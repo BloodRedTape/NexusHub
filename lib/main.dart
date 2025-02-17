@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/tabs/morning.dart';
 import 'core/dashboard.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
