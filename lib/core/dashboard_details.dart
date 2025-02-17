@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 class DashboardDetails extends StatelessWidget {
   final Widget body;
-  final Widget title;
+  final Widget? title;
 
-  const DashboardDetails({required this.body, required this.title});
+  const DashboardDetails({required this.body, this.title});
 
   @override
   Widget build(BuildContext context) {

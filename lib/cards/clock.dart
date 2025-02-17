@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:nexus/core/dashboard_card.dart';
 import 'dart:async';
 
-class ClockCard extends StatefulWidget {
+import 'package:nexus/core/dashboard_details.dart';
+
+class Clock extends StatefulWidget {
+  final double size;
+
+  const Clock({required this.size});
+
   @override
-  _ClockCardState createState() => _ClockCardState();
+  _ClockState createState() => _ClockState();
 }
 
-class _ClockCardState extends State<ClockCard> {
+class _ClockState extends State<Clock> {
   late String _timeString;
   Timer? _timer;
 
@@ -40,16 +46,24 @@ class _ClockCardState extends State<ClockCard> {
 
   @override
   Widget build(BuildContext context) {
-    return DashboardCard(
-      child: Center(
-        child: Text(
-          _timeString,
-          style: TextStyle(
-            fontSize: 96,
-            fontWeight: FontWeight.bold,
-          ),
+    return Center(
+      child: Text(
+        _timeString,
+        style: TextStyle(
+          fontSize: widget.size,
+          fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+}
+
+class ClockCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return DashboardCard(
+      child: Clock(size: 96),
+      details: DashboardDetails(body: Clock(size: 240)),
     );
   }
 }
