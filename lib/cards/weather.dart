@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/core/dashboard_card.dart';
 import 'package:http/http.dart' as http;
+import 'package:nexus/core/dashboard_details.dart';
 import 'dart:convert';
 import 'package:open_weather_client/open_weather.dart';
 import 'dart:async';
@@ -62,7 +63,7 @@ class WeatherWidget extends StatelessWidget {
 }
 
 class WeatherCard extends StatefulWidget {
-  static const String apiKey = 'YOUR_KEY_HERE';
+  static const String apiKey = 'YOUR_API_KEY';
   final String city;
 
   WeatherCard({required this.city});
