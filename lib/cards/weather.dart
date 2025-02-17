@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:nexus/core/dashboard_card.dart';
 import 'package:http/http.dart' as http;
 import 'package:nexus/core/dashboard_details.dart';
+import 'package:nexus/widgets/token_input_widget.dart';
 import 'dart:convert';
 import 'package:open_weather_client/open_weather.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WeatherWidget extends StatelessWidget {
   final String location;
@@ -21,49 +23,47 @@ class WeatherWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DashboardCard(
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            location,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          location,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
-          SizedBox(height: 10),
-          Icon(
-            weatherIcon,
-            size: 46,
-            color: Colors.blue,
+        ),
+        SizedBox(height: 10),
+        Icon(
+          weatherIcon,
+          size: 46,
+          color: Colors.blue,
+        ),
+        SizedBox(height: 10),
+        Text(
+          temperature,
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
           ),
-          SizedBox(height: 10),
-          Text(
-            temperature,
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
+        ),
+        SizedBox(height: 10),
+        Text(
+          weatherDescription,
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey[700],
           ),
-          SizedBox(height: 10),
-          Text(
-            weatherDescription,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[700],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
 class WeatherCard extends StatefulWidget {
-  static const String apiKey = 'YOUR_API_KEY';
+  static const String apiTokenKey = 'OPEN_WEATHER_MAP_TOKEN';
   final String city;
 
   WeatherCard({required this.city});
@@ -100,9 +100,13 @@ class _WeatherCardState extends State<WeatherCard> {
   }
 
   Future<void> fetchWeatherData() async {
-    OpenWeather openWeather = OpenWeather(apiKey: WeatherCard.apiKey);
-
     try {
+      final prefs = await SharedPreferences.getInstance();
+
+      final token = prefs.getString(WeatherCard.apiTokenKey);
+
+      OpenWeather openWeather = OpenWeather(apiKey: token!);
+
       WeatherData weatherData = await openWeather.currentWeatherByCityName(
           cityName: widget.city, weatherUnits: WeatherUnits.METRIC);
 
@@ -149,11 +153,16 @@ class _WeatherCardState extends State<WeatherCard> {
 
   @override
   Widget build(BuildContext context) {
-    return WeatherWidget(
-      location: location,
-      temperature: temperature,
-      weatherDescription: weatherDescription,
-      weatherIcon: weatherIcon,
-    );
+    return DashboardCard(
+        details: DashboardDetails(
+            body:
+                const TokenInputWidget(preferencesKey: WeatherCard.apiTokenKey),
+            title: Text('Weather Settings')),
+        child: WeatherWidget(
+          location: location,
+          temperature: temperature,
+          weatherDescription: weatherDescription,
+          weatherIcon: weatherIcon,
+        ));
   }
 }
