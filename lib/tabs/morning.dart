@@ -1,10 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:nexus/cards/alarm.dart';
 import 'package:nexus/cards/clock.dart';
-import 'package:nexus/core/dashboard_card.dart';
+import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/core/expanded_row.dart';
 import 'package:nexus/core/expanded_column.dart';
 
 import 'package:nexus/cards/weather.dart';
+import 'package:nexus/core/switch_card.dart';
+
+class LightSwitchCard extends StatelessWidget {
+  final SwitchStateProvider stateProvider;
+  final String? name;
+  final String? room;
+
+  LightSwitchCard({required this.stateProvider, this.name, this.room});
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchCard(
+      childFactory: buildChild,
+      stateProvider: stateProvider,
+    );
+  }
+
+  Widget buildChild(bool? state) {
+    List<Widget> widgets = [
+      Icon(icon(state), size: 64, color: iconColor(state)),
+    ];
+
+    if (name != null) {
+      widgets.add(SizedBox(height: 8));
+      widgets.add(Text(
+        name!,
+        style: TextStyle(fontSize: 20),
+      ));
+    }
+    if (room != null) {
+      widgets.add(SizedBox(height: 8));
+      widgets.add(Text(
+        room!,
+        style: TextStyle(fontSize: 20),
+      ));
+    }
+
+    return Center(
+      child: Column(
+        children: widgets,
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+      ),
+    );
+  }
+
+  IconData icon(bool? state) {
+    if (state == null) {
+      return Icons.info;
+    }
+
+    return Icons.lightbulb;
+  }
+
+  Color iconColor(bool? state) {
+    if (state == null) {
+      return Colors.white;
+    }
+
+    return state ? Colors.yellow : Colors.white;
+  }
+}
 
 class MorningTab extends StatelessWidget {
   const MorningTab({super.key});
@@ -20,34 +83,14 @@ class MorningTab extends StatelessWidget {
           ),
         ]),
         ExpandedColumn(children: [
-          DashboardCard(
-            color: Color.fromARGB(255, 240, 173, 85),
-            child: Center(
-              child: Text(
-                'On · 80%\nLamp\nLiving Room',
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
+          CalendarCard(),
           ExpandedRow(
             children: [
-              DashboardCard(
-                child: Center(
-                  child: Text(
-                    '68°\n76° 65°',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-              DashboardCard(
-                color: Color.fromARGB(255, 69, 131, 240),
-                child: Center(
-                  child: Text(
-                    '8:44\nTimer',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )
+              LightSwitchCard(
+                  stateProvider: DummySwitchStateProvider(),
+                  name: 'Led',
+                  room: 'Master'),
+              AlarmCard()
             ],
           )
         ])

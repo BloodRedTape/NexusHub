@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/dashboard_card.dart';
+import 'package:nexus/core/details_card.dart';
 import 'dart:async';
-
-import 'package:nexus/core/dashboard_details.dart';
 
 class Clock extends StatefulWidget {
   final double size;
@@ -61,9 +59,9 @@ class _ClockState extends State<Clock> {
 class ClockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return DashboardCard(
+    return DetailsCard(
       child: Clock(size: 96),
-      details: DashboardDetails(body: Clock(size: 240)),
+      details: DetailsPage(body: Clock(size: 240)),
     );
   }
 }

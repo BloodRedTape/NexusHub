@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/dashboard_card.dart';
-import 'package:http/http.dart' as http;
-import 'package:nexus/core/dashboard_details.dart';
+import 'package:nexus/core/details_card.dart';
 import 'package:nexus/widgets/token_input_widget.dart';
-import 'dart:convert';
 import 'package:open_weather_client/open_weather.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -153,16 +150,17 @@ class _WeatherCardState extends State<WeatherCard> {
 
   @override
   Widget build(BuildContext context) {
-    return DashboardCard(
-        details: DashboardDetails(
+    return DetailsCard(
+        details: DetailsPage(
             body:
                 const TokenInputWidget(preferencesKey: WeatherCard.apiTokenKey),
             title: Text('Weather Settings')),
-        child: WeatherWidget(
+        child: Center(
+            child: WeatherWidget(
           location: location,
           temperature: temperature,
           weatherDescription: weatherDescription,
           weatherIcon: weatherIcon,
-        ));
+        )));
   }
 }

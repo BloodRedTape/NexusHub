@@ -1,0 +1,71 @@
+import 'package:flutter/material.dart';
+import 'package:nexus/core/base_card.dart';
+
+class SwitchStateProvider {
+  Function(bool?)? _onSwitchChanged;
+
+  void bindSwitchChanged(Function(bool?) callback) {
+    _onSwitchChanged = callback;
+    onBound();
+  }
+
+  void onBound() {}
+
+  void setSwitch(bool? value) {
+    _onSwitchChanged?.call(value);
+  }
+}
+
+class DummySwitchStateProvider extends SwitchStateProvider {
+  @override
+  void onBound() {
+    setSwitch(true);
+  }
+}
+
+class SwitchCard extends StatefulWidget {
+  final SwitchStateProvider stateProvider;
+  final Widget Function(bool?) childFactory;
+  final Color? Function(bool?)? colorFactory;
+
+  SwitchCard({
+    required this.childFactory,
+    required this.stateProvider,
+    this.colorFactory,
+  });
+
+  @override
+  State<StatefulWidget> createState() => _SwitchCardState();
+}
+
+class _SwitchCardState extends State<SwitchCard> {
+  bool? _state;
+
+  void switchState() {
+    if (_state == null) return;
+
+    widget.stateProvider.setSwitch(!_state!);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.stateProvider.bindSwitchChanged(onSwitchChanged);
+  }
+
+  void onSwitchChanged(bool? value) {
+    setState(() {
+      _state = value;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseCard(
+      child: widget.childFactory(_state),
+      color: widget.colorFactory?.call(_state),
+      onTap: switchState,
+    );
+  }
+}
