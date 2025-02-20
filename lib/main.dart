@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/tabs/morning.dart';
 import 'core/dashboard.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +19,10 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
   }
 
   @override
