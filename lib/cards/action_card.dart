@@ -25,13 +25,20 @@ class ActionCard extends StatelessWidget {
     }
 
     return BaseCard(
-      child: Center(
+      child: ElevatedButton(
+        onPressed: call,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: widgets,
         ),
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.zero, // Ensure zero padding
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+                30), // Optional: Match the card's border radius
+          ),
+        ),
       ),
-      onTap: call,
     );
   }
 

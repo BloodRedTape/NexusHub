@@ -15,10 +15,7 @@ class BaseCard extends StatelessWidget {
           onTap: onTap,
           child: Card(
             color: color,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: child,
-            ),
+            child: child,
           )),
     );
   }
