@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/calendar.dart';
+import 'package:nexus/tabs/home.dart';
 import 'package:nexus/tabs/morning.dart';
 import 'core/dashboard.dart';
 import 'package:flutter/services.dart';
@@ -33,7 +34,7 @@ class _MyAppState extends State<MyApp> {
           TabItem(tab: Tab(text: 'Your morning'), child: MorningTab()),
           TabItem(
             tab: Tab(text: 'Home control'),
-            child: Center(child: Text('Home control content')),
+            child: HomeTab(),
           ),
           TabItem(
             tab: Tab(text: 'Media'),
