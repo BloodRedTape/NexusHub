@@ -1,30 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/base_card.dart';
-
-class SwitchStateProvider {
-  Function(bool?)? _onSwitchChanged;
-
-  void bindSwitchChanged(Function(bool?) callback) {
-    _onSwitchChanged = callback;
-    onBound();
-  }
-
-  void onBound() {}
-
-  void setSwitch(bool? value) {
-    _onSwitchChanged?.call(value);
-  }
-}
-
-class DummySwitchStateProvider extends SwitchStateProvider {
-  @override
-  void onBound() {
-    setSwitch(true);
-  }
-}
+import 'package:nexus/cards/base.dart';
+import 'package:nexus/providers/value.dart';
 
 class SwitchCard extends StatefulWidget {
-  final SwitchStateProvider stateProvider;
+  final ValueStateProvider<bool> stateProvider;
   final Widget Function(bool?) childFactory;
   final Color? Function(bool?)? colorFactory;
 
@@ -44,7 +23,7 @@ class _SwitchCardState extends State<SwitchCard> {
   void switchState() {
     if (_state == null) return;
 
-    widget.stateProvider.setSwitch(!_state!);
+    widget.stateProvider.setValue(!_state!);
   }
 
   @override

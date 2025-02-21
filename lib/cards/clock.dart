@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/details_card.dart';
+import 'package:nexus/cards/details.dart';
 import 'dart:async';
 
 class Clock extends StatefulWidget {

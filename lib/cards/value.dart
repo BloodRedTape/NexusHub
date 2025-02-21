@@ -1,31 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/base_card.dart';
-
-class ValueStateProvider<T> {
-  Function(T?)? _onValueChanged;
-
-  void bindSwitchChanged(Function(T?) callback) {
-    _onValueChanged = callback;
-    onBound();
-  }
-
-  void onBound() {}
-
-  void setValue(T? value) {
-    _onValueChanged?.call(value);
-  }
-}
-
-class DummyValueStateProvider<T> extends ValueStateProvider<T> {
-  final T initialValue;
-
-  DummyValueStateProvider({required this.initialValue});
-
-  @override
-  void onBound() {
-    setValue(initialValue);
-  }
-}
+import 'package:nexus/cards/base.dart';
+import 'package:nexus/providers/value.dart';
 
 class ValueCard<T> extends StatefulWidget {
   final ValueStateProvider<T> stateProvider;

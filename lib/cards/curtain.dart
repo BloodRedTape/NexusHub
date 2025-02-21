@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/value_card.dart';
+import 'package:nexus/cards/value.dart';
+import 'package:nexus/providers/value.dart';
 
 class CurtainCard extends StatelessWidget {
   final ValueStateProvider<double> stateProvider;

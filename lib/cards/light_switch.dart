@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/switch_card.dart';
+import 'package:nexus/cards/switch.dart';
+import 'package:nexus/providers/value.dart';
 
 class LightSwitchCard extends StatelessWidget {
-  final SwitchStateProvider stateProvider;
+  final ValueStateProvider<bool> stateProvider;
   final String? name;
   final String? room;
 

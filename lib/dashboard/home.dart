@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/action_card.dart';
+import 'package:nexus/cards/action.dart';
 import 'package:nexus/cards/alarm.dart';
 import 'package:nexus/cards/clock.dart';
 import 'package:nexus/cards/calendar.dart';
-import 'package:nexus/cards/light_switch_card.dart';
-import 'package:nexus/core/expanded_row.dart';
-import 'package:nexus/core/expanded_column.dart';
+import 'package:nexus/cards/light_switch.dart';
+import 'package:nexus/widgets/expanded_row.dart';
+import 'package:nexus/widgets/expanded_column.dart';
 
-import 'package:nexus/cards/curtain_card.dart';
-import 'package:nexus/core/switch_card.dart';
-import 'package:nexus/core/value_card.dart';
+import 'package:nexus/cards/curtain.dart';
+import 'package:nexus/cards/switch.dart';
+import 'package:nexus/providers/value.dart';
 
 void MakeSnackBar(BuildContext context, String text) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -53,11 +53,13 @@ class HomeTab extends StatelessWidget {
           ExpandedRow(
             children: [
               LightSwitchCard(
-                  stateProvider: DummySwitchStateProvider(),
+                  stateProvider:
+                      DummyValueStateProvider<bool>(initialValue: true),
                   name: 'Bulbs',
                   room: 'Master'),
               LightSwitchCard(
-                  stateProvider: DummySwitchStateProvider(),
+                  stateProvider:
+                      DummyValueStateProvider<bool>(initialValue: true),
                   name: 'Bulb',
                   room: 'Toilet'),
             ],

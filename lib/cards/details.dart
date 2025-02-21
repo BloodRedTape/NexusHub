@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/base_card.dart';
+import 'package:nexus/cards/base.dart';
 
 class DetailsPage extends StatelessWidget {
   final Widget body;

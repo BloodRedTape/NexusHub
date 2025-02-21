@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/core/base_card.dart';
+import 'package:nexus/cards/base.dart';
 
 class CalendarEvent {
   final TimeOfDay start;
@@ -26,7 +26,7 @@ class CalendarDay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (events.length == 0) return SizedBox();
+    if (events.isEmpty) return SizedBox();
 
     double fontSize = 24;
 
