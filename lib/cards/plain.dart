@@ -147,6 +147,7 @@ class PlainCard extends StatelessWidget {
         padding: EdgeInsets.zero, // Ensure zero padding
         foregroundColor: Colors.white,
         iconColor: Colors.white,
+        backgroundColor: color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(
               16), // Optional: Match the card's border radius

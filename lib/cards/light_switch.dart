@@ -12,6 +12,7 @@ class LightSwitchCard extends StateCard<bool> {
   @override
   Widget build(BuildContext context, bool? state) {
     return PlainCard(
+        color: color(state),
         icon: icon(state),
         iconColor: iconColor(state),
         text: stateToText(state),
@@ -37,6 +38,12 @@ class LightSwitchCard extends StateCard<bool> {
     }
 
     return state ? Icons.lightbulb : Icons.lightbulb_outline;
+  }
+
+  Color? color(bool? state) {
+    if (state == null || !state) return null;
+
+    return const Color.fromARGB(255, 99, 78, 4);
   }
 
   Color iconColor(bool? state) {

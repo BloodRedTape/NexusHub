@@ -11,6 +11,10 @@ class DetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(appBar: AppBar(title: title), body: body);
   }
+
+  void navigateTo(BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => this));
+  }
 }
 
 class DetailsCard extends StatelessWidget {
@@ -32,6 +36,6 @@ class DetailsCard extends StatelessWidget {
   void navigateDetails(BuildContext context) {
     if (details == null) return;
 
-    Navigator.push(context, MaterialPageRoute(builder: (context) => details!));
+    details!.navigateTo(context);
   }
 }

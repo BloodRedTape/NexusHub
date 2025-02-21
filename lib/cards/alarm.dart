@@ -5,6 +5,7 @@ class AlarmCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PlainCard(
+        color: const Color.fromARGB(255, 38, 82, 158),
         icon: Icons.alarm,
         text: '9:00',
         subText: 'Next - 10:00',

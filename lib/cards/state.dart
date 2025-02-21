@@ -28,6 +28,12 @@ class _SwitchCardState<T> extends State<StateCard<T>> {
     widget.stateProvider.bindSwitchChanged(onValueChanged);
   }
 
+  @override
+  void dispose() {
+    widget.stateProvider.unbind();
+    super.dispose();
+  }
+
   void onValueChanged(T? value) {
     setState(() {
       _state = value;

@@ -6,7 +6,14 @@ class StateProvider<T> {
     onBound();
   }
 
+  void unbind() {
+    _onValueChanged = null;
+    onUnbound();
+  }
+
   void onBound() {}
+
+  void onUnbound() {}
 
   void setValue(T? value) {
     _onValueChanged?.call(value);

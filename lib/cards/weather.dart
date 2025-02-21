@@ -1,57 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/details.dart';
+import 'package:nexus/cards/plain.dart';
+import 'package:nexus/cards/state.dart';
+import 'package:nexus/providers/weather.dart';
 import 'package:nexus/utils/token_input_widget.dart';
 import 'package:open_weather_client/open_weather.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:weather_icons/weather_icons.dart';
 
-class WeatherWidget extends StatelessWidget {
-  final String location;
-  final String temperature;
-  final String weatherDescription;
-  final IconData weatherIcon;
-
-  WeatherWidget({
-    required this.location,
-    required this.temperature,
-    required this.weatherDescription,
-    required this.weatherIcon,
-  });
+class WeatherCard extends StateCard<WeatherState> {
+  WeatherCard() : super(stateProvider: OpenWeatherMap(city: 'kyiv'));
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WeatherState? state) {
+    final details = DetailsPage(
+        body:
+            const TokenInputWidget(preferencesKey: OpenWeatherMap.apiTokenKey),
+        title: Text('Weather Settings'));
+
+    if (state == null)
+      return PlainCard(
+        icon: Icons.error,
+        text: 'Unavailable',
+        action: () => details.navigateTo(context),
+      );
+
+    return DetailsCard(
+        details: details,
+        child: buildGradient(Padding(
+            padding: EdgeInsets.all(30),
+            child: buildCardContent(context, state))));
+  }
+
+  Widget buildGradient(Widget child) {
+    return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16.0),
+          gradient: LinearGradient(
+            colors: [
+              Colors.blue.withOpacity(0.7),
+              const Color.fromARGB(255, 122, 213, 255).withOpacity(0.5),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: child);
+  }
+
+  Widget buildCardContent(BuildContext context, WeatherState state) {
     return Column(
       mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          location,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 10),
-        Icon(
-          weatherIcon,
-          size: 46,
-          color: Colors.blue,
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Icon(state.icon, size: 48),
         ),
         SizedBox(height: 10),
         Text(
-          temperature,
+          '${state.temperature.toStringAsFixed(1)}°',
           style: TextStyle(
-            fontSize: 36,
+            fontSize: 48,
             fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(height: 10),
         Text(
-          weatherDescription,
+          '${state.minimalTemperature.toStringAsFixed(1)}° ${state.maximumTemperature.toStringAsFixed(1)}°',
           style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey[700],
+            fontSize: 28,
+            color: Colors.grey[400],
           ),
         ),
       ],
@@ -59,29 +80,16 @@ class WeatherWidget extends StatelessWidget {
   }
 }
 
-class WeatherCard extends StatefulWidget {
+class OpenWeatherMap extends WeatherStateProvider {
   static const String apiTokenKey = 'OPEN_WEATHER_MAP_TOKEN';
   final String city;
-
-  WeatherCard({required this.city});
-
-  @override
-  _WeatherCardState createState() => _WeatherCardState();
-}
-
-class _WeatherCardState extends State<WeatherCard> {
-  late String location;
-  late String temperature;
-  late String weatherDescription;
-  late IconData weatherIcon;
-
   Timer? _timer;
 
-  @override
-  void initState() {
-    super.initState();
+  OpenWeatherMap({required this.city});
 
-    setErrorState();
+  @override
+  void onBound() {
+    super.onBound();
 
     fetchWeatherData();
 
@@ -90,77 +98,65 @@ class _WeatherCardState extends State<WeatherCard> {
   }
 
   @override
-  void dispose() {
+  void onUnbound() {
     _timer?.cancel();
-
-    super.dispose();
   }
 
   Future<void> fetchWeatherData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      final token = prefs.getString(WeatherCard.apiTokenKey);
+      final token = prefs.getString(apiTokenKey);
 
       OpenWeather openWeather = OpenWeather(apiKey: token!);
 
       WeatherData weatherData = await openWeather.currentWeatherByCityName(
-          cityName: widget.city, weatherUnits: WeatherUnits.METRIC);
+          cityName: city, weatherUnits: WeatherUnits.METRIC);
 
-      setSuccessState(weatherData);
+      setValue(WeatherState(
+          icon: getWeatherIcon(weatherData.details.first.icon),
+          temperature: weatherData.temperature.currentTemperature,
+          maximumTemperature: weatherData.temperature.tempMax,
+          minimalTemperature: weatherData.temperature.tempMin));
     } catch (e) {
-      setErrorState();
+      setValue(null);
     }
   }
 
-  void setSuccessState(WeatherData data) {
-    if (!mounted) return;
-    setState(() {
-      location = widget.city;
-      temperature = '${data.temperature.currentTemperature}°C';
-      weatherDescription = data.details.first.weatherShortDescription;
-      weatherIcon = _mapWeatherConditionToIcon(weatherDescription);
-    });
-  }
-
-  void setErrorState() {
-    if (!mounted) return;
-    setState(() {
-      location = 'Error';
-      temperature = 'N/A';
-      weatherDescription = 'Unable to fetch weather';
-      weatherIcon = Icons.error;
-    });
-  }
-
-  IconData _mapWeatherConditionToIcon(String condition) {
-    switch (condition.toLowerCase()) {
-      case 'clear':
-        return Icons.wb_sunny;
-      case 'clouds':
-        return Icons.cloud;
-      case 'rain':
-        return Icons.beach_access;
-      case 'snow':
-        return Icons.ac_unit;
+  IconData getWeatherIcon(String iconCode) {
+    switch (iconCode) {
+      case '01d':
+        return WeatherIcons.day_sunny;
+      case '01n':
+        return WeatherIcons.night_clear;
+      case '02d':
+        return WeatherIcons.day_cloudy;
+      case '02n':
+        return WeatherIcons.night_alt_cloudy;
+      case '03d':
+      case '03n':
+        return WeatherIcons.cloud;
+      case '04d':
+      case '04n':
+        return WeatherIcons.cloudy;
+      case '09d':
+      case '09n':
+        return WeatherIcons.showers;
+      case '10d':
+        return WeatherIcons.day_rain;
+      case '10n':
+        return WeatherIcons.night_alt_rain;
+      case '11d':
+      case '11n':
+        return WeatherIcons.thunderstorm;
+      case '13d':
+      case '13n':
+        return WeatherIcons.snow;
+      case '50d':
+      case '50n':
+        return WeatherIcons.fog;
       default:
-        return Icons.help_outline;
+        return Icons.error;
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DetailsCard(
-        details: DetailsPage(
-            body:
-                const TokenInputWidget(preferencesKey: WeatherCard.apiTokenKey),
-            title: Text('Weather Settings')),
-        child: Center(
-            child: WeatherWidget(
-          location: location,
-          temperature: temperature,
-          weatherDescription: weatherDescription,
-          weatherIcon: weatherIcon,
-        )));
   }
 }

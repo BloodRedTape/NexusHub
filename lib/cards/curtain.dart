@@ -12,12 +12,12 @@ class CurtainCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueCard(
-      childFactory: buildChild,
+      childFactory: (state) => buildChild(state, context),
       stateProvider: stateProvider,
     );
   }
 
-  Widget buildChild(double? state) {
+  Widget buildChild(double? state, BuildContext context) {
     if (state == null) {
       return Center(child: Text('Undefined'));
     }
@@ -43,10 +43,9 @@ class CurtainCard extends StatelessWidget {
       ));
     }
 
-    widgets.add(Slider(
-      value: state,
-      onChanged: stateProvider.setValue,
-    ));
+    widgets.add(
+      Slider(value: state, min: 0, max: 100, onChanged: stateProvider.setValue),
+    );
 
     return Center(
       child: Column(

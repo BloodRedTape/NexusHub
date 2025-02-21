@@ -18,11 +18,7 @@ class MorningTab extends StatelessWidget {
       children: [
         ExpandedColumn(children: [
           ClockCard(),
-          ExpandedRow(children: [
-            WeatherCard(
-              city: 'kyiv',
-            ),
-          ])
+          ExpandedRow(children: [WeatherCard(), AlarmCard()])
         ]),
         ExpandedColumn(children: [
           CalendarCard(
@@ -49,9 +45,6 @@ class MorningTab extends StatelessWidget {
                   description: 'Driving')
             ])
           ]))),
-          ExpandedRow(
-            children: [AlarmCard()],
-          )
         ])
       ],
     );
