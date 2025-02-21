@@ -1,32 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:nexus/cards/base.dart';
+import 'package:nexus/cards/plain.dart';
+import 'package:nexus/providers/calendar.dart';
 
-class CalendarEvent {
-  final TimeOfDay start;
-  final TimeOfDay end;
-  final String description;
+class CalendarDayWidget extends StatelessWidget {
+  final CalendarDayState day;
 
-  const CalendarEvent({
-    required this.start,
-    required this.end,
-    required this.description,
-  });
-}
-
-class CalendarDay extends StatelessWidget {
-  final String dayName;
-  final String date;
-  final List<CalendarEvent> events;
-
-  const CalendarDay({
-    required this.dayName,
-    required this.date,
-    required this.events,
-  });
+  const CalendarDayWidget({required this.day});
 
   @override
   Widget build(BuildContext context) {
-    if (events.isEmpty) return SizedBox();
+    if (day.events.isEmpty) return SizedBox();
 
     double fontSize = 24;
 
@@ -39,18 +24,7 @@ class CalendarDay extends StatelessWidget {
               Icon(Icons.calendar_month, size: 35),
               const SizedBox(width: 8),
               Text(
-                '$dayName',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.circle,
-                size: 10,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '$date',
+                DateFormat('d MMMM').format(day.date),
                 style:
                     TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
               ),
@@ -64,7 +38,7 @@ class CalendarDay extends StatelessWidget {
                 3: FixedColumnWidth(40.0),
                 4: FlexColumnWidth(),
               },
-              children: events.map((event) {
+              children: day.events.map((event) {
                 return TableRow(
                   children: [
                     TableCell(
@@ -107,42 +81,43 @@ class CalendarDay extends StatelessWidget {
   }
 }
 
-class Calendar extends StatelessWidget {
+class CalendarCard extends StatefulWidget {
+  final CalendarStateProvider stateProvider;
+
+  const CalendarCard({required this.stateProvider});
+
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-        padding: EdgeInsets.all(8),
-        child: Column(children: [
-          CalendarDay(dayName: 'Tuesday', date: '15 February', events: [
-            CalendarEvent(
-                start: TimeOfDay(hour: 13, minute: 00),
-                end: TimeOfDay(hour: 14, minute: 00),
-                description: 'Driving'),
-            CalendarEvent(
-                start: TimeOfDay(hour: 9, minute: 00),
-                end: TimeOfDay(hour: 10, minute: 00),
-                description: 'Pay for house'),
-          ]),
-          const SizedBox(height: 16),
-          CalendarDay(dayName: 'Wensday', date: '16 February', events: [
-            CalendarEvent(
-                start: TimeOfDay(hour: 13, minute: 00),
-                end: TimeOfDay(hour: 14, minute: 00),
-                description: 'Something'),
-            CalendarEvent(
-                start: TimeOfDay(hour: 8, minute: 00),
-                end: TimeOfDay(hour: 9, minute: 00),
-                description: 'Stuff'),
-          ])
-        ]));
-  }
+  State<StatefulWidget> createState() => _CalendarCardState();
 }
 
-class CalendarCard extends StatelessWidget {
-  const CalendarCard();
+class _CalendarCardState extends State<CalendarCard> {
+  CalendarState? _state;
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.stateProvider.bindSwitchChanged(onSwitchChanged);
+  }
+
+  void onSwitchChanged(CalendarState? value) {
+    setState(() {
+      _state = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BaseCard(child: Calendar(), color: Colors.grey[900]);
+    if (_state == null)
+      return PlainCard(icon: Icons.error, text: 'Unavailable');
+
+    return BaseCard(
+        child: Padding(
+            padding: EdgeInsets.all(8),
+            child: Column(
+                children: _state!.days
+                    .map((day) => CalendarDayWidget(day: day))
+                    .toList())),
+        color: Colors.grey[900]);
   }
 }
