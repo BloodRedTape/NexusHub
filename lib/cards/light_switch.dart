@@ -3,11 +3,11 @@ import 'package:nexus/cards/switch.dart';
 import 'package:nexus/providers/value.dart';
 
 class LightSwitchCard extends StatelessWidget {
-  final ValueStateProvider<bool> stateProvider;
-  final String? name;
+  final StateProvider<bool> stateProvider;
+  final String name;
   final String? room;
 
-  LightSwitchCard({required this.stateProvider, this.name, this.room});
+  LightSwitchCard({required this.stateProvider, required this.name, this.room});
 
   @override
   Widget build(BuildContext context) {

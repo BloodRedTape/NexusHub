@@ -4,7 +4,7 @@ import 'package:nexus/cards/value.dart';
 import 'package:nexus/providers/value.dart';
 
 class TemperatureCard extends StatelessWidget {
-  final ValueStateProvider<double> stateProvider;
+  final StateProvider<double> stateProvider;
 
   const TemperatureCard({required this.stateProvider});
 

@@ -3,7 +3,7 @@ import 'package:nexus/cards/base.dart';
 import 'package:nexus/providers/value.dart';
 
 class SwitchCard extends StatefulWidget {
-  final ValueStateProvider<bool> stateProvider;
+  final StateProvider<bool> stateProvider;
   final Widget Function(bool?) childFactory;
   final Color? Function(bool?)? colorFactory;
 

@@ -3,7 +3,7 @@ import 'package:nexus/cards/value.dart';
 import 'package:nexus/providers/value.dart';
 
 class CurtainCard extends StatelessWidget {
-  final ValueStateProvider<double> stateProvider;
+  final StateProvider<double> stateProvider;
   final String? name;
   final Color? sliderColor;
 

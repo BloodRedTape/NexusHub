@@ -4,8 +4,8 @@ import 'package:nexus/cards/clock.dart';
 import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/providers/calendar.dart';
 import 'package:nexus/providers/value.dart';
-import 'package:nexus/widgets/expanded_row.dart';
-import 'package:nexus/widgets/expanded_column.dart';
+import 'package:nexus/utils/expanded_row.dart';
+import 'package:nexus/utils/expanded_column.dart';
 
 import 'package:nexus/cards/weather.dart';
 
@@ -26,7 +26,7 @@ class MorningTab extends StatelessWidget {
         ]),
         ExpandedColumn(children: [
           CalendarCard(
-              stateProvider: DummyValueStateProvider<CalendarState>(
+              stateProvider: DummyStateProvider<CalendarState>(
                   initialValue: CalendarState(days: [
             CalendarDayState(date: DateTime(2024, 2, 21), events: [
               CalendarEventState(

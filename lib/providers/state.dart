@@ -1,4 +1,4 @@
-class ValueStateProvider<T> {
+class StateProvider<T> {
   Function(T?)? _onValueChanged;
 
   void bindSwitchChanged(Function(T?) callback) {
@@ -13,10 +13,10 @@ class ValueStateProvider<T> {
   }
 }
 
-class DummyValueStateProvider<T> extends ValueStateProvider<T> {
+class DummyStateProvider<T> extends StateProvider<T> {
   final T initialValue;
 
-  DummyValueStateProvider({required this.initialValue});
+  DummyStateProvider({required this.initialValue});
 
   @override
   void onBound() {

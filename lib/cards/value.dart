@@ -3,7 +3,7 @@ import 'package:nexus/cards/base.dart';
 import 'package:nexus/providers/value.dart';
 
 class ValueCard<T> extends StatefulWidget {
-  final ValueStateProvider<T> stateProvider;
+  final StateProvider<T> stateProvider;
   final Widget Function(T?) childFactory;
   final Color? Function(T?)? colorFactory;
 

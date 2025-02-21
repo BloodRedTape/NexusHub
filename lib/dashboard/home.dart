@@ -5,8 +5,8 @@ import 'package:nexus/cards/clock.dart';
 import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/cards/light_switch.dart';
 import 'package:nexus/cards/temperature.dart';
-import 'package:nexus/widgets/expanded_row.dart';
-import 'package:nexus/widgets/expanded_column.dart';
+import 'package:nexus/utils/expanded_row.dart';
+import 'package:nexus/utils/expanded_column.dart';
 
 import 'package:nexus/cards/curtain.dart';
 import 'package:nexus/cards/switch.dart';
@@ -30,19 +30,17 @@ class HomeTab extends StatelessWidget {
         ExpandedColumn(children: [
           ExpandedRow(children: [
             TemperatureCard(
-                stateProvider:
-                    DummyValueStateProvider<double>(initialValue: 20.1)),
+                stateProvider: DummyStateProvider<double>(initialValue: 20.1)),
             TemperatureCard(
-                stateProvider:
-                    DummyValueStateProvider<double>(initialValue: 24.8))
+                stateProvider: DummyStateProvider<double>(initialValue: 24.8))
           ]),
           ExpandedRow(children: [
             CurtainCard(
                 name: 'Left Curtain',
-                stateProvider: DummyValueStateProvider(initialValue: 0.5)),
+                stateProvider: DummyStateProvider(initialValue: 0.5)),
             CurtainCard(
                 name: 'RightCurtain',
-                stateProvider: DummyValueStateProvider(initialValue: 0.5))
+                stateProvider: DummyStateProvider(initialValue: 0.5))
           ])
         ]),
         ExpandedColumn(children: [
@@ -61,13 +59,11 @@ class HomeTab extends StatelessWidget {
           ExpandedRow(
             children: [
               LightSwitchCard(
-                  stateProvider:
-                      DummyValueStateProvider<bool>(initialValue: true),
+                  stateProvider: DummyStateProvider<bool>(initialValue: true),
                   name: 'Bulbs',
                   room: 'Master'),
               LightSwitchCard(
-                  stateProvider:
-                      DummyValueStateProvider<bool>(initialValue: true),
+                  stateProvider: DummyStateProvider<bool>(initialValue: true),
                   name: 'Bulb',
                   room: 'Toilet'),
             ],
