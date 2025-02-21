@@ -42,9 +42,17 @@ class _SwitchCardState extends State<SwitchCard> {
   @override
   Widget build(BuildContext context) {
     return BaseCard(
-      child: widget.childFactory(_state),
-      color: widget.colorFactory?.call(_state),
-      onTap: switchState,
-    );
+        child: ElevatedButton(
+          onPressed: switchState,
+          child: widget.childFactory(_state),
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.zero, // Ensure zero padding
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                  30), // Optional: Match the card's border radius
+            ),
+          ),
+        ),
+        color: widget.colorFactory?.call(_state));
   }
 }
