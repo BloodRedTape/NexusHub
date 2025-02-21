@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/base.dart';
-import 'package:nexus/providers/value.dart';
+import 'package:nexus/providers/state.dart';
 
 class SwitchCard extends StatefulWidget {
   final StateProvider<bool> stateProvider;

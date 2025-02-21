@@ -1,45 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/base.dart';
+import 'package:nexus/cards/plain.dart';
 
 class ActionCard extends StatelessWidget {
-  final IconData? icon;
-  final String? name;
+  final IconData icon;
+  final String name;
   final Function()? action;
 
-  const ActionCard({this.icon, this.name, this.action});
+  const ActionCard({required this.icon, required this.name, this.action});
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> widgets = [];
-
-    if (icon != null) {
-      widgets.add(Icon(icon, size: 94));
-    }
-
-    if (name != null) {
-      if (widgets.isNotEmpty) {
-        widgets.add(SizedBox(height: 8));
-      }
-
-      widgets.add(Text(name!, style: TextStyle(fontSize: 24)));
-    }
-
-    return BaseCard(
-      child: ElevatedButton(
-        onPressed: call,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: widgets,
-        ),
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.zero, // Ensure zero padding
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-                30), // Optional: Match the card's border radius
-          ),
-        ),
-      ),
-    );
+    return PlainCard(action: call, text: name, icon: icon);
   }
 
   void call() {

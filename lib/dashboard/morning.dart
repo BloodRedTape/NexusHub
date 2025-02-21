@@ -3,7 +3,7 @@ import 'package:nexus/cards/alarm.dart';
 import 'package:nexus/cards/clock.dart';
 import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/providers/calendar.dart';
-import 'package:nexus/providers/value.dart';
+import 'package:nexus/providers/state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 

@@ -1,49 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/switch.dart';
-import 'package:nexus/providers/value.dart';
+import 'package:nexus/cards/plain.dart';
+import 'package:nexus/cards/state.dart';
 
-class LightSwitchCard extends StatelessWidget {
-  final StateProvider<bool> stateProvider;
+class LightSwitchCard extends StateCard<bool> {
   final String name;
   final String? room;
 
-  LightSwitchCard({required this.stateProvider, required this.name, this.room});
+  LightSwitchCard(
+      {required super.stateProvider, required this.name, this.room});
 
   @override
-  Widget build(BuildContext context) {
-    return SwitchCard(
-      childFactory: buildChild,
-      stateProvider: stateProvider,
-    );
+  Widget build(BuildContext context, bool? state) {
+    return PlainCard(
+        icon: icon(state),
+        iconColor: iconColor(state),
+        text: stateToText(state),
+        subText: room,
+        action: () => switchState(state));
   }
 
-  Widget buildChild(bool? state) {
-    List<Widget> widgets = [
-      Icon(icon(state), size: 64, color: iconColor(state)),
-    ];
+  void switchState(bool? state) {
+    if (state == null) return;
 
-    if (name != null) {
-      widgets.add(SizedBox(height: 8));
-      widgets.add(Text(
-        name!,
-        style: TextStyle(fontSize: 20),
-      ));
-    }
-    if (room != null) {
-      widgets.add(SizedBox(height: 8));
-      widgets.add(Text(
-        room!,
-        style: TextStyle(fontSize: 20),
-      ));
-    }
+    setState(!state);
+  }
 
-    return Center(
-      child: Column(
-        children: widgets,
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-      ),
-    );
+  String stateToText(bool? state) {
+    if (state == null) return 'Unavailable';
+
+    return state ? 'On' : 'Off';
   }
 
   IconData icon(bool? state) {

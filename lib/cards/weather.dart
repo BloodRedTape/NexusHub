@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/details.dart';
-import 'package:nexus/widgets/token_input_widget.dart';
+import 'package:nexus/utils/token_input_widget.dart';
 import 'package:open_weather_client/open_weather.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';

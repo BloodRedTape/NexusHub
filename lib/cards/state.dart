@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/base.dart';
 import 'package:nexus/providers/state.dart';
 
-class ValueCard<T> extends StatefulWidget {
+abstract class StateCard<T> extends StatefulWidget {
   final StateProvider<T> stateProvider;
-  final Widget Function(T?) childFactory;
-  final Color? Function(T?)? colorFactory;
 
-  ValueCard({
-    required this.childFactory,
+  const StateCard({
     required this.stateProvider,
-    this.colorFactory,
   });
 
   @override
   State<StatefulWidget> createState() => _SwitchCardState<T>();
+
+  Widget build(BuildContext context, T? state);
+
+  void setState(T? state) {
+    stateProvider.setValue(state);
+  }
 }
 
-class _SwitchCardState<T> extends State<ValueCard<T>> {
+class _SwitchCardState<T> extends State<StateCard<T>> {
   T? _state;
 
   @override
@@ -35,9 +36,6 @@ class _SwitchCardState<T> extends State<ValueCard<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseCard(
-      color: widget.colorFactory?.call(_state),
-      child: widget.childFactory(_state),
-    );
+    return widget.build(context, _state);
   }
 }

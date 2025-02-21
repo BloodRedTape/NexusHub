@@ -4,13 +4,13 @@ import 'package:nexus/cards/alarm.dart';
 import 'package:nexus/cards/clock.dart';
 import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/cards/light_switch.dart';
+import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/temperature.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 
 import 'package:nexus/cards/curtain.dart';
-import 'package:nexus/cards/switch.dart';
-import 'package:nexus/providers/value.dart';
+import 'package:nexus/providers/state.dart';
 
 void MakeSnackBar(BuildContext context, String text) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -30,28 +30,28 @@ class HomeTab extends StatelessWidget {
         ExpandedColumn(children: [
           ExpandedRow(children: [
             TemperatureCard(
-                stateProvider: DummyStateProvider<double>(initialValue: 20.1)),
+                stateProvider: DummyStateProvider(initialValue: 21.3),
+                room: 'Master'),
             TemperatureCard(
-                stateProvider: DummyStateProvider<double>(initialValue: 24.8))
+                stateProvider: DummyStateProvider(initialValue: 20.1),
+                room: 'Bedroom'),
           ]),
           ExpandedRow(children: [
             CurtainCard(
                 name: 'Left Curtain',
                 stateProvider: DummyStateProvider(initialValue: 0.5)),
-            CurtainCard(
-                name: 'RightCurtain',
-                stateProvider: DummyStateProvider(initialValue: 0.5))
+            AlarmCard(),
           ])
         ]),
         ExpandedColumn(children: [
           ExpandedRow(children: [
             ActionCard(
-              name: 'Ping Anna',
+              name: 'Find My',
               icon: Icons.phone_iphone,
               action: () => MakeSnackBar(context, 'Pinged anna'),
             ),
             ActionCard(
-              name: 'Movie Scene',
+              name: 'Scene',
               icon: Icons.movie,
               action: () => MakeSnackBar(context, 'Set scenario to movie'),
             )

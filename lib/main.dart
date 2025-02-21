@@ -55,14 +55,14 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
         cardTheme: CardTheme(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30))),
+                borderRadius: BorderRadius.circular(16))),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
         cardTheme: CardTheme(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30))),
+                borderRadius: BorderRadius.circular(16))),
       ),
       themeMode: ThemeMode.dark,
     );
