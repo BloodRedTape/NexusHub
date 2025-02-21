@@ -4,6 +4,7 @@ import 'package:nexus/cards/alarm.dart';
 import 'package:nexus/cards/clock.dart';
 import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/cards/light_switch.dart';
+import 'package:nexus/cards/temperature.dart';
 import 'package:nexus/widgets/expanded_row.dart';
 import 'package:nexus/widgets/expanded_column.dart';
 
@@ -27,7 +28,14 @@ class HomeTab extends StatelessWidget {
     return ExpandedRow(
       children: [
         ExpandedColumn(children: [
-          ClockCard(),
+          ExpandedRow(children: [
+            TemperatureCard(
+                stateProvider:
+                    DummyValueStateProvider<double>(initialValue: 20.1)),
+            TemperatureCard(
+                stateProvider:
+                    DummyValueStateProvider<double>(initialValue: 24.8))
+          ]),
           ExpandedRow(children: [
             CurtainCard(
                 name: 'Left Curtain',

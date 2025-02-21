@@ -51,7 +51,7 @@ class LightSwitchCard extends StatelessWidget {
       return Icons.info;
     }
 
-    return Icons.lightbulb;
+    return state ? Icons.lightbulb : Icons.lightbulb_outline;
   }
 
   Color iconColor(bool? state) {
