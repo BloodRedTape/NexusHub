@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/details.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
+import 'package:nexus/consts.dart';
 import 'package:nexus/providers/weather.dart';
 import 'package:nexus/utils/token_input_widget.dart';
 import 'package:open_weather_client/open_weather.dart';
@@ -57,7 +58,7 @@ class WeatherCard extends StateCard<WeatherState> {
       children: [
         Align(
           alignment: Alignment.centerLeft,
-          child: Icon(state.icon, size: 48),
+          child: Icon(state.icon, size: iconSize),
         ),
         SizedBox(height: 10),
         Text(

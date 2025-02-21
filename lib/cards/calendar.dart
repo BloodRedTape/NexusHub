@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/plain.dart';
+import 'package:nexus/cards/state.dart';
 import 'package:nexus/providers/calendar.dart';
 
 class CalendarDayWidget extends StatelessWidget {
@@ -16,7 +17,7 @@ class CalendarDayWidget extends StatelessWidget {
     double fontSize = 24;
 
     return Padding(
-        padding: EdgeInsets.all(8.0),
+        padding: EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -81,43 +82,21 @@ class CalendarDayWidget extends StatelessWidget {
   }
 }
 
-class CalendarCard extends StatefulWidget {
-  final CalendarStateProvider stateProvider;
-
-  const CalendarCard({required this.stateProvider});
+class CalendarCard extends StateCard<CalendarState> {
+  const CalendarCard({required super.stateProvider});
 
   @override
-  State<StatefulWidget> createState() => _CalendarCardState();
-}
-
-class _CalendarCardState extends State<CalendarCard> {
-  CalendarState? _state;
-
-  @override
-  void initState() {
-    super.initState();
-
-    widget.stateProvider.bindSwitchChanged(onSwitchChanged);
-  }
-
-  void onSwitchChanged(CalendarState? value) {
-    setState(() {
-      _state = value;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_state == null)
-      return PlainCard(icon: Icons.error, text: 'Unavailable');
+  Widget build(BuildContext context, CalendarState? state) {
+    if (state == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
 
     return BaseCard(
-        child: Padding(
-            padding: EdgeInsets.all(8),
-            child: Column(
-                children: _state!.days
-                    .map((day) => CalendarDayWidget(day: day))
-                    .toList())),
-        color: Colors.grey[900]);
+      color: Colors.grey[900],
+      child: Padding(
+          padding: EdgeInsets.all(8),
+          child: Column(
+              children: state.days
+                  .map((day) => CalendarDayWidget(day: day))
+                  .toList())),
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/calendar.dart';
+import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/home.dart';
 import 'package:nexus/dashboard/morning.dart';
 import 'dashboard/dashboard.dart';
@@ -55,14 +56,14 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
         cardTheme: CardTheme(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16))),
+                borderRadius: BorderRadius.circular(cardBorderRadius))),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
         cardTheme: CardTheme(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16))),
+                borderRadius: BorderRadius.circular(cardBorderRadius))),
       ),
       themeMode: ThemeMode.dark,
     );

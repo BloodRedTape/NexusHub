@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/base.dart';
+import 'package:nexus/consts.dart';
 
 class PlainAction {
   final IconData icon;
@@ -48,10 +49,6 @@ class PlainLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double iconSize = 48;
-    final double primaryTextSize = 34;
-    final double secondaryTextSize = 28;
-
     final actionWidget = subAction != null
         ? PlainActionWidget(action: subAction!, iconSize: iconSize)
         : SizedBox();
@@ -128,7 +125,7 @@ class PlainCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Padding(
-        padding: EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(cardPadding),
         child: PlainLayout(
           icon: icon,
           iconColor: iconColor,
@@ -149,8 +146,7 @@ class PlainCard extends StatelessWidget {
         iconColor: Colors.white,
         backgroundColor: color,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-              16), // Optional: Match the card's border radius
+          borderRadius: BorderRadius.circular(cardBorderRadius),
         ),
       ),
     );
