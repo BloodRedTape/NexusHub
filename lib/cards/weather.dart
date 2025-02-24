@@ -11,20 +11,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_icons/weather_icons.dart';
 
 class WeatherCard extends StateCard<WeatherState> {
-  WeatherCard() : super(stateProvider: OpenWeatherMap(city: 'kyiv'));
+  final DetailsPage? details;
+  WeatherCard({required super.stateProvider, this.details});
 
   @override
   Widget build(BuildContext context, WeatherState? state) {
-    final details = DetailsPage(
-        body:
-            const TokenInputWidget(preferencesKey: OpenWeatherMap.apiTokenKey),
-        title: Text('Weather Settings'));
-
     if (state == null)
       return PlainCard(
         icon: Icons.error,
         text: 'Unavailable',
-        action: () => details.navigateTo(context),
+        action: () => details?.navigateTo(context),
       );
 
     return DetailsCard(
@@ -78,86 +74,5 @@ class WeatherCard extends StateCard<WeatherState> {
         ),
       ],
     );
-  }
-}
-
-class OpenWeatherMap extends WeatherStateProvider {
-  static const String apiTokenKey = 'OPEN_WEATHER_MAP_TOKEN';
-  final String city;
-  Timer? _timer;
-
-  OpenWeatherMap({required this.city});
-
-  @override
-  void onBound() {
-    super.onBound();
-
-    fetchWeatherData();
-
-    _timer = Timer.periodic(
-        Duration(seconds: 30), (Timer t) async => await fetchWeatherData());
-  }
-
-  @override
-  void onUnbound() {
-    _timer?.cancel();
-  }
-
-  Future<void> fetchWeatherData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      final token = prefs.getString(apiTokenKey);
-
-      OpenWeather openWeather = OpenWeather(apiKey: token!);
-
-      WeatherData weatherData = await openWeather.currentWeatherByCityName(
-          cityName: city, weatherUnits: WeatherUnits.METRIC);
-
-      setValue(WeatherState(
-          icon: getWeatherIcon(weatherData.details.first.icon),
-          temperature: weatherData.temperature.currentTemperature,
-          maximumTemperature: weatherData.temperature.tempMax,
-          minimalTemperature: weatherData.temperature.tempMin));
-    } catch (e) {
-      setValue(null);
-    }
-  }
-
-  IconData getWeatherIcon(String iconCode) {
-    switch (iconCode) {
-      case '01d':
-        return WeatherIcons.day_sunny;
-      case '01n':
-        return WeatherIcons.night_clear;
-      case '02d':
-        return WeatherIcons.day_cloudy;
-      case '02n':
-        return WeatherIcons.night_alt_cloudy;
-      case '03d':
-      case '03n':
-        return WeatherIcons.cloud;
-      case '04d':
-      case '04n':
-        return WeatherIcons.cloudy;
-      case '09d':
-      case '09n':
-        return WeatherIcons.showers;
-      case '10d':
-        return WeatherIcons.day_rain;
-      case '10n':
-        return WeatherIcons.night_alt_rain;
-      case '11d':
-      case '11n':
-        return WeatherIcons.thunderstorm;
-      case '13d':
-      case '13n':
-        return WeatherIcons.snow;
-      case '50d':
-      case '50n':
-        return WeatherIcons.fog;
-      default:
-        return Icons.error;
-    }
   }
 }
