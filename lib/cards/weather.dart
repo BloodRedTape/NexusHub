@@ -37,7 +37,7 @@ class WeatherCard extends StateCard<WeatherState> {
           gradient: LinearGradient(
             colors: [
               Colors.blue.withOpacity(0.7),
-              const Color.fromARGB(255, 122, 213, 255).withOpacity(0.5),
+              const Color.fromARGB(255, 90, 203, 255).withOpacity(0.5),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -47,6 +47,7 @@ class WeatherCard extends StateCard<WeatherState> {
   }
 
   Widget buildCardContent(BuildContext context, WeatherState state) {
+    final fixed = 0;
     return Column(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -54,24 +55,36 @@ class WeatherCard extends StateCard<WeatherState> {
       children: [
         Align(
           alignment: Alignment.centerLeft,
-          child: Icon(state.icon, size: iconSize),
+          child: Icon(state.icon, size: iconSize * 0.9),
         ),
-        SizedBox(height: 10),
         Text(
-          '${state.temperature.toStringAsFixed(1)}°',
+          '${state.temperature.toStringAsFixed(fixed)}°',
           style: TextStyle(
-            fontSize: 48,
+            fontSize: 60,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 10),
-        Text(
-          '${state.minimalTemperature.toStringAsFixed(1)}° ${state.maximumTemperature.toStringAsFixed(1)}°',
-          style: TextStyle(
-            fontSize: 28,
-            color: Colors.grey[400],
-          ),
-        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${state.maximumTemperature.toStringAsFixed(fixed)}°',
+              style: TextStyle(
+                fontSize: 28,
+              ),
+            ),
+            const SizedBox(
+              width: 8,
+            ),
+            Text(
+              '${state.minimalTemperature.toStringAsFixed(fixed)}°',
+              style: TextStyle(
+                fontSize: 28,
+                color: Colors.grey[400],
+              ),
+            )
+          ],
+        )
       ],
     );
   }

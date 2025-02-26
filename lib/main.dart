@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/home.dart';
 import 'package:nexus/dashboard/morning.dart';
 import 'dashboard/dashboard.dart';
 import 'package:flutter/services.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(MyApp());
 }
 

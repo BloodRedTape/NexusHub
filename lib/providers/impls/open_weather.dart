@@ -19,10 +19,10 @@ class OpenWeatherMap extends WeatherStateProvider {
   void onBound() {
     super.onBound();
 
-    fetchWeatherData();
-
-    _timer = Timer.periodic(
-        Duration(seconds: 30), (Timer t) async => await fetchWeatherData());
+    fetchWeatherData().then((_) => {
+          _timer = Timer.periodic(Duration(seconds: 30),
+              (Timer t) async => await fetchWeatherData())
+        });
   }
 
   @override

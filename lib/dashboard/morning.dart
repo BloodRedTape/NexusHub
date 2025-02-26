@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/alarm.dart';
 import 'package:nexus/cards/clock.dart';
 import 'package:nexus/cards/calendar.dart';
+import 'package:nexus/providers/alarm.dart';
 import 'package:nexus/providers/calendar.dart';
 import 'package:nexus/providers/impls/open_meteo.dart';
-import 'package:nexus/providers/impls/open_weather.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
@@ -22,7 +22,11 @@ class MorningTab extends StatelessWidget {
           ClockCard(),
           ExpandedRow(children: [
             WeatherCard(stateProvider: OpenMeteo(lat: 50.4375, long: 30.5)),
-            AlarmCard()
+            AlarmCard(
+              stateProvider: DummyStateProvider(
+                  initialValue:
+                      AlarmState(alarms: [AlarmInfo(fire: DateTime.now())])),
+            )
           ])
         ]),
         ExpandedColumn(children: [

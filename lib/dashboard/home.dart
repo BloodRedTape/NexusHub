@@ -40,7 +40,9 @@ class HomeTab extends StatelessWidget {
             CurtainCard(
                 name: 'Left Curtain',
                 stateProvider: DummyStateProvider(initialValue: 0.5)),
-            AlarmCard(),
+            CurtainCard(
+                name: 'RightCurtain',
+                stateProvider: DummyStateProvider(initialValue: 0.5)),
           ])
         ]),
         ExpandedColumn(children: [

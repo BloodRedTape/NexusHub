@@ -28,7 +28,10 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
+        compileSdkVersion = "android-34"
     }
+
 
     buildTypes {
         release {
