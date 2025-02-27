@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/states/alarm.dart';
@@ -24,6 +25,7 @@ class AlarmCard extends StateCard<AlarmState> {
       icon: icon,
       text: _formatDateTime(nearest.fire),
       subText: next != null ? _formatDateTime(next.fire) : null,
+      action: () => InstalledApps.startApp('com.google.android.deskclock'),
     );
   }
 
