@@ -27,8 +27,7 @@ class PlainActionWidget extends StatelessWidget {
 }
 
 class PlainLayout extends StatelessWidget {
-  final IconData icon;
-  final Color? iconColor;
+  final Widget icon;
 
   final PlainAction? subAction;
 
@@ -40,7 +39,6 @@ class PlainLayout extends StatelessWidget {
 
   const PlainLayout(
       {required this.icon,
-      this.iconColor,
       this.subAction,
       required this.text,
       this.textColor,
@@ -74,10 +72,7 @@ class PlainLayout extends StatelessWidget {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Icon(icon, size: iconSize, color: iconColor),
-            actionWidget
-          ],
+          children: [icon, actionWidget],
         ),
         const SizedBox(
           height: 8,
@@ -97,8 +92,7 @@ class PlainLayout extends StatelessWidget {
 }
 
 class PlainCard extends StatelessWidget {
-  final IconData icon;
-  final Color? iconColor;
+  final Widget iconWidget;
 
   final Function()? action;
   final PlainAction? subAction;
@@ -111,24 +105,35 @@ class PlainCard extends StatelessWidget {
 
   final Color? color;
 
-  const PlainCard(
-      {required this.icon,
-      this.iconColor,
-      this.action,
-      this.subAction,
-      required this.text,
-      this.textColor,
-      this.subText,
-      this.subTextColor,
-      this.color});
+  PlainCard({
+    required IconData icon,
+    Color? iconColor,
+    this.action,
+    this.subAction,
+    required this.text,
+    this.textColor,
+    this.subText,
+    this.subTextColor,
+    this.color,
+  }) : iconWidget = Icon(icon, color: iconColor, size: iconSize);
+
+  PlainCard.fromIconWidget({
+    required this.iconWidget,
+    this.action,
+    this.subAction,
+    required this.text,
+    this.textColor,
+    this.subText,
+    this.subTextColor,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     final content = Padding(
         padding: EdgeInsets.all(cardPadding),
         child: PlainLayout(
-          icon: icon,
-          iconColor: iconColor,
+          icon: iconWidget,
           subAction: subAction,
           text: text,
           textColor: textColor,

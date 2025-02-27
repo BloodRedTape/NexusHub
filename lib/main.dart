@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/consts.dart';
+import 'package:nexus/dashboard/apps.dart';
 import 'package:nexus/dashboard/home.dart';
 import 'package:nexus/dashboard/morning.dart';
 import 'dashboard/dashboard.dart';
@@ -39,8 +40,8 @@ class _MyAppState extends State<MyApp> {
             child: HomeTab(),
           ),
           TabItem(
-            tab: Tab(text: 'Media'),
-            child: Center(child: Text('Media content')),
+            tab: Tab(text: 'Apps'),
+            child: AppsTab(),
           ),
           TabItem(
             tab: Tab(text: 'Communicate'),

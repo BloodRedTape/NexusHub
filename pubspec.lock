@@ -120,6 +120,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+  installed_apps:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: "2deae2b7f5f65cdef0c2a3357f0edee2e56b998b"
+      url: "https://github.com/BloodRedTape/installed_apps"
+    source: git
+    version: "1.5.2"
   intl:
     dependency: "direct main"
     description:
