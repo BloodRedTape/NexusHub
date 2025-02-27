@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
-import 'package:nexus/providers/calendar.dart';
+import 'package:nexus/states/calendar.dart';
 
 class CalendarDayWidget extends StatelessWidget {
   final CalendarDayState day;

@@ -3,7 +3,7 @@ import 'package:nexus/cards/details.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
-import 'package:nexus/providers/weather.dart';
+import 'package:nexus/states/weather.dart';
 import 'package:nexus/utils/token_input_widget.dart';
 import 'package:open_weather_client/open_weather.dart';
 import 'dart:async';

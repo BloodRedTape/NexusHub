@@ -1,32 +1,29 @@
+import 'dart:async';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 class StateProvider<T> {
-  Function(T?)? _onValueChanged;
+  final List<void Function(T?)> _onValueChanged = [];
+  T? _state;
 
-  void bindSwitchChanged(Function(T?) callback) {
-    _onValueChanged = callback;
-    onBound();
+  void bindValueChanged(Function(T?) callback) {
+    _onValueChanged.add(callback);
+    callback(_state);
   }
 
-  void unbind() {
-    _onValueChanged = null;
-    onUnbound();
+  void unbind(Function(T?) callback) {
+    _onValueChanged.remove(callback);
   }
 
-  void onBound() {}
+  void init() {}
 
-  void onUnbound() {}
+  void dispose() {}
 
   void setValue(T? value) {
-    _onValueChanged?.call(value);
-  }
-}
+    _state = value;
 
-class DummyStateProvider<T> extends StateProvider<T> {
-  final T initialValue;
-
-  DummyStateProvider({required this.initialValue});
-
-  @override
-  void onBound() {
-    setValue(initialValue);
+    for (final callback in _onValueChanged) {
+      callback.call(value);
+    }
   }
 }

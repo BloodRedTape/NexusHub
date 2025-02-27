@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
-import 'package:nexus/providers/alarm.dart';
+import 'package:nexus/states/alarm.dart';
 
 class AlarmCard extends StateCard<AlarmState> {
   const AlarmCard({required super.stateProvider});

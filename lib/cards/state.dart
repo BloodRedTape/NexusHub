@@ -24,13 +24,12 @@ class _SwitchCardState<T> extends State<StateCard<T>> {
   @override
   void initState() {
     super.initState();
-
-    widget.stateProvider.bindSwitchChanged(onValueChanged);
+    widget.stateProvider.bindValueChanged(onValueChanged);
   }
 
   @override
   void dispose() {
-    widget.stateProvider.unbind();
+    widget.stateProvider.unbind(onValueChanged);
     super.dispose();
   }
 

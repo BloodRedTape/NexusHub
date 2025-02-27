@@ -10,7 +10,7 @@ import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 
 import 'package:nexus/cards/curtain.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/providers/dummy_state.dart';
 
 void MakeSnackBar(BuildContext context, String text) {
   ScaffoldMessenger.of(context).showSnackBar(

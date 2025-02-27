@@ -1,38 +1,57 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:nexus/clients/open_meteo/client.dart';
+import 'package:nexus/providers/state.dart';
 import 'package:weather_icons/weather_icons.dart';
-import 'package:nexus/providers/weather.dart';
+import 'package:nexus/states/weather.dart';
 import 'package:open_meteo/open_meteo.dart';
 
-class OpenMeteo extends WeatherStateProvider {
-  final double lat;
-  final double long;
+class OpenMeteoWeatherStateProvider extends WeatherStateProvider {
+  final StateProvider<OpenMeteoConfig> configStateProvider;
+  OpenMeteoConfig? _config;
   Timer? _timer;
 
-  OpenMeteo({required this.lat, required this.long});
+  OpenMeteoWeatherStateProvider({required this.configStateProvider});
 
-  @override
-  void onBound() {
-    super.onBound();
+  void _onConfigChanged(OpenMeteoConfig? config) {
+    _config = config;
 
-    fetchWeatherData();
-
-    _timer = Timer.periodic(
-        Duration(seconds: 30), (Timer t) async => await fetchWeatherData());
+    _timer?.cancel();
+    fetchWeatherData().then((_) {
+      _timer = Timer.periodic(
+          Duration(seconds: 30), (Timer t) async => await fetchWeatherData());
+    });
   }
 
   @override
-  void onUnbound() {
+  void init() {
+    super.init();
+
+    configStateProvider.bindValueChanged(_onConfigChanged);
+  }
+
+  @override
+  void dispose() {
     _timer?.cancel();
+
+    configStateProvider.unbind(_onConfigChanged);
+    super.dispose();
   }
 
   Future<void> fetchWeatherData() async {
+    final config = _config;
+
+    if (config == null) {
+      setValue(null);
+      return;
+    }
+
     try {
       final weather = WeatherApi();
       final response = await weather.request(
-          latitude: lat,
-          longitude: long,
+          latitude: config.lat,
+          longitude: config.long,
           current: {
             WeatherCurrent.weather_code,
             WeatherCurrent.temperature_2m

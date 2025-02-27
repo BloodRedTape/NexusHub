@@ -30,7 +30,8 @@ class _SwitchCardState extends State<SwitchCard> {
   void initState() {
     super.initState();
 
-    widget.stateProvider.bindSwitchChanged(onSwitchChanged);
+    widget.stateProvider.init();
+    widget.stateProvider.bindValueChanged(onSwitchChanged);
   }
 
   void onSwitchChanged(bool? value) {

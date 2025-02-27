@@ -24,7 +24,7 @@ class _SwitchCardState<T> extends State<ValueCard<T>> {
   void initState() {
     super.initState();
 
-    widget.stateProvider.bindSwitchChanged(onValueChanged);
+    widget.stateProvider.bindValueChanged(onValueChanged);
   }
 
   void onValueChanged(T? value) {

@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/alarm.dart';
 import 'package:nexus/cards/clock.dart';
 import 'package:nexus/cards/calendar.dart';
-import 'package:nexus/providers/alarm.dart';
-import 'package:nexus/providers/calendar.dart';
-import 'package:nexus/providers/impls/open_meteo.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/open_meteo/client.dart';
+import 'package:nexus/states/alarm.dart';
+import 'package:nexus/states/calendar.dart';
+import 'package:nexus/clients/open_meteo/provider.dart';
+import 'package:nexus/providers/dummy_state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 
 import 'package:nexus/cards/weather.dart';
 
 class MorningTab extends StatelessWidget {
-  const MorningTab({super.key});
+  final OpenMeteoWeatherClient weatherClient;
+
+  const MorningTab({super.key, required this.weatherClient});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +24,7 @@ class MorningTab extends StatelessWidget {
         ExpandedColumn(children: [
           ClockCard(),
           ExpandedRow(children: [
-            WeatherCard(stateProvider: OpenMeteo(lat: 50.4375, long: 30.5)),
+            WeatherCard(stateProvider: weatherClient.getStateProvider()),
             AlarmCard(
               stateProvider: DummyStateProvider(
                   initialValue:
