@@ -2,26 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/cards/base.dart';
+import 'package:nexus/cards/state.dart';
+import 'package:nexus/clients/apps/client.dart';
 import 'package:nexus/consts.dart';
 
-class AppsTab extends StatelessWidget {
-  const AppsTab({super.key});
+class AppsTab extends StateCard<List<AppInfo>> {
+  AppsTab({required super.stateProvider});
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<AppInfo>>(
-      future: InstalledApps.getInstalledApps(false, true, true),
-      builder: (
-        BuildContext buildContext,
-        AsyncSnapshot<List<AppInfo>> snapshot,
-      ) {
-        return snapshot.connectionState == ConnectionState.done
-            ? snapshot.hasData
-                ? _buildGridView(snapshot.data ?? [])
-                : _buildError()
-            : _buildProgressIndicator();
-      },
-    );
+  Widget build(BuildContext context, List<AppInfo>? state) {
+    if (state == null) return _buildProgressIndicator();
+
+    return _buildGridView(state);
   }
 
   Widget _buildGridView(List<AppInfo> apps) {
@@ -62,11 +54,5 @@ class AppsTab extends StatelessWidget {
 
   Widget _buildProgressIndicator() {
     return Center(child: Text("Loading apps ...."));
-  }
-
-  Widget _buildError() {
-    return Center(
-      child: Text("Error occurred while loading apps ...."),
-    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/cards/details.dart';
+import 'package:nexus/clients/apps/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/apps.dart';
@@ -25,6 +26,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final OpenMeteoWeatherClient _weatherClient = OpenMeteoWeatherClient();
+  final AppsClient _appsClient = AppsClient();
 
   @override
   void initState() {
@@ -50,9 +52,9 @@ class _MyAppState extends State<MyApp> {
             tab: Tab(text: 'Home control'),
             child: HomeTab(),
           ),
-          const TabItem(
+          TabItem(
             tab: Tab(text: 'Apps'),
-            child: AppsTab(),
+            child: AppsTab(stateProvider: _appsClient.getStateProvider()),
           ),
           TabItem(
             tab: const Tab(text: 'Settings'),
