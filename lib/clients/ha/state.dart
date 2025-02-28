@@ -1,11 +1,11 @@
 import 'package:home_assistant/home_assistant.dart';
 import 'package:nexus/providers/state.dart';
 
-class TemperatureStateProvider extends StateProvider<double> {
+class SensorStateProvider extends StateProvider<double> {
   final String entityId;
   final StateProvider<List<Entity>> entitiesStateProvider;
 
-  TemperatureStateProvider(
+  SensorStateProvider(
       {required this.entityId, required this.entitiesStateProvider});
 
   @override
