@@ -6,6 +6,7 @@ import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/cards/light_switch.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/sensor.dart';
+import 'package:nexus/cards/switch.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/ha/state.dart';
 import 'package:nexus/utils/expanded_row.dart';
@@ -63,27 +64,28 @@ class HomeTab extends StatelessWidget {
         ]),
         ExpandedColumn(children: [
           ExpandedRow(children: [
-            ActionCard(
-              name: 'Find My',
-              icon: Icons.phone_iphone,
-              action: () => MakeSnackBar(context, 'Pinged anna'),
-            ),
-            ActionCard(
-              name: 'Scene',
-              icon: Icons.movie,
-              action: () => MakeSnackBar(context, 'Set scenario to movie'),
-            )
+            LightSwitchCard(
+                stateProvider: homeAssistantClient
+                    .switchStateProvider('light.light_bulb0_master'),
+                room: 'Master'),
+            LightSwitchCard(
+                stateProvider: homeAssistantClient
+                    .switchStateProvider('light.light_bulb1_master'),
+                room: 'Master'),
           ]),
           ExpandedRow(
             children: [
               LightSwitchCard(
-                  stateProvider: DummyStateProvider<bool>(initialValue: true),
-                  name: 'Bulbs',
+                  stateProvider: homeAssistantClient
+                      .switchStateProvider('light.light_bulb2_master'),
                   room: 'Master'),
-              LightSwitchCard(
-                  stateProvider: DummyStateProvider<bool>(initialValue: true),
-                  name: 'Bulb',
-                  room: 'Toilet'),
+              SwitchCard(
+                  onIcon: Icons.power,
+                  offIcon: Icons.power_off,
+                  onColor: Colors.amber,
+                  stateProvider: homeAssistantClient
+                      .switchStateProvider('switch.power_print3d_master'),
+                  room: '3d Printer'),
             ],
           )
         ])

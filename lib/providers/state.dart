@@ -26,4 +26,6 @@ class StateProvider<T> {
       callback.call(value);
     }
   }
+
+  void requestValue(T newValue) {}
 }

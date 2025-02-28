@@ -13,9 +13,10 @@ import 'package:nexus/utils/generic_icon.dart';
 
 class HomeAssistantClient {
   late StateProvider<HomeAssistantConfig> _configStateProvider;
-  late StateProvider<List<Entity>> _entitiesStateProvider;
+  late HomeAssistantStateProvider _entitiesStateProvider;
 
   Map<String, SensorStateProvider> _sensorStateProviders = {};
+  Map<String, SwitchStateProvider> _switchStateProviders = {};
 
   HomeAssistantClient() {
     _configStateProvider = SharedPreferencesStateProvider(
@@ -51,6 +52,27 @@ class HomeAssistantClient {
     provider.init();
 
     return provider;
+  }
+
+  StateProvider<bool> switchStateProvider(String entityId) {
+    return _switchStateProviders.putIfAbsent(
+        entityId, () => _buildSwitchStateProvider(entityId));
+  }
+
+  SwitchStateProvider _buildSwitchStateProvider(String entityId) {
+    final provider = SwitchStateProvider(
+        entityId: entityId,
+        entitiesStateProvider: entitiesStateProvider(),
+        requestState: (state) => _requestSwitchState(entityId, state));
+
+    provider.init();
+
+    return provider;
+  }
+
+  void _requestSwitchState(String entityId, bool state) {
+    _entitiesStateProvider.executeService(
+        entityId, state ? 'turn_on' : 'turn_off');
   }
 
   SettingsItem makeSettings() {

@@ -11,4 +11,8 @@ class DummyStateProvider<T> extends StateProvider<T> {
   void init() {
     setValue(initialValue);
   }
+
+  void requestValue(T newValue) {
+    setValue(newValue);
+  }
 }

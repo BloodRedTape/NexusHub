@@ -1,59 +1,68 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/base.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/cards/plain.dart';
+import 'package:nexus/cards/state.dart';
 
-class SwitchCard extends StatefulWidget {
-  final StateProvider<bool> stateProvider;
-  final Widget Function(bool?) childFactory;
-  final Color? Function(bool?)? colorFactory;
+class SwitchCard extends StateCard<bool> {
+  final IconData onIcon;
+  final IconData offIcon;
+  final Color? onIconColor;
+  final Color? offIconColor;
+  final Color? onColor;
+  final Color? offColor;
+  final String? room;
 
-  SwitchCard({
-    required this.childFactory,
-    required this.stateProvider,
-    this.colorFactory,
-  });
-
-  @override
-  State<StatefulWidget> createState() => _SwitchCardState();
-}
-
-class _SwitchCardState extends State<SwitchCard> {
-  bool? _state;
-
-  void switchState() {
-    if (_state == null) return;
-
-    widget.stateProvider.setValue(!_state!);
-  }
+  SwitchCard(
+      {required super.stateProvider,
+      required this.onIcon,
+      required this.offIcon,
+      this.onIconColor,
+      this.offIconColor,
+      this.onColor,
+      this.offColor,
+      this.room});
 
   @override
-  void initState() {
-    super.initState();
-
-    widget.stateProvider.init();
-    widget.stateProvider.bindValueChanged(onSwitchChanged);
+  Widget build(BuildContext context, bool? state) {
+    return PlainCard(
+        color: _color(state),
+        icon: _icon(state),
+        iconColor: _iconColor(state),
+        text: _stateToText(state),
+        subText: room,
+        action: () => switchState(state));
   }
 
-  void onSwitchChanged(bool? value) {
-    setState(() {
-      _state = value;
-    });
+  void switchState(bool? state) {
+    if (state == null) return;
+
+    setState(!state);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return BaseCard(
-        child: ElevatedButton(
-          onPressed: switchState,
-          child: widget.childFactory(_state),
-          style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.zero, // Ensure zero padding
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(
-                  30), // Optional: Match the card's border radius
-            ),
-          ),
-        ),
-        color: widget.colorFactory?.call(_state));
+  String _stateToText(bool? state) {
+    if (state == null) return 'Unavailable';
+
+    return state ? 'On' : 'Off';
+  }
+
+  IconData _icon(bool? state) {
+    if (state == null) {
+      return Icons.error;
+    }
+
+    return state ? onIcon : offIcon;
+  }
+
+  Color? _color(bool? state) {
+    if (state == null) return null;
+
+    return state ? onColor : offColor;
+  }
+
+  Color? _iconColor(bool? state) {
+    if (state == null) {
+      return Colors.white;
+    }
+
+    return state ? onIconColor : offColor;
   }
 }

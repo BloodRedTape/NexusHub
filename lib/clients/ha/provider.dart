@@ -57,4 +57,25 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
       setValue(null);
     }
   }
+
+  Future<bool> executeService(String entityId, String action) async {
+    final config = _config;
+
+    if (config == null) {
+      return false;
+    }
+
+    try {
+      final homeAssistant = HomeAssistant(
+        baseUrl: config.url,
+        bearerToken: config.token,
+      );
+
+      await homeAssistant.executeService(entityId, action);
+      await fetchData();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

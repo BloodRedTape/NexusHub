@@ -13,8 +13,8 @@ abstract class StateCard<T> extends StatefulWidget {
 
   Widget build(BuildContext context, T? state);
 
-  void setState(T? state) {
-    stateProvider.setValue(state);
+  void setState(T state) {
+    stateProvider.requestValue(state);
   }
 }
 
