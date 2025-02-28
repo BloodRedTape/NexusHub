@@ -6,6 +6,8 @@ import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/cards/light_switch.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/temperature.dart';
+import 'package:nexus/clients/ha/client.dart';
+import 'package:nexus/clients/ha/state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 
@@ -21,7 +23,24 @@ void MakeSnackBar(BuildContext context, String text) {
 }
 
 class HomeTab extends StatelessWidget {
-  const HomeTab({super.key});
+  final HomeAssistantClient homeAssistantClient;
+
+  late TemperatureStateProvider bedroomTemp;
+  late TemperatureStateProvider masterTemp;
+
+  HomeTab({required this.homeAssistantClient}) {
+    bedroomTemp = TemperatureStateProvider(
+        entitiesStateProvider: homeAssistantClient.entitiesStateProvider(),
+        entityId: 'sensor.temp_ht_bedroom');
+
+    bedroomTemp.init();
+
+    masterTemp = TemperatureStateProvider(
+        entitiesStateProvider: homeAssistantClient.entitiesStateProvider(),
+        entityId: 'sensor.temp_ht_master');
+
+    masterTemp.init();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,12 +48,8 @@ class HomeTab extends StatelessWidget {
       children: [
         ExpandedColumn(children: [
           ExpandedRow(children: [
-            TemperatureCard(
-                stateProvider: DummyStateProvider(initialValue: 21.3),
-                room: 'Master'),
-            TemperatureCard(
-                stateProvider: DummyStateProvider(initialValue: 20.1),
-                room: 'Bedroom'),
+            TemperatureCard(stateProvider: masterTemp, room: 'Master'),
+            TemperatureCard(stateProvider: bedroomTemp, room: 'Bedroom'),
           ]),
           ExpandedRow(children: [
             CurtainCard(

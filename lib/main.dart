@@ -3,6 +3,7 @@ import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/apps/client.dart';
+import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/apps.dart';
@@ -27,6 +28,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final OpenMeteoWeatherClient _weatherClient = OpenMeteoWeatherClient();
   final AppsClient _appsClient = AppsClient();
+  final HomeAssistantClient _homeAssistantClient = HomeAssistantClient();
 
   @override
   void initState() {
@@ -48,9 +50,11 @@ class _MyAppState extends State<MyApp> {
             tab: Tab(text: 'Your morning'),
             child: MorningTab(weatherClient: _weatherClient),
           ),
-          const TabItem(
+          TabItem(
             tab: Tab(text: 'Home control'),
-            child: HomeTab(),
+            child: HomeTab(
+              homeAssistantClient: _homeAssistantClient,
+            ),
           ),
           TabItem(
             tab: Tab(text: 'Apps'),
@@ -61,7 +65,8 @@ class _MyAppState extends State<MyApp> {
             child: SettingsTab(items: [
               SettingsItem.fromPackage(
                   name: 'Settings', package: 'com.android.settings'),
-              _weatherClient.makeSettings()
+              _weatherClient.makeSettings(),
+              _homeAssistantClient.makeSettings()
             ]),
           ),
         ],

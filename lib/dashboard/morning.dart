@@ -26,10 +26,9 @@ class MorningTab extends StatelessWidget {
           ExpandedRow(children: [
             WeatherCard(stateProvider: weatherClient.getStateProvider()),
             AlarmCard(
-              stateProvider: DummyStateProvider(
-                  initialValue:
-                      AlarmState(alarms: [AlarmInfo(fire: DateTime.now())])),
-            )
+                stateProvider: DummyStateProvider(
+                    initialValue:
+                        AlarmState(alarms: [AlarmInfo(fire: DateTime.now())])))
           ])
         ]),
         ExpandedColumn(children: [
