@@ -18,6 +18,10 @@ class Formatter {
   static String aqi(double state) {
     return '${state.toInt()} AQI';
   }
+
+  static String time(double state) {
+    return '${state.toInt()} h';
+  }
 }
 
 class SensorCard extends StateCard<double> {

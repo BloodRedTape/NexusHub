@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:installed_apps/app_info.dart';
-import 'package:installed_apps/installed_apps.dart';
-import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/apps/client.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/apps.dart';
-import 'package:nexus/dashboard/home.dart';
+import 'package:nexus/dashboard/bedroom.dart';
+import 'package:nexus/dashboard/master.dart';
 import 'package:nexus/dashboard/morning.dart';
 import 'package:nexus/dashboard/settings.dart';
-import 'package:nexus/utils/generic_icon.dart';
 import 'dashboard/dashboard.dart';
 import 'package:flutter/services.dart';
 
@@ -51,8 +48,14 @@ class _MyAppState extends State<MyApp> {
             child: MorningTab(weatherClient: _weatherClient),
           ),
           TabItem(
-            tab: Tab(text: 'Home control'),
-            child: HomeTab(
+            tab: Tab(text: 'Master Room'),
+            child: MasterTab(
+              homeAssistantClient: _homeAssistantClient,
+            ),
+          ),
+          TabItem(
+            tab: Tab(text: 'Bedroom'),
+            child: BedroomTab(
               homeAssistantClient: _homeAssistantClient,
             ),
           ),

@@ -1,0 +1,78 @@
+import 'package:flutter/material.dart';
+import 'package:nexus/cards/light_switch.dart';
+import 'package:nexus/cards/sensor.dart';
+import 'package:nexus/cards/switch.dart';
+import 'package:nexus/clients/ha/client.dart';
+import 'package:nexus/utils/expanded_row.dart';
+import 'package:nexus/utils/expanded_column.dart';
+
+class MasterTab extends StatelessWidget {
+  final HomeAssistantClient homeAssistantClient;
+
+  MasterTab({required this.homeAssistantClient});
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpandedRow(
+      children: [
+        ExpandedColumn(children: [
+          ExpandedRow(children: [
+            SensorCard(
+              stateProvider: homeAssistantClient
+                  .sensorStateProvider('sensor.temp_ht_master'),
+              icon: Icons.thermostat,
+              formatter: Formatter.tempearture,
+            ),
+            SensorCard(
+              stateProvider: homeAssistantClient
+                  .sensorStateProvider('sensor.humidity_ht_master'),
+              icon: Icons.water_drop_outlined,
+              formatter: Formatter.humidity,
+            ),
+          ]),
+          ExpandedRow(children: [
+            SensorCard(
+              stateProvider: homeAssistantClient
+                  .sensorStateProvider('sensor.illuminance_motion_nowhere'),
+              icon: Icons.sunny,
+              formatter: Formatter.illuminance,
+            ),
+            SensorCard(
+              stateProvider: homeAssistantClient
+                  .sensorStateProvider('sensor.u_s_air_quality_index'),
+              icon: Icons.air_sharp,
+              formatter: Formatter.aqi,
+            ),
+          ])
+        ]),
+        ExpandedColumn(children: [
+          ExpandedRow(children: [
+            LightSwitchCard(
+                stateProvider: homeAssistantClient
+                    .switchStateProvider('light.light_bulb0_master'),
+                room: 'Master'),
+            LightSwitchCard(
+                stateProvider: homeAssistantClient
+                    .switchStateProvider('light.light_bulb1_master'),
+                room: 'Master'),
+          ]),
+          ExpandedRow(
+            children: [
+              LightSwitchCard(
+                  stateProvider: homeAssistantClient
+                      .switchStateProvider('light.light_bulb2_master'),
+                  room: 'Master'),
+              SwitchCard(
+                  onIcon: Icons.power,
+                  offIcon: Icons.power_off,
+                  onColor: Colors.amber,
+                  stateProvider: homeAssistantClient
+                      .switchStateProvider('switch.power_print3d_master'),
+                  room: '3d Printer'),
+            ],
+          )
+        ])
+      ],
+    );
+  }
+}

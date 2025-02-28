@@ -1,32 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/action.dart';
-import 'package:nexus/cards/alarm.dart';
-import 'package:nexus/cards/clock.dart';
-import 'package:nexus/cards/calendar.dart';
+import 'package:nexus/cards/curtain.dart';
 import 'package:nexus/cards/light_switch.dart';
-import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/sensor.dart';
 import 'package:nexus/cards/switch.dart';
 import 'package:nexus/clients/ha/client.dart';
-import 'package:nexus/clients/ha/state.dart';
+import 'package:nexus/providers/dummy_state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 
-import 'package:nexus/cards/curtain.dart';
-import 'package:nexus/providers/dummy_state.dart';
-
-void MakeSnackBar(BuildContext context, String text) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(text),
-    ),
-  );
-}
-
-class HomeTab extends StatelessWidget {
+class BedroomTab extends StatelessWidget {
   final HomeAssistantClient homeAssistantClient;
 
-  HomeTab({required this.homeAssistantClient});
+  BedroomTab({required this.homeAssistantClient});
 
   @override
   Widget build(BuildContext context) {
@@ -63,31 +48,31 @@ class HomeTab extends StatelessWidget {
           ])
         ]),
         ExpandedColumn(children: [
-          ExpandedRow(children: [
-            LightSwitchCard(
-                stateProvider: homeAssistantClient
-                    .switchStateProvider('light.light_bulb0_master'),
-                room: 'Master'),
-            LightSwitchCard(
-                stateProvider: homeAssistantClient
-                    .switchStateProvider('light.light_bulb1_master'),
-                room: 'Master'),
-          ]),
           ExpandedRow(
             children: [
-              LightSwitchCard(
-                  stateProvider: homeAssistantClient
-                      .switchStateProvider('light.light_bulb2_master'),
-                  room: 'Master'),
+              SensorCard(
+                stateProvider: homeAssistantClient
+                    .sensorStateProvider('sensor.time_ventilation_bedroom'),
+                icon: Icons.curtains,
+                formatter: Formatter.time,
+              ),
               SwitchCard(
-                  onIcon: Icons.power,
-                  offIcon: Icons.power_off,
-                  onColor: Colors.amber,
-                  stateProvider: homeAssistantClient
-                      .switchStateProvider('switch.power_print3d_master'),
-                  room: '3d Printer'),
+                  onIcon: Icons.wind_power,
+                  offIcon: Icons.wind_power_outlined,
+                  onColor: const Color.fromARGB(255, 43, 167, 216),
+                  stateProvider: homeAssistantClient.switchStateProvider(
+                      'fan.xiaomi_mi_smart_humidifier_2_bedroom'),
+                  room: 'Humidifier'),
             ],
-          )
+          ),
+          ExpandedRow(children: [
+            CurtainCard(
+                stateProvider: DummyStateProvider(initialValue: 0.5),
+                name: 'Left'),
+            CurtainCard(
+                stateProvider: DummyStateProvider(initialValue: 0.5),
+                name: 'Right'),
+          ]),
         ])
       ],
     );
