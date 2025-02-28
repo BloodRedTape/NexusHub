@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:home_assistant/home_assistant.dart';
 import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/ha/config.dart';
+import 'package:nexus/clients/ha/debug.dart';
 import 'package:nexus/clients/ha/provider.dart';
 import 'package:nexus/clients/ha/settings.dart';
 import 'package:nexus/dashboard/settings.dart';
@@ -35,15 +36,25 @@ class HomeAssistantClient {
 
   SettingsItem makeSettings() {
     return SettingsItem.details(
-        icon: GenericIcon.fromImage(
-          image: Image.network(
-              'https://community-assets.home-assistant.io/original/3X/6/3/63f75921214e158bc02336dc864c096b11889f14.png'),
-        ),
-        name: 'Home Assistant',
-        details: DetailsPage(
-            title: Text('Home Assistant Settings'),
-            body: HomeAssistantConfigWidget(
+      icon: GenericIcon.fromImage(
+        image: Image.network(
+            'https://community-assets.home-assistant.io/original/3X/6/3/63f75921214e158bc02336dc864c096b11889f14.png'),
+      ),
+      name: 'Home Assistant',
+      details: DetailsPage(
+        title: Text('Home Assistant Settings'),
+        body: Column(
+          children: [
+            HomeAssistantConfigWidget(
               stateProvider: _configStateProvider,
-            )));
+            ),
+            Flexible(
+              child: HomeAssistantDebugWidget(
+                  stateProvider: _entitiesStateProvider),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
