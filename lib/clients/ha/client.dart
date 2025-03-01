@@ -18,10 +18,12 @@ class HomeAssistantClient {
   Map<String, EntityStateProvider> _entityStateProviders = {};
   Map<String, SensorStateProvider> _sensorStateProviders = {};
   Map<String, SwitchStateProvider> _switchStateProviders = {};
+  Map<String, CurtainStateProvider> _curtainStateProviders = {};
 
   HomeAssistantClient() {
     _configStateProvider = SharedPreferencesStateProvider(
-      initialValue: HomeAssistantConfig(token: '', url: ''),
+      initialValue:
+          HomeAssistantConfig(token: '', url: 'https://192.168.1.211:8443'),
       preferencesKey: 'HOME_ASSISTANT_CONFIG',
       serialize: HomeAssistantConfig.serialize,
       deserialize: HomeAssistantConfig.deserialize,
@@ -90,6 +92,27 @@ class HomeAssistantClient {
   void _requestSwitchState(String entityId, bool state) {
     _entitiesStateProvider.executeService(
         entityId, state ? 'turn_on' : 'turn_off');
+  }
+
+  StateProvider<double> curtainStateProvider(String entityId) {
+    return _curtainStateProviders.putIfAbsent(
+        entityId, () => _buildCurtainStateProvider(entityId));
+  }
+
+  CurtainStateProvider _buildCurtainStateProvider(String entityId) {
+    final provider = CurtainStateProvider(
+        entityId: entityId,
+        entitiesStateProvider: entitiesStateProvider(),
+        requestState: (state) => _requestCurtainState(entityId, state));
+
+    provider.init();
+
+    return provider;
+  }
+
+  void _requestCurtainState(String entityId, double state) {
+    _entitiesStateProvider.executeService(entityId, 'set_cover_position',
+        aditionalActions: {'position': state.toInt()}, refetch: false);
   }
 
   SettingsItem makeSettings() {

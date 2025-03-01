@@ -6,14 +6,14 @@ import 'package:nexus/providers/state.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class Printer extends StatefulWidget {
-  StateProvider<double> bedTemperature;
-  StateProvider<double> targetBedTemperature;
-  StateProvider<double> extruderTemperature;
-  StateProvider<double> targetExtruderTemperature;
-  StateProvider<double> progress;
-  StateProvider<bool> power;
-  StateProvider<String> status;
-  StateProvider<String> connection;
+  final StateProvider<double> bedTemperature;
+  final StateProvider<double> targetBedTemperature;
+  final StateProvider<double> extruderTemperature;
+  final StateProvider<double> targetExtruderTemperature;
+  final StateProvider<double> progress;
+  final StateProvider<bool> power;
+  final StateProvider<String> status;
+  final StateProvider<String> connection;
 
   Printer({
     required this.bedTemperature,

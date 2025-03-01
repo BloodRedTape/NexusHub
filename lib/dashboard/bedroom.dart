@@ -66,10 +66,12 @@ class BedroomTab extends StatelessWidget {
           ),
           ExpandedRow(children: [
             CurtainCard(
-                stateProvider: DummyStateProvider(initialValue: 0.5),
+                stateProvider: homeAssistantClient
+                    .curtainStateProvider('cover.driver_curtain0_bedroom'),
                 name: 'Left'),
             CurtainCard(
-                stateProvider: DummyStateProvider(initialValue: 0.5),
+                stateProvider: homeAssistantClient
+                    .curtainStateProvider('cover.driver_curtain1_bedroom'),
                 name: 'Right'),
           ]),
         ])

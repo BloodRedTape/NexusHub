@@ -1,59 +1,69 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/value.dart';
+import 'package:nexus/cards/plain.dart';
+import 'package:nexus/consts.dart';
 import 'package:nexus/providers/state.dart';
 
-class CurtainCard extends StatelessWidget {
+class CurtainCard extends StatefulWidget {
   final StateProvider<double> stateProvider;
   final String? name;
-  final Color? sliderColor;
 
-  CurtainCard({required this.stateProvider, this.name, this.sliderColor});
+  const CurtainCard({required this.stateProvider, this.name});
+
+  @override
+  State<StatefulWidget> createState() => _CurtainCardState();
+}
+
+class _CurtainCardState<T> extends State<CurtainCard> {
+  double? _state;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.stateProvider.bindValueChanged(onValueChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.stateProvider.unbind(onValueChanged);
+    super.dispose();
+  }
+
+  void onValueChanged(double? value) {
+    setState(() {
+      _state = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ValueCard(
-      childFactory: (state) => buildChild(state, context),
-      stateProvider: stateProvider,
-    );
+    return _build(context, _state);
   }
 
-  Widget buildChild(double? state, BuildContext context) {
+  Widget _build(BuildContext context, double? state) {
     if (state == null) {
-      return Center(child: Text('Undefined'));
+      return PlainCard(icon: Icons.error, text: 'Unavailable');
     }
-
     List<Widget> widgets = [];
 
-    if (name != null) {
-      widgets.add(SizedBox(height: 8));
-      widgets.add(Row(
-        children: [
-          Icon(
-            Icons.curtains,
-            size: 48,
-            color: Colors.deepPurpleAccent[100],
-          ),
-          SizedBox(width: 4),
-          Text(
-            name!,
-            style: TextStyle(fontSize: 28),
-          )
-        ],
-        mainAxisAlignment: MainAxisAlignment.center,
-      ));
+    if (widget.name != null) {
+      widgets.add(Text(widget.name!,
+          style: TextStyle(
+              fontSize: primaryTextSize, fontWeight: FontWeight.bold)));
     }
 
     widgets.add(
-      Slider(value: state, min: 0, max: 100, onChanged: stateProvider.setValue),
+      Slider(
+          value: state,
+          min: 0,
+          max: 100,
+          onChanged: onValueChanged,
+          onChangeEnd: widget.stateProvider.requestValue),
     );
 
-    return Center(
-      child: Column(
-        children: widgets,
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-      ),
-    );
+    return PlainCardBase(
+        icon: Icon(Icons.curtains,
+            size: iconSize, color: Colors.deepPurpleAccent[100]),
+        children: widgets);
   }
 
   IconData icon(bool? state) {

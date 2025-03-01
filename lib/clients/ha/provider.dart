@@ -59,7 +59,9 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
     }
   }
 
-  Future<bool> executeService(String entityId, String action) async {
+  Future<bool> executeService(String entityId, String action,
+      {Map<String, dynamic> aditionalActions = const {},
+      bool refetch = true}) async {
     final config = _config;
 
     if (config == null) {
@@ -73,8 +75,11 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
         allowUntrustedSsl: true,
       );
 
-      await homeAssistant.executeService(entityId, action);
-      await fetchData();
+      await homeAssistant.executeService(entityId, action,
+          additionalActions: aditionalActions);
+
+      if (refetch) await fetchData();
+
       return true;
     } catch (e) {
       return false;

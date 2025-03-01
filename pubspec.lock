@@ -100,8 +100,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: master
-      resolved-ref: b4821f7fb6fe1dad60c89226567383995f1e0d20
+      ref: ce217d58ffade5f274ac0d37ea6512c3877f1adf
+      resolved-ref: ce217d58ffade5f274ac0d37ea6512c3877f1adf
       url: "https://github.com/BloodRedTape/home_assistant"
     source: git
     version: "1.0.1"

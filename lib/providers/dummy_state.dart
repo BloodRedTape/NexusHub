@@ -12,6 +12,7 @@ class DummyStateProvider<T> extends StateProvider<T> {
     setValue(initialValue);
   }
 
+  @override
   void requestValue(T newValue) {
     setValue(newValue);
   }
