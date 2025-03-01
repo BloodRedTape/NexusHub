@@ -176,14 +176,12 @@ class _PrinterState extends State<Printer> {
               TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold),
         ),
         Text(
-          '${temperature(bedTemperature)}/${temperature(targetBedTemperature)}',
-          style: TextStyle(
-              fontSize: secondaryTextSize, fontWeight: FontWeight.bold),
+          '${temperature(bedTemperature)} / ${temperature(targetBedTemperature)}',
+          style: TextStyle(fontSize: secondaryTextSize),
         ),
         Text(
-          '${temperature(extruderTemperature)}/${temperature(targetExtruderTemperature)}',
-          style: TextStyle(
-              fontSize: secondaryTextSize, fontWeight: FontWeight.bold),
+          '${temperature(extruderTemperature)} / ${temperature(targetExtruderTemperature)}',
+          style: TextStyle(fontSize: secondaryTextSize),
         ),
       ],
     );

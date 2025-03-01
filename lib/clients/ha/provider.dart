@@ -48,6 +48,7 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
       final homeAssistant = HomeAssistant(
         baseUrl: config.url,
         bearerToken: config.token,
+        allowUntrustedSsl: true,
       );
 
       final entities = await homeAssistant.fetchStates();
@@ -69,6 +70,7 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
       final homeAssistant = HomeAssistant(
         baseUrl: config.url,
         bearerToken: config.token,
+        allowUntrustedSsl: true,
       );
 
       await homeAssistant.executeService(entityId, action);
