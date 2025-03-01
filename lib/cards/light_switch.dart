@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/plain.dart';
-import 'package:nexus/cards/state.dart';
 import 'package:nexus/cards/switch.dart';
 
 class LightSwitchCard extends SwitchCard {

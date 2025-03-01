@@ -5,7 +5,6 @@ import 'package:nexus/cards/calendar.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/states/alarm.dart';
 import 'package:nexus/states/calendar.dart';
-import 'package:nexus/clients/open_meteo/provider.dart';
 import 'package:nexus/providers/dummy_state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';

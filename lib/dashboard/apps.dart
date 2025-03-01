@@ -3,7 +3,6 @@ import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/state.dart';
-import 'package:nexus/clients/apps/client.dart';
 import 'package:nexus/consts.dart';
 
 class AppsTab extends StateCard<List<AppInfo>> {

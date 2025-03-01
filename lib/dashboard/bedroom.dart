@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/curtain.dart';
-import 'package:nexus/cards/light_switch.dart';
 import 'package:nexus/cards/sensor.dart';
 import 'package:nexus/cards/switch.dart';
 import 'package:nexus/clients/ha/client.dart';

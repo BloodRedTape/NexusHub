@@ -1,7 +1,3 @@
-import 'dart:async';
-
-import 'package:shared_preferences/shared_preferences.dart';
-
 class StateProvider<T> {
   final List<void Function(T?)> _onValueChanged = [];
   T? _state;

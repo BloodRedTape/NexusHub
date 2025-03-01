@@ -4,11 +4,6 @@ import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/states/weather.dart';
-import 'package:nexus/utils/token_input_widget.dart';
-import 'package:open_weather_client/open_weather.dart';
-import 'dart:async';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:weather_icons/weather_icons.dart';
 
 class WeatherCard extends StateCard<WeatherState> {
   final DetailsPage? details;
