@@ -26,6 +26,47 @@ class PlainActionWidget extends StatelessWidget {
   }
 }
 
+class PlainLayoutBase extends StatelessWidget {
+  final Widget icon;
+
+  final PlainAction? subAction;
+
+  final List<Widget> children;
+
+  const PlainLayoutBase(
+      {required this.icon, this.subAction, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final actionWidget = subAction != null
+        ? PlainActionWidget(action: subAction!, iconSize: iconSize)
+        : SizedBox();
+
+    return Padding(
+        padding: EdgeInsets.all(cardPadding),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [icon, actionWidget],
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            Expanded(
+                child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: children,
+            ))
+          ],
+        ));
+  }
+}
+
 class PlainLayout extends StatelessWidget {
   final Widget icon;
 
@@ -47,10 +88,6 @@ class PlainLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actionWidget = subAction != null
-        ? PlainActionWidget(action: subAction!, iconSize: iconSize)
-        : SizedBox();
-
     final textWidget = FittedBox(
         alignment: Alignment.bottomLeft,
         fit: BoxFit.scaleDown,
@@ -65,29 +102,55 @@ class PlainLayout extends StatelessWidget {
             style: TextStyle(fontSize: secondaryTextSize, color: subTextColor))
         : SizedBox();
 
-    return Column(
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [icon, actionWidget],
-        ),
-        const SizedBox(
-          height: 8,
-        ),
-        Expanded(
-            child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            textWidget,
-            subTextWidget,
-          ],
-        ))
-      ],
+    return PlainLayoutBase(
+        icon: icon,
+        subAction: subAction,
+        children: [textWidget, subTextWidget]);
+  }
+}
+
+class PlainCardBase extends StatelessWidget {
+  final Widget icon;
+
+  final Function()? action;
+  final PlainAction? subAction;
+
+  final List<Widget> children;
+
+  final Color? color;
+
+  PlainCardBase({
+    required this.icon,
+    this.action,
+    this.subAction,
+    required this.children,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = PlainLayoutBase(
+      icon: icon,
+      subAction: subAction,
+      children: children,
     );
+
+    final button = ElevatedButton(
+      onPressed: () => action?.call(),
+      child: content,
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        padding: EdgeInsets.zero, // Ensure zero padding
+        foregroundColor: Colors.white,
+        iconColor: Colors.white,
+        backgroundColor: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cardBorderRadius),
+        ),
+      ),
+    );
+
+    return BaseCard(child: action != null ? button : content, color: color);
   }
 }
 
@@ -130,32 +193,25 @@ class PlainCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = Padding(
-        padding: EdgeInsets.all(cardPadding),
-        child: PlainLayout(
-          icon: iconWidget,
-          subAction: subAction,
-          text: text,
-          textColor: textColor,
-          subText: subText,
-          subTextColor: subTextColor,
-        ));
+    final textWidget = FittedBox(
+        alignment: Alignment.bottomLeft,
+        fit: BoxFit.scaleDown,
+        child: Text(text,
+            style: TextStyle(
+                fontSize: primaryTextSize,
+                fontWeight: FontWeight.bold,
+                color: textColor)));
 
-    final button = ElevatedButton(
-      onPressed: () => action?.call(),
-      child: content,
-      style: ElevatedButton.styleFrom(
-        elevation: 0,
-        padding: EdgeInsets.zero, // Ensure zero padding
-        foregroundColor: Colors.white,
-        iconColor: Colors.white,
-        backgroundColor: color,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(cardBorderRadius),
-        ),
-      ),
-    );
+    final subTextWidget = subText != null
+        ? Text(subText!,
+            style: TextStyle(fontSize: secondaryTextSize, color: subTextColor))
+        : SizedBox();
 
-    return BaseCard(child: action != null ? button : content, color: color);
+    return PlainCardBase(
+        icon: iconWidget,
+        subAction: subAction,
+        action: action,
+        children: [textWidget, subTextWidget],
+        color: color);
   }
 }

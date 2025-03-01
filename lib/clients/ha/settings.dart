@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:nexus/clients/ha/config.dart';
-import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/providers/state.dart';
 
 class HomeAssistantConfigWidget extends StatefulWidget {

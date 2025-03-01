@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/light_switch.dart';
+import 'package:nexus/cards/printer.dart';
 import 'package:nexus/cards/sensor.dart';
 import 'package:nexus/cards/switch.dart';
 import 'package:nexus/clients/ha/client.dart';
+import 'package:nexus/providers/dummy_state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 
@@ -62,13 +64,25 @@ class MasterTab extends StatelessWidget {
                   stateProvider: homeAssistantClient
                       .switchStateProvider('light.light_bulb2_master'),
                   room: 'Master'),
-              SwitchCard(
-                  onIcon: Icons.power,
-                  offIcon: Icons.power_off,
-                  onColor: Colors.amber,
-                  stateProvider: homeAssistantClient
-                      .switchStateProvider('switch.power_print3d_master'),
-                  room: '3d Printer'),
+              Printer(
+                bedTemperature: homeAssistantClient
+                    .sensorStateProvider('sensor.bed_temp_shui_master'),
+                targetBedTemperature: homeAssistantClient
+                    .sensorStateProvider('sensor.target_bed_temp_shui_master'),
+                extruderTemperature: homeAssistantClient
+                    .sensorStateProvider('sensor.extruder_temp_shui_master'),
+                targetExtruderTemperature:
+                    homeAssistantClient.sensorStateProvider(
+                        'sensor.target_extruder_temp_shui_master'),
+                progress: homeAssistantClient
+                    .sensorStateProvider('sensor.print_progress_shui_master'),
+                power: homeAssistantClient
+                    .switchStateProvider('switch.power_print3d_master'),
+                status: homeAssistantClient
+                    .entityStateProvider('sensor.print_status_shui_master'),
+                connection: homeAssistantClient
+                    .entityStateProvider('sensor.connection_shui_master'),
+              ),
             ],
           )
         ])

@@ -15,6 +15,7 @@ class HomeAssistantClient {
   late StateProvider<HomeAssistantConfig> _configStateProvider;
   late HomeAssistantStateProvider _entitiesStateProvider;
 
+  Map<String, EntityStateProvider> _entityStateProviders = {};
   Map<String, SensorStateProvider> _sensorStateProviders = {};
   Map<String, SwitchStateProvider> _switchStateProviders = {};
 
@@ -36,6 +37,22 @@ class HomeAssistantClient {
 
   StateProvider<List<Entity>> entitiesStateProvider() {
     return _entitiesStateProvider;
+  }
+
+  StateProvider<String> entityStateProvider(String entityId) {
+    return _entityStateProviders.putIfAbsent(
+        entityId, () => _buildEntityStateProvider(entityId));
+  }
+
+  EntityStateProvider _buildEntityStateProvider(String entityId) {
+    final provider = EntityStateProvider(
+      entityId: entityId,
+      entitiesStateProvider: entitiesStateProvider(),
+    );
+
+    provider.init();
+
+    return provider;
   }
 
   StateProvider<double> sensorStateProvider(String entityId) {
