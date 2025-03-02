@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nexus/cards/action.dart';
 import 'package:nexus/cards/light_switch.dart';
 import 'package:nexus/cards/printer.dart';
 import 'package:nexus/cards/sensor.dart';
@@ -7,6 +8,7 @@ import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/providers/dummy_state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class MasterTab extends StatelessWidget {
   final HomeAssistantClient homeAssistantClient;
@@ -49,21 +51,15 @@ class MasterTab extends StatelessWidget {
         ]),
         ExpandedColumn(children: [
           ExpandedRow(children: [
-            LightSwitchCard(
-                stateProvider: homeAssistantClient
-                    .switchStateProvider('light.light_bulb0_master'),
-                room: 'Master'),
-            LightSwitchCard(
-                stateProvider: homeAssistantClient
-                    .switchStateProvider('light.light_bulb1_master'),
-                room: 'Master'),
+            ActionCard(icon: MdiIcons.testTubeEmpty, name: 'Action 1'),
+            ActionCard(icon: MdiIcons.testTube, name: 'Action 2'),
           ]),
           ExpandedRow(
             children: [
               LightSwitchCard(
                   stateProvider: homeAssistantClient
-                      .switchStateProvider('light.light_bulb2_master'),
-                  room: 'Master'),
+                      .switchStateProvider('light.light_bulbs_master'),
+                  room: 'Bulbs'),
               Printer(
                 bedTemperature: homeAssistantClient
                     .sensorStateProvider('sensor.bed_temp_shui_master'),
