@@ -25,5 +25,3 @@ class CalendarState {
 
   CalendarState({required this.days});
 }
-
-typedef CalendarStateProvider = StateProvider<CalendarState>;

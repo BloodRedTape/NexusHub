@@ -41,7 +41,7 @@ dependencies:
   home_assistant: 
     git: 
       url: https://github.com/BloodRedTape/home_assistant
-      ref: ce217d58ffade5f274ac0d37ea6512c3877f1adf
+      ref: 09c210bbcc677d5c80e43e003fbbf5b06c3b4e4e
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

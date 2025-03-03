@@ -70,7 +70,9 @@ class CalendarDayWidget extends StatelessWidget {
                     TableCell(
                       child: Text(
                         event.description,
-                        style: TextStyle(fontSize: fontSize),
+                        style: TextStyle(
+                            fontSize: fontSize,
+                            overflow: TextOverflow.ellipsis),
                       ),
                     ),
                   ],

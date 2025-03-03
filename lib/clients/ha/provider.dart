@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:home_assistant/home_assistant.dart';
 import 'package:nexus/clients/ha/config.dart';
@@ -17,7 +18,7 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
     _timer?.cancel();
     fetchData().then((_) {
       _timer = Timer.periodic(
-          Duration(seconds: 30), (Timer t) async => await fetchData());
+          Duration(seconds: 60), (Timer t) async => await fetchData());
     });
   }
 
@@ -59,7 +60,7 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
     }
   }
 
-  Future<bool> executeService(String entityId, String action,
+  Future<bool> executeServiceForEntity(String entityId, String action,
       {Map<String, dynamic> aditionalActions = const {},
       bool refetch = true}) async {
     final config = _config;
@@ -75,7 +76,7 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
         allowUntrustedSsl: true,
       );
 
-      await homeAssistant.executeService(entityId, action,
+      await homeAssistant.executeServiceForEntity(entityId, action,
           additionalActions: aditionalActions);
 
       if (refetch) await fetchData();
@@ -83,6 +84,40 @@ class HomeAssistantStateProvider extends StateProvider<List<Entity>> {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<ServiceResponse?> executeService(
+      {required String domain,
+      required String service,
+      Map<String, dynamic> serviceData = const {},
+      bool returnResponse = true,
+      bool refetch = true}) async {
+    final config = _config;
+
+    if (config == null) {
+      return null;
+    }
+
+    try {
+      final homeAssistant = HomeAssistant(
+        baseUrl: config.url,
+        bearerToken: config.token,
+        allowUntrustedSsl: true,
+      );
+
+      ServiceResponse? response = await homeAssistant.executeService(
+          domain: domain,
+          service: service,
+          serviceData: serviceData,
+          returnResponse: returnResponse);
+
+      if (refetch) await fetchData();
+
+      return response;
+    } catch (e) {
+      print('HomeAssisant $e');
+      return null;
     }
   }
 }

@@ -45,7 +45,10 @@ class _MyAppState extends State<MyApp> {
         items: [
           TabItem(
             tab: Tab(text: 'Your morning'),
-            child: MorningTab(weatherClient: _weatherClient),
+            child: MorningTab(
+              weatherClient: _weatherClient,
+              homeAssistantClient: _homeAssistantClient,
+            ),
           ),
           TabItem(
             tab: Tab(text: 'Master Room'),

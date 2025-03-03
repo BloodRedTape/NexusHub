@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:home_assistant/home_assistant.dart';
+import 'package:intl/intl.dart';
 import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/ha/config.dart';
 import 'package:nexus/clients/ha/debug.dart';
@@ -9,6 +10,7 @@ import 'package:nexus/clients/ha/state.dart';
 import 'package:nexus/dashboard/settings.dart';
 import 'package:nexus/providers/shared_preferences_state.dart';
 import 'package:nexus/providers/state.dart';
+import 'package:nexus/states/calendar.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
 class HomeAssistantClient {
@@ -19,6 +21,7 @@ class HomeAssistantClient {
   Map<String, SensorStateProvider> _sensorStateProviders = {};
   Map<String, SwitchStateProvider> _switchStateProviders = {};
   Map<String, CurtainStateProvider> _curtainStateProviders = {};
+  Map<String, CalendarStateProvider> _calendarStateProviders = {};
 
   HomeAssistantClient() {
     _configStateProvider = SharedPreferencesStateProvider(
@@ -90,7 +93,7 @@ class HomeAssistantClient {
   }
 
   void _requestSwitchState(String entityId, bool state) {
-    _entitiesStateProvider.executeService(
+    _entitiesStateProvider.executeServiceForEntity(
         entityId, state ? 'turn_on' : 'turn_off');
   }
 
@@ -111,8 +114,44 @@ class HomeAssistantClient {
   }
 
   void _requestCurtainState(String entityId, double state) {
-    _entitiesStateProvider.executeService(entityId, 'set_cover_position',
+    _entitiesStateProvider.executeServiceForEntity(
+        entityId, 'set_cover_position',
         aditionalActions: {'position': state.toInt()}, refetch: false);
+  }
+
+  StateProvider<CalendarState> calendarStateProvider(String entityId) {
+    return _calendarStateProviders.putIfAbsent(
+        entityId, () => _buildCalendarStateProvider(entityId));
+  }
+
+  CalendarStateProvider _buildCalendarStateProvider(String entityId) {
+    final provider = CalendarStateProvider(
+        entityId: entityId,
+        entitiesStateProvider: entitiesStateProvider(),
+        getCalendarEvents: _getCalendarEvents);
+
+    provider.init();
+
+    return provider;
+  }
+
+  Future<ServiceResponse?> _getCalendarEvents(
+      String entityId, DateTime start, DateTime end) async {
+    final DateFormat dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+    ServiceResponse? response = await _entitiesStateProvider.executeService(
+      domain: 'calendar',
+      service: 'get_events',
+      serviceData: {
+        'entity_id': entityId,
+        'start_date_time': dateFormat.format(start),
+        'end_date_time': dateFormat.format(end),
+      },
+      returnResponse: true,
+      refetch: false,
+    );
+
+    return response;
   }
 
   SettingsItem makeSettings() {
