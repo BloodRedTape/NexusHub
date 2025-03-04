@@ -11,6 +11,8 @@ class CalendarEventState {
     required this.end,
     required this.description,
   });
+
+  bool get isFullDay => start == TimeOfDay(hour: 0, minute: 00) && end == TimeOfDay(hour: 24, minute: 00);
 }
 
 class CalendarDayState {

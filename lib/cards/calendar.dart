@@ -26,38 +26,26 @@ class CalendarDayWidget extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 DateFormat('d MMMM').format(day.date),
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
               ),
             ]),
             const SizedBox(height: 8),
             Table(
               columnWidths: {
                 0: IntrinsicColumnWidth(),
-                1: IntrinsicColumnWidth(),
-                2: IntrinsicColumnWidth(),
-                3: FixedColumnWidth(40.0),
-                4: FlexColumnWidth(),
+                1: FixedColumnWidth(40.0),
+                2: FlexColumnWidth(),
               },
               children: day.events.map((event) {
+                final timeRangeText =
+                    '${event.start.hour}:${event.start.minute.toString().padLeft(2, '0')} - ${event.end.hour}:${event.end.minute.toString().padLeft(2, '0')}';
+
                 return TableRow(
                   children: [
                     TableCell(
                         child: Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: Text(
-                          '${event.start.hour}:${event.start.minute.toString().padLeft(2, '0')}',
-                          style: TextStyle(fontSize: fontSize)),
-                    )),
-                    TableCell(
-                      child: Text(' - ', style: TextStyle(fontSize: fontSize)),
-                    ),
-                    TableCell(
-                        child: Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: Text(
-                          '${event.end.hour}:${event.end.minute.toString().padLeft(2, '0')}',
-                          style: TextStyle(fontSize: fontSize)),
+                      alignment: AlignmentDirectional.center,
+                      child: Text(timeRangeText, style: TextStyle(fontSize: fontSize)),
                     )),
                     const TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
@@ -70,9 +58,7 @@ class CalendarDayWidget extends StatelessWidget {
                     TableCell(
                       child: Text(
                         event.description,
-                        style: TextStyle(
-                            fontSize: fontSize,
-                            overflow: TextOverflow.ellipsis),
+                        style: TextStyle(fontSize: fontSize, overflow: TextOverflow.ellipsis),
                       ),
                     ),
                   ],
@@ -93,12 +79,7 @@ class CalendarCard extends StateCard<CalendarState> {
 
     return BaseCard(
       color: Colors.grey[900],
-      child: Padding(
-          padding: EdgeInsets.all(8),
-          child: Column(
-              children: state.days
-                  .map((day) => CalendarDayWidget(day: day))
-                  .toList())),
+      child: Padding(padding: EdgeInsets.all(8), child: Column(children: state.days.map((day) => CalendarDayWidget(day: day)).toList())),
     );
   }
 }

@@ -25,8 +25,7 @@ class HomeAssistantClient {
 
   HomeAssistantClient() {
     _configStateProvider = SharedPreferencesStateProvider(
-      initialValue:
-          HomeAssistantConfig(token: '', url: 'https://192.168.1.211:8443'),
+      initialValue: HomeAssistantConfig(token: '', url: 'https://192.168.1.211:8443'),
       preferencesKey: 'HOME_ASSISTANT_CONFIG',
       serialize: HomeAssistantConfig.serialize,
       deserialize: HomeAssistantConfig.deserialize,
@@ -34,8 +33,7 @@ class HomeAssistantClient {
 
     _configStateProvider.init();
 
-    _entitiesStateProvider =
-        HomeAssistantStateProvider(configStateProvider: _configStateProvider);
+    _entitiesStateProvider = HomeAssistantStateProvider(configStateProvider: _configStateProvider);
 
     _entitiesStateProvider.init();
   }
@@ -45,8 +43,7 @@ class HomeAssistantClient {
   }
 
   StateProvider<String> entityStateProvider(String entityId) {
-    return _entityStateProviders.putIfAbsent(
-        entityId, () => _buildEntityStateProvider(entityId));
+    return _entityStateProviders.putIfAbsent(entityId, () => _buildEntityStateProvider(entityId));
   }
 
   EntityStateProvider _buildEntityStateProvider(String entityId) {
@@ -61,8 +58,7 @@ class HomeAssistantClient {
   }
 
   StateProvider<double> sensorStateProvider(String entityId) {
-    return _sensorStateProviders.putIfAbsent(
-        entityId, () => _buildSensorStateProvider(entityId));
+    return _sensorStateProviders.putIfAbsent(entityId, () => _buildSensorStateProvider(entityId));
   }
 
   SensorStateProvider _buildSensorStateProvider(String entityId) {
@@ -77,15 +73,12 @@ class HomeAssistantClient {
   }
 
   StateProvider<bool> switchStateProvider(String entityId) {
-    return _switchStateProviders.putIfAbsent(
-        entityId, () => _buildSwitchStateProvider(entityId));
+    return _switchStateProviders.putIfAbsent(entityId, () => _buildSwitchStateProvider(entityId));
   }
 
   SwitchStateProvider _buildSwitchStateProvider(String entityId) {
-    final provider = SwitchStateProvider(
-        entityId: entityId,
-        entitiesStateProvider: entitiesStateProvider(),
-        requestState: (state) => _requestSwitchState(entityId, state));
+    final provider =
+        SwitchStateProvider(entityId: entityId, entitiesStateProvider: entitiesStateProvider(), requestState: (state) => _requestSwitchState(entityId, state));
 
     provider.init();
 
@@ -93,20 +86,16 @@ class HomeAssistantClient {
   }
 
   void _requestSwitchState(String entityId, bool state) {
-    _entitiesStateProvider.executeServiceForEntity(
-        entityId, state ? 'turn_on' : 'turn_off');
+    _entitiesStateProvider.executeServiceForEntity(entityId, state ? 'turn_on' : 'turn_off');
   }
 
   StateProvider<double> curtainStateProvider(String entityId) {
-    return _curtainStateProviders.putIfAbsent(
-        entityId, () => _buildCurtainStateProvider(entityId));
+    return _curtainStateProviders.putIfAbsent(entityId, () => _buildCurtainStateProvider(entityId));
   }
 
   CurtainStateProvider _buildCurtainStateProvider(String entityId) {
     final provider = CurtainStateProvider(
-        entityId: entityId,
-        entitiesStateProvider: entitiesStateProvider(),
-        requestState: (state) => _requestCurtainState(entityId, state));
+        entityId: entityId, entitiesStateProvider: entitiesStateProvider(), requestState: (state) => _requestCurtainState(entityId, state));
 
     provider.init();
 
@@ -114,29 +103,23 @@ class HomeAssistantClient {
   }
 
   void _requestCurtainState(String entityId, double state) {
-    _entitiesStateProvider.executeServiceForEntity(
-        entityId, 'set_cover_position',
-        aditionalActions: {'position': state.toInt()}, refetch: false);
+    _entitiesStateProvider.executeServiceForEntity(entityId, 'set_cover_position', aditionalActions: {'position': state.toInt()}, refetch: false);
   }
 
   StateProvider<CalendarState> calendarStateProvider(String entityId) {
-    return _calendarStateProviders.putIfAbsent(
-        entityId, () => _buildCalendarStateProvider(entityId));
+    return _calendarStateProviders.putIfAbsent(entityId, () => _buildCalendarStateProvider(entityId));
   }
 
   CalendarStateProvider _buildCalendarStateProvider(String entityId) {
     final provider = CalendarStateProvider(
-        entityId: entityId,
-        entitiesStateProvider: entitiesStateProvider(),
-        getCalendarEvents: _getCalendarEvents);
+        entityId: entityId, entitiesStateProvider: entitiesStateProvider(), getCalendarEvents: _getCalendarEvents, rangeFromNow: Duration(days: 3));
 
     provider.init();
 
     return provider;
   }
 
-  Future<ServiceResponse?> _getCalendarEvents(
-      String entityId, DateTime start, DateTime end) async {
+  Future<ServiceResponse?> _getCalendarEvents(String entityId, DateTime start, DateTime end) async {
     final DateFormat dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
 
     ServiceResponse? response = await _entitiesStateProvider.executeService(
@@ -157,8 +140,7 @@ class HomeAssistantClient {
   SettingsItem makeSettings() {
     return SettingsItem.details(
       icon: GenericIcon.fromImage(
-        image: Image.network(
-            'https://community-assets.home-assistant.io/original/3X/6/3/63f75921214e158bc02336dc864c096b11889f14.png'),
+        image: Image.network('https://community-assets.home-assistant.io/original/3X/6/3/63f75921214e158bc02336dc864c096b11889f14.png'),
       ),
       name: 'Home Assistant',
       details: DetailsPage(
@@ -169,8 +151,7 @@ class HomeAssistantClient {
               stateProvider: _configStateProvider,
             ),
             Flexible(
-              child: HomeAssistantDebugWidget(
-                  stateProvider: _entitiesStateProvider),
+              child: HomeAssistantDebugWidget(stateProvider: _entitiesStateProvider),
             ),
           ],
         ),
