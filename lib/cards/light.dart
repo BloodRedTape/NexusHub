@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/states/light.dart';
+import 'package:nexus/utils/tint.dart';
 
 class LightCard extends StateCard<LightState> {
   final IconData onIcon;
@@ -15,7 +16,7 @@ class LightCard extends StateCard<LightState> {
     if (state == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
 
     return PlainCard(
-      color: _color(state),
+      color: Tint.color(color: state.color?.value, fraction: 0.4),
       icon: _icon(state),
       iconColor: _iconColor(state),
       text: _stateToText(state),
@@ -47,15 +48,6 @@ class LightCard extends StateCard<LightState> {
     }
 
     return state.isOn ? onIcon : offIcon;
-  }
-
-  Color? _color(LightState? state) {
-    final double fraction = 0.4;
-    final Color? color = state?.color?.value;
-
-    if (color == null) return null;
-
-    return Color.fromARGB(255, (color.r * fraction * 255).toInt(), (color.g * fraction * 255).toInt(), (color.b * fraction * 255).toInt());
   }
 
   Color _iconColor(LightState? state) {

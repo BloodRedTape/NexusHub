@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:nexus/cards/action.dart';
 import 'package:nexus/cards/curtain.dart';
 import 'package:nexus/cards/humidifier.dart';
 import 'package:nexus/cards/sensor.dart';
@@ -19,8 +20,8 @@ class BedroomTab extends StatelessWidget {
     return ExpandedRow(
       children: [
         ExpandedColumn(children: [
-          ExpandedRow(children: [
-            ExpandedColumn(children: [
+          ExpandedColumn(children: [
+            ExpandedRow(children: [
               SmallSensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.temp_ht_bedroom'),
                 icon: Icons.thermostat,
@@ -32,42 +33,41 @@ class BedroomTab extends StatelessWidget {
                 formatter: Formatter.humidity,
               ),
             ]),
-            ExpandedColumn(children: [
+            ExpandedRow(children: [
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_bedroom'),
+                icon: MdiIcons.windowOpenVariant,
+                formatter: Formatter.time,
+              ),
               SmallSensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_master'),
                 icon: Icons.co2,
                 formatter: Formatter.carbonDioxide,
                 iconPainter: Painter.carbonDioxide,
               ),
-              SmallSensorCard(
-                stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_bedroom'),
-                icon: MdiIcons.windowOpenVariant,
-                formatter: Formatter.time,
-              ),
             ]),
           ]),
           ExpandedRow(children: [
-            SensorCard(
-              stateProvider: homeAssistantClient.sensorStateProvider('sensor.illuminance_motion_nowhere'),
-              icon: Icons.sunny,
-              formatter: Formatter.illuminance,
-            ),
-            SensorCard(
-              stateProvider: homeAssistantClient.sensorStateProvider('sensor.u_s_air_quality_index'),
-              icon: Icons.air_sharp,
-              formatter: Formatter.aqi,
-              iconPainter: Painter.aqi,
-            ),
-          ])
+            ExpandedColumn(children: [
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.illuminance_mi_bedroom'),
+                icon: Icons.sunny,
+                formatter: Formatter.illuminance,
+              ),
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.u_s_air_quality_index'),
+                icon: Icons.air_sharp,
+                formatter: Formatter.aqi,
+                iconPainter: Painter.aqi,
+              ),
+            ]),
+            ActionCard(name: 'Action', icon: MdiIcons.openInApp)
+          ]),
         ]),
         ExpandedColumn(children: [
           ExpandedRow(
             children: [
-              SensorCard(
-                stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_bedroom'),
-                icon: Icons.curtains,
-                formatter: Formatter.time,
-              ),
+              ActionCard(name: 'Sleep', icon: MdiIcons.sleep),
               HumidifierCard(
                 stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2_bedroom'),
                 room: 'Humidifier',

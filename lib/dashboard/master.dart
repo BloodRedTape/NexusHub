@@ -11,6 +11,7 @@ import 'package:nexus/providers/dummy_state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:nexus/utils/tint.dart';
 
 class MasterTab extends StatelessWidget {
   final HomeAssistantClient homeAssistantClient;
@@ -22,8 +23,8 @@ class MasterTab extends StatelessWidget {
     return ExpandedRow(
       children: [
         ExpandedColumn(children: [
-          ExpandedRow(children: [
-            ExpandedColumn(children: [
+          ExpandedColumn(children: [
+            ExpandedRow(children: [
               SmallSensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.temp_ht_master'),
                 icon: Icons.thermostat,
@@ -35,16 +36,17 @@ class MasterTab extends StatelessWidget {
                 formatter: Formatter.humidity,
               ),
             ]),
-            ExpandedColumn(children: [
-              SmallSensorCard(
-                  stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_master'),
-                  icon: Icons.co2,
-                  formatter: Formatter.carbonDioxide,
-                  iconPainter: Painter.carbonDioxide),
+            ExpandedRow(children: [
               SmallSensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_master'),
                 icon: MdiIcons.windowOpenVariant,
                 formatter: Formatter.time,
+              ),
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_master'),
+                icon: Icons.co2,
+                formatter: Formatter.carbonDioxide,
+                iconPainter: Painter.carbonDioxide,
               ),
             ]),
           ]),
@@ -63,29 +65,6 @@ class MasterTab extends StatelessWidget {
                   iconPainter: Painter.aqi,
                 ),
               ]),
-              LightCard(
-                  stateProvider: homeAssistantClient.lightStateProvider('light.light_led_master'),
-                  onIcon: MdiIcons.lightbulbSpot,
-                  offIcon: MdiIcons.lightbulbSpotOff,
-                  name: 'Led Strip'),
-            ],
-          )
-        ]),
-        ExpandedColumn(children: [
-          ExpandedRow(children: [
-            HumidifierCard(
-              stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2'),
-              room: 'Humidifier',
-            ),
-            ActionCard(icon: MdiIcons.testTube, name: 'Action 2'),
-          ]),
-          ExpandedRow(
-            children: [
-              LightCard(
-                  stateProvider: homeAssistantClient.lightStateProvider('light.light_bulbs_master'),
-                  onIcon: Icons.lightbulb,
-                  offIcon: Icons.lightbulb_outline,
-                  name: 'Bulbs'),
               Printer(
                 bedTemperature: homeAssistantClient.sensorStateProvider('sensor.bed_temp_shui_master'),
                 targetBedTemperature: homeAssistantClient.sensorStateProvider('sensor.target_bed_temp_shui_master'),
@@ -98,6 +77,36 @@ class MasterTab extends StatelessWidget {
               ),
             ],
           )
+        ]),
+        ExpandedColumn(children: [
+          ExpandedRow(
+            children: [
+              LightCard(
+                  stateProvider: homeAssistantClient.lightStateProvider('light.light_bulbs_master'),
+                  onIcon: Icons.lightbulb,
+                  offIcon: Icons.lightbulb_outline,
+                  name: 'Bulbs'),
+              LightCard(
+                stateProvider: homeAssistantClient.lightStateProvider('light.light_led_master'),
+                onIcon: MdiIcons.lightbulbSpot,
+                offIcon: MdiIcons.lightbulbSpotOff,
+                name: 'Led Strip',
+              ),
+            ],
+          ),
+          ExpandedRow(children: [
+            HumidifierCard(
+              stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2'),
+              room: 'Humidifier',
+            ),
+            SwitchCard(
+              stateProvider: homeAssistantClient.switchStateProvider('switch.power_plug1_nowhere'),
+              onIcon: MdiIcons.powerPlug,
+              offIcon: MdiIcons.powerPlugOff,
+              room: 'Heater',
+              onColor: Tint.color(color: const Color.fromARGB(255, 255, 94, 0)),
+            ),
+          ]),
         ])
       ],
     );
