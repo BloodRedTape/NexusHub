@@ -36,6 +36,7 @@ class BedroomTab extends StatelessWidget {
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_master'),
                 icon: Icons.co2,
                 formatter: Formatter.carbonDioxide,
+                iconPainter: Painter.carbonDioxide,
               ),
               SmallSensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_bedroom'),
@@ -54,6 +55,7 @@ class BedroomTab extends StatelessWidget {
               stateProvider: homeAssistantClient.sensorStateProvider('sensor.u_s_air_quality_index'),
               icon: Icons.air_sharp,
               formatter: Formatter.aqi,
+              iconPainter: Painter.aqi,
             ),
           ])
         ]),

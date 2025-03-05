@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/plain.dart';
@@ -37,12 +38,42 @@ class Formatter {
   }
 }
 
+class Painter {
+  static Color? none(double state) {
+    return null;
+  }
+
+  static Color? Function(double) color(Color color) {
+    return (_) => color;
+  }
+
+  static Color? carbonDioxide(double state) {
+    if (state < 1000) return Colors.green;
+    if (state < 1500) return Colors.amber;
+    return Colors.red;
+  }
+
+  static Color? illuminance(double state) {
+    double maxIlluminance = 1000;
+    return HSVColor.fromAHSV(1.0, (clampDouble(state, 0, maxIlluminance) / maxIlluminance * 55.0) / 255.0, 0.5, 1.0).toColor();
+  }
+
+  static Color? aqi(double state) {
+    if (state < 50) return Colors.green;
+    if (state < 100.0) return Colors.amber;
+    if (state < 150.0) return Colors.orange;
+    if (state < 200.0) return Colors.red;
+    return Colors.purple;
+  }
+}
+
 class SensorCard extends StateCard<double> {
   final IconData icon;
   final String Function(double) formatter;
+  final Color? Function(double)? iconPainter;
   final String? room;
 
-  const SensorCard({required super.stateProvider, required this.icon, required this.formatter, this.room});
+  const SensorCard({required super.stateProvider, required this.icon, required this.formatter, this.iconPainter, this.room});
 
   @override
   Widget build(BuildContext context, double? state) {
@@ -50,6 +81,7 @@ class SensorCard extends StateCard<double> {
 
     return PlainCard(
       icon: icon,
+      iconColor: iconPainter?.call(state),
       text: formatter(state),
       subText: room,
     );
@@ -59,13 +91,18 @@ class SensorCard extends StateCard<double> {
 class SmallSensorCard extends StateCard<double> {
   final IconData icon;
   final String Function(double) formatter;
+  final Color? Function(double)? iconPainter;
 
-  const SmallSensorCard({required super.stateProvider, required this.icon, required this.formatter});
+  const SmallSensorCard({required super.stateProvider, required this.icon, required this.formatter, this.iconPainter});
 
   @override
   Widget build(BuildContext context, double? state) {
     if (state == null) return SmallPlainCard(icon: Icons.error, text: 'Unavailable');
 
-    return SmallPlainCard(icon: icon, text: formatter(state));
+    return SmallPlainCard(
+      icon: icon,
+      text: formatter(state),
+      iconColor: iconPainter?.call(state),
+    );
   }
 }

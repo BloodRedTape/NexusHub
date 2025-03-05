@@ -180,23 +180,26 @@ class PlainCard extends StatelessWidget {
 }
 
 class SmallPlainCard extends StatelessWidget {
-  final IconData icon;
+  final Widget iconWidget;
   final String text;
   final void Function()? action;
+  final Color? color;
 
-  const SmallPlainCard({required this.icon, required this.text, this.action});
+  SmallPlainCard({required IconData icon, Color? iconColor, this.color, required this.text, this.action})
+      : iconWidget = Icon(icon, size: iconSize, color: iconColor);
 
   @override
   Widget build(BuildContext context) {
     return BaseCard(
       action: action,
+      color: color,
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: iconSize),
+            iconWidget,
             const SizedBox(width: cardPadding * 0.25),
             Expanded(
               child: Text(text, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
