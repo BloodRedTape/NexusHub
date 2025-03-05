@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/action.dart';
+import 'package:nexus/cards/humidifier.dart';
 import 'package:nexus/cards/light.dart';
 import 'package:nexus/cards/light_switch.dart';
 import 'package:nexus/cards/printer.dart';
@@ -72,7 +73,10 @@ class MasterTab extends StatelessWidget {
         ]),
         ExpandedColumn(children: [
           ExpandedRow(children: [
-            ActionCard(icon: MdiIcons.testTubeEmpty, name: 'Action 1'),
+            HumidifierCard(
+              stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2'),
+              room: 'Humidifier',
+            ),
             ActionCard(icon: MdiIcons.testTube, name: 'Action 2'),
           ]),
           ExpandedRow(

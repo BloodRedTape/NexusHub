@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:nexus/cards/curtain.dart';
+import 'package:nexus/cards/humidifier.dart';
 import 'package:nexus/cards/sensor.dart';
 import 'package:nexus/cards/switch.dart';
 import 'package:nexus/clients/ha/client.dart';
@@ -67,12 +68,10 @@ class BedroomTab extends StatelessWidget {
                 icon: Icons.curtains,
                 formatter: Formatter.time,
               ),
-              SwitchCard(
-                  onIcon: Icons.wind_power,
-                  offIcon: Icons.wind_power_outlined,
-                  onColor: const Color.fromARGB(255, 43, 167, 216),
-                  stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2_bedroom'),
-                  room: 'Humidifier'),
+              HumidifierCard(
+                stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2_bedroom'),
+                room: 'Humidifier',
+              ),
             ],
           ),
           ExpandedRow(children: [
