@@ -178,3 +178,32 @@ class PlainCard extends StatelessWidget {
     );
   }
 }
+
+class SmallPlainCard extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final void Function()? action;
+
+  const SmallPlainCard({required this.icon, required this.text, this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseCard(
+      action: action,
+      child: Padding(
+        padding: EdgeInsets.all(cardPadding),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, size: iconSize),
+            const SizedBox(width: cardPadding * 0.25),
+            Expanded(
+              child: Text(text, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

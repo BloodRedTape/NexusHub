@@ -64,21 +64,8 @@ class SmallSensorCard extends StateCard<double> {
 
   @override
   Widget build(BuildContext context, double? state) {
-    if (state == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
+    if (state == null) return SmallPlainCard(icon: Icons.error, text: 'Unavailable');
 
-    return BaseCard(
-      child: Padding(
-        padding: EdgeInsets.all(cardPadding),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(icon, size: iconSize),
-            const SizedBox(width: cardPadding * 0.25),
-            Text(formatter(state), style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
+    return SmallPlainCard(icon: icon, text: formatter(state));
   }
 }
