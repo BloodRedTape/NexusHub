@@ -69,8 +69,7 @@ class _MyAppState extends State<MyApp> {
           TabItem(
             tab: const Tab(text: 'Settings'),
             child: SettingsTab(items: [
-              SettingsItem.fromPackage(
-                  name: 'Settings', package: 'com.android.settings'),
+              SettingsItem.fromPackage(name: 'Settings', package: 'com.android.settings'),
               _weatherClient.makeSettings(),
               _homeAssistantClient.makeSettings()
             ]),
@@ -80,16 +79,12 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         brightness: Brightness.light,
         useMaterial3: true,
-        cardTheme: CardTheme(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(cardBorderRadius))),
+        cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
-        cardTheme: CardTheme(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(cardBorderRadius))),
+        cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
       ),
       themeMode: ThemeMode.dark,
     );

@@ -9,12 +9,14 @@ import 'package:nexus/clients/ha/settings.dart';
 import 'package:nexus/clients/ha/states/calendar.dart';
 import 'package:nexus/clients/ha/states/curtain.dart';
 import 'package:nexus/clients/ha/states/entity.dart';
+import 'package:nexus/clients/ha/states/light.dart';
 import 'package:nexus/clients/ha/states/sensor.dart';
 import 'package:nexus/clients/ha/states/switch.dart';
 import 'package:nexus/dashboard/settings.dart';
 import 'package:nexus/providers/shared_preferences_state.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/calendar.dart';
+import 'package:nexus/states/light.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
 class HomeAssistantClient {
@@ -26,6 +28,7 @@ class HomeAssistantClient {
   Map<String, SwitchStateProvider> _switchStateProviders = {};
   Map<String, CurtainStateProvider> _curtainStateProviders = {};
   Map<String, CalendarStateProvider> _calendarStateProviders = {};
+  Map<String, LightStateProvider> _lightStateProviders = {};
 
   HomeAssistantClient() {
     _configStateProvider = SharedPreferencesStateProvider(
@@ -139,6 +142,23 @@ class HomeAssistantClient {
     );
 
     return response;
+  }
+
+  StateProvider<LightState> lightStateProvider(String entityId) {
+    return _lightStateProviders.putIfAbsent(entityId, () => _buildLightStateProvider(entityId));
+  }
+
+  LightStateProvider _buildLightStateProvider(String entityId) {
+    final provider = LightStateProvider(
+        entityId: entityId, entitiesStateProvider: entitiesStateProvider(), requestLightState: (state) => _requestLightState(entityId, state));
+
+    provider.init();
+
+    return provider;
+  }
+
+  void _requestLightState(String entityId, LightState state) {
+    _entitiesStateProvider.executeServiceForEntity(entityId, state.isOn ? 'turn_on' : 'turn_off');
   }
 
   SettingsItem makeSettings() {

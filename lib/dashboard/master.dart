@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/action.dart';
+import 'package:nexus/cards/light.dart';
 import 'package:nexus/cards/light_switch.dart';
 import 'package:nexus/cards/printer.dart';
 import 'package:nexus/cards/sensor.dart';
@@ -60,7 +61,11 @@ class MasterTab extends StatelessWidget {
                   formatter: Formatter.aqi,
                 ),
               ]),
-              ActionCard(icon: MdiIcons.microscope, name: 'Action 3'),
+              LightCard(
+                  stateProvider: homeAssistantClient.lightStateProvider('light.light_led_master'),
+                  onIcon: MdiIcons.lightbulbSpot,
+                  offIcon: MdiIcons.lightbulbSpotOff,
+                  name: 'Led Strip'),
             ],
           )
         ]),
@@ -71,7 +76,11 @@ class MasterTab extends StatelessWidget {
           ]),
           ExpandedRow(
             children: [
-              LightSwitchCard(stateProvider: homeAssistantClient.switchStateProvider('light.light_bulbs_master'), room: 'Bulbs'),
+              LightCard(
+                  stateProvider: homeAssistantClient.lightStateProvider('light.light_bulbs_master'),
+                  onIcon: Icons.lightbulb,
+                  offIcon: Icons.lightbulb_outline,
+                  name: 'Bulbs'),
               Printer(
                 bedTemperature: homeAssistantClient.sensorStateProvider('sensor.bed_temp_shui_master'),
                 targetBedTemperature: homeAssistantClient.sensorStateProvider('sensor.target_bed_temp_shui_master'),

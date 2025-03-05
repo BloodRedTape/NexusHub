@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/providers/state.dart';
 
 class CalendarEventState {
   final TimeOfDay start;
