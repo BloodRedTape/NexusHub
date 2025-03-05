@@ -47,7 +47,7 @@ class AppsTab extends StateCard<List<AppInfo>> {
           ],
         ),
       ),
-      onTap: () => InstalledApps.startApp(app.packageName),
+      action: () => InstalledApps.startApp(app.packageName),
     );
   }
 

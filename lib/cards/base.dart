@@ -1,22 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:nexus/consts.dart';
 
 class BaseCard extends StatelessWidget {
   final Widget child;
   final Color? color;
-  final Function()? onTap;
+  final Function()? action;
 
-  BaseCard({required this.child, this.onTap, this.color});
+  BaseCard({required this.child, this.action, this.color});
 
   @override
   Widget build(BuildContext context) {
+    final button = ElevatedButton(
+      onPressed: () => action?.call(),
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        padding: EdgeInsets.zero, // Ensure zero padding
+        foregroundColor: Colors.white,
+        iconColor: Colors.white,
+        backgroundColor: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cardBorderRadius),
+        ),
+      ),
+      child: child,
+    );
+
     return Container(
       margin: const EdgeInsets.all(5),
-      child: GestureDetector(
-          onTap: onTap,
-          child: Card(
-            color: color,
-            child: child,
-          )),
+      child: Card(
+        color: color,
+        child: action != null ? button : child,
+      ),
     );
   }
 }

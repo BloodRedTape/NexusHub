@@ -29,7 +29,7 @@ class DetailsCard extends StatelessWidget {
     return BaseCard(
       child: child,
       color: color,
-      onTap: () => navigateDetails(context),
+      action: details != null ? () => navigateDetails(context) : null,
     );
   }
 

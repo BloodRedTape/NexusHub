@@ -21,33 +21,48 @@ class MasterTab extends StatelessWidget {
       children: [
         ExpandedColumn(children: [
           ExpandedRow(children: [
-            SensorCard(
-              stateProvider: homeAssistantClient
-                  .sensorStateProvider('sensor.temp_ht_master'),
-              icon: Icons.thermostat,
-              formatter: Formatter.tempearture,
-            ),
-            SensorCard(
-              stateProvider: homeAssistantClient
-                  .sensorStateProvider('sensor.humidity_ht_master'),
-              icon: Icons.water_drop_outlined,
-              formatter: Formatter.humidity,
-            ),
+            ExpandedColumn(children: [
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.temp_ht_master'),
+                icon: Icons.thermostat,
+                formatter: Formatter.tempearture,
+              ),
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.humidity_ht_master'),
+                icon: Icons.water_drop_outlined,
+                formatter: Formatter.humidity,
+              ),
+            ]),
+            ExpandedColumn(children: [
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_master'),
+                icon: Icons.co2,
+                formatter: Formatter.carbonDioxide,
+              ),
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_master'),
+                icon: MdiIcons.windowOpenVariant,
+                formatter: Formatter.time,
+              ),
+            ]),
           ]),
-          ExpandedRow(children: [
-            SensorCard(
-              stateProvider: homeAssistantClient
-                  .sensorStateProvider('sensor.illuminance_motion_nowhere'),
-              icon: Icons.sunny,
-              formatter: Formatter.illuminance,
-            ),
-            SensorCard(
-              stateProvider: homeAssistantClient
-                  .sensorStateProvider('sensor.u_s_air_quality_index'),
-              icon: Icons.air_sharp,
-              formatter: Formatter.aqi,
-            ),
-          ])
+          ExpandedRow(
+            children: [
+              ExpandedColumn(children: [
+                SmallSensorCard(
+                  stateProvider: homeAssistantClient.sensorStateProvider('sensor.illuminance_motion_nowhere'),
+                  icon: Icons.sunny,
+                  formatter: Formatter.illuminance,
+                ),
+                SmallSensorCard(
+                  stateProvider: homeAssistantClient.sensorStateProvider('sensor.u_s_air_quality_index'),
+                  icon: Icons.air_sharp,
+                  formatter: Formatter.aqi,
+                ),
+              ]),
+              ActionCard(icon: MdiIcons.microscope, name: 'Action 3'),
+            ],
+          )
         ]),
         ExpandedColumn(children: [
           ExpandedRow(children: [
@@ -56,28 +71,16 @@ class MasterTab extends StatelessWidget {
           ]),
           ExpandedRow(
             children: [
-              LightSwitchCard(
-                  stateProvider: homeAssistantClient
-                      .switchStateProvider('light.light_bulbs_master'),
-                  room: 'Bulbs'),
+              LightSwitchCard(stateProvider: homeAssistantClient.switchStateProvider('light.light_bulbs_master'), room: 'Bulbs'),
               Printer(
-                bedTemperature: homeAssistantClient
-                    .sensorStateProvider('sensor.bed_temp_shui_master'),
-                targetBedTemperature: homeAssistantClient
-                    .sensorStateProvider('sensor.target_bed_temp_shui_master'),
-                extruderTemperature: homeAssistantClient
-                    .sensorStateProvider('sensor.extruder_temp_shui_master'),
-                targetExtruderTemperature:
-                    homeAssistantClient.sensorStateProvider(
-                        'sensor.target_extruder_temp_shui_master'),
-                progress: homeAssistantClient
-                    .sensorStateProvider('sensor.print_progress_shui_master'),
-                power: homeAssistantClient
-                    .switchStateProvider('switch.power_print3d_master'),
-                status: homeAssistantClient
-                    .entityStateProvider('sensor.print_status_shui_master'),
-                connection: homeAssistantClient
-                    .entityStateProvider('sensor.connection_shui_master'),
+                bedTemperature: homeAssistantClient.sensorStateProvider('sensor.bed_temp_shui_master'),
+                targetBedTemperature: homeAssistantClient.sensorStateProvider('sensor.target_bed_temp_shui_master'),
+                extruderTemperature: homeAssistantClient.sensorStateProvider('sensor.extruder_temp_shui_master'),
+                targetExtruderTemperature: homeAssistantClient.sensorStateProvider('sensor.target_extruder_temp_shui_master'),
+                progress: homeAssistantClient.sensorStateProvider('sensor.print_progress_shui_master'),
+                power: homeAssistantClient.switchStateProvider('switch.power_print3d_master'),
+                status: homeAssistantClient.entityStateProvider('sensor.print_status_shui_master'),
+                connection: homeAssistantClient.entityStateProvider('sensor.connection_shui_master'),
               ),
             ],
           )
