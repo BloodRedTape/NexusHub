@@ -8,8 +8,14 @@ class CalendarStateProvider extends StateProvider<CalendarState> {
   final StateProvider<List<Entity>> entitiesStateProvider;
   final Future<ServiceResponse?> Function(String, DateTime, DateTime) getCalendarEvents;
   final Duration rangeFromNow;
+  final Duration timeZone;
 
-  CalendarStateProvider({required this.entityId, required this.entitiesStateProvider, required this.getCalendarEvents, required this.rangeFromNow});
+  CalendarStateProvider(
+      {required this.entityId,
+      required this.entitiesStateProvider,
+      required this.getCalendarEvents,
+      required this.rangeFromNow,
+      this.timeZone = const Duration(hours: 2)});
 
   @override
   void init() {
@@ -66,8 +72,8 @@ class CalendarStateProvider extends StateProvider<CalendarState> {
     Map<DateTime, List<CalendarEventState>> result = {};
 
     for (dynamic event in eventsJson) {
-      DateTime startDateTime = DateTime.parse(event['start']);
-      DateTime endDateTime = DateTime.parse(event['end']);
+      DateTime startDateTime = DateTime.parse(event['start']).add(timeZone);
+      DateTime endDateTime = DateTime.parse(event['end']).add(timeZone);
 
       String description = event['summary'];
 

@@ -49,7 +49,7 @@ class Painter {
 
   static Color? carbonDioxide(double state) {
     if (state < 1000) return Colors.green;
-    if (state < 1500) return Colors.amber;
+    if (state < 1500) return const Color.fromARGB(255, 255, 210, 73);
     return Colors.red;
   }
 
@@ -60,7 +60,7 @@ class Painter {
 
   static Color? aqi(double state) {
     if (state < 50) return Colors.green;
-    if (state < 100.0) return Colors.amber;
+    if (state < 100.0) return Color.fromARGB(255, 255, 210, 73);
     if (state < 150.0) return Colors.orange;
     if (state < 200.0) return Colors.red;
     return Colors.purple;
