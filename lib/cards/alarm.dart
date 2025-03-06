@@ -11,21 +11,18 @@ class AlarmCard extends StateCard<AlarmState> {
   Widget build(BuildContext context, AlarmState? state) {
     if (state == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
 
-    final color = const Color.fromARGB(255, 38, 82, 158);
     final icon = Icons.alarm;
+    final action = () => InstalledApps.startApp('com.google.android.deskclock');
 
-    if (state.alarms.isEmpty)
-      return PlainCard(color: color, icon: icon, text: 'None');
+    if (state.next == null) return PlainCard(color: null, icon: icon, text: 'None', action: action);
 
-    final AlarmInfo nearest = state.alarms.first;
-    final AlarmInfo? next = state.alarms.length > 1 ? state.alarms[1] : null;
+    final color = const Color.fromARGB(255, 23, 59, 121);
 
     return PlainCard(
       color: color,
       icon: icon,
-      text: _formatDateTime(nearest.fire),
-      subText: next != null ? _formatDateTime(next.fire) : null,
-      action: () => InstalledApps.startApp('com.google.android.deskclock'),
+      text: _formatDateTime(state.next!.fire),
+      action: action,
     );
   }
 

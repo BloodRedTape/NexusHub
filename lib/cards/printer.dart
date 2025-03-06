@@ -47,8 +47,7 @@ class _PrinterState extends State<Printer> {
     widget.bedTemperature.bindValueChanged(onBedTemperatureChanged);
     widget.targetBedTemperature.bindValueChanged(onTargetBedTemperatureChanged);
     widget.extruderTemperature.bindValueChanged(onExtruderTemperatureChanged);
-    widget.targetExtruderTemperature
-        .bindValueChanged(onTargetExtruderTemperatureChanged);
+    widget.targetExtruderTemperature.bindValueChanged(onTargetExtruderTemperatureChanged);
     widget.progress.bindValueChanged(onProgressChanged);
     widget.power.bindValueChanged(onPowerChanged);
     widget.status.bindValueChanged(onStatusChanged);
@@ -119,28 +118,11 @@ class _PrinterState extends State<Printer> {
 
   @override
   Widget build(BuildContext context) {
-    return _build(
-        context,
-        bedTemperature,
-        targetBedTemperature,
-        extruderTemperature,
-        targetExtruderTemperature,
-        progress,
-        power,
-        status,
-        connection);
+    return _build(context, bedTemperature, targetBedTemperature, extruderTemperature, targetExtruderTemperature, progress, power, status, connection);
   }
 
-  Widget _build(
-      BuildContext context,
-      double? bedTemperature,
-      double? targetBedTemperature,
-      double? extruderTemperature,
-      double? targetExtruderTemperature,
-      double? progress,
-      bool? power,
-      String? status,
-      String? connection) {
+  Widget _build(BuildContext context, double? bedTemperature, double? targetBedTemperature, double? extruderTemperature, double? targetExtruderTemperature,
+      double? progress, bool? power, String? status, String? connection) {
     if (power == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
 
     final powerIcon = power ? Icons.power : Icons.power_off;
@@ -153,27 +135,20 @@ class _PrinterState extends State<Printer> {
 
     final printerIcon = MdiIcons.printer3D;
 
-    if (!power)
-      return PlainCard(
-          icon: printerIcon, text: 'Power Off', subAction: powerAction);
+    if (!power) return PlainCard(icon: printerIcon, text: 'Power Off', subAction: powerAction);
 
-    if (connection == null || status == null || status == 'unknown')
-      return PlainCard(
-          icon: printerIcon, text: 'No Connection', subAction: powerAction);
+    if (connection == null || status == null || status == 'unknown') return PlainCard(icon: printerIcon, text: 'No Connection', subAction: powerAction);
 
     bool printing = status == 'Printing' && progress != null;
 
     return PlainCardBase(
       icon: Icon(printerIcon, size: iconSize),
-      color: printing
-          ? const Color.fromARGB(255, 36, 110, 238)
-          : const Color.fromARGB(255, 25, 70, 146),
+      color: const Color.fromARGB(255, 25, 70, 146),
       subAction: powerAction,
       children: [
         Text(
           printing ? '${progress.toInt()}%' : status,
-          style:
-              TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold),
         ),
         Text(
           '${temperature(bedTemperature)} / ${temperature(targetBedTemperature)}',

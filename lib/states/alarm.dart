@@ -1,5 +1,3 @@
-import 'package:nexus/providers/state.dart';
-
 class AlarmInfo {
   final DateTime fire;
 
@@ -7,9 +5,7 @@ class AlarmInfo {
 }
 
 class AlarmState {
-  final List<AlarmInfo> alarms;
+  final AlarmInfo? next;
 
-  const AlarmState({required this.alarms});
+  const AlarmState({required this.next});
 }
-
-typedef AlarmStateProvider = StateProvider<AlarmState>;

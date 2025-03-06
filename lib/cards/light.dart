@@ -13,7 +13,12 @@ class LightCard extends StateCard<LightState> {
 
   @override
   Widget build(BuildContext context, LightState? state) {
-    if (state == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
+    if (state == null)
+      return PlainCard(
+        icon: Icons.error,
+        text: 'Unavailable',
+        subText: name,
+      );
 
     return PlainCard(
       color: Tint.color(color: state.color?.value, fraction: 0.4),

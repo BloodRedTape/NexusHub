@@ -20,24 +20,24 @@ class BedroomTab extends StatelessWidget {
     return ExpandedRow(
       children: [
         ExpandedColumn(children: [
-          ExpandedColumn(children: [
-            ExpandedRow(children: [
+          ExpandedRow(children: [
+            ExpandedColumn(children: [
               SmallSensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.temp_ht_bedroom'),
                 icon: Icons.thermostat,
                 formatter: Formatter.tempearture,
               ),
               SmallSensorCard(
-                stateProvider: homeAssistantClient.sensorStateProvider('sensor.humidity_ht_bedroom'),
-                icon: Icons.water_drop_outlined,
-                formatter: Formatter.humidity,
-              ),
-            ]),
-            ExpandedRow(children: [
-              SmallSensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_bedroom'),
                 icon: MdiIcons.windowOpenVariant,
                 formatter: Formatter.time,
+              ),
+            ]),
+            ExpandedColumn(children: [
+              SmallSensorCard(
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.humidity_ht_bedroom'),
+                icon: Icons.water_drop_outlined,
+                formatter: Formatter.humidity,
               ),
               SmallSensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_master'),
