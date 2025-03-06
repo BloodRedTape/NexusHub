@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/providers/state.dart';
-import 'dart:io' show Platform;
 
 class AppsStateProvider extends StateProvider<List<AppInfo>> {
   @override

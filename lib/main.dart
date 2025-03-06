@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/clients/android/api.dart';
 import 'package:nexus/clients/android/client.dart';
-import 'package:nexus/clients/apps/client.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/consts.dart';
@@ -10,7 +8,6 @@ import 'package:nexus/dashboard/bedroom.dart';
 import 'package:nexus/dashboard/master.dart';
 import 'package:nexus/dashboard/morning.dart';
 import 'package:nexus/dashboard/settings.dart';
-import 'package:nexus/utils/generic_icon.dart';
 import 'dashboard/dashboard.dart';
 import 'package:flutter/services.dart';
 
@@ -27,7 +24,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final OpenMeteoWeatherClient _weatherClient = OpenMeteoWeatherClient();
-  final AppsClient _appsClient = AppsClient();
   final HomeAssistantClient _homeAssistantClient = HomeAssistantClient();
   final AndroidClient _androidClient = AndroidClient();
 
@@ -69,12 +65,12 @@ class _MyAppState extends State<MyApp> {
           ),
           TabItem(
             tab: Tab(text: 'Apps'),
-            child: AppsTab(stateProvider: _appsClient.getStateProvider()),
+            child: AppsTab(stateProvider: _androidClient.getAppsStateProvider()),
           ),
           TabItem(
             tab: const Tab(text: 'Settings'),
             child: SettingsTab(items: [
-              SettingsItem.fromPackage(name: 'Settings', package: 'com.android.settings'),
+              _androidClient.makeSettings(),
               _weatherClient.makeSettings(),
               _homeAssistantClient.makeSettings(),
             ]),
