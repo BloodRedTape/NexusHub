@@ -7,11 +7,7 @@ class SharedPreferencesStateProvider<T> extends StateProvider<T> {
   final String Function(T?) serialize;
   final T? Function(String) deserialize;
 
-  SharedPreferencesStateProvider(
-      {required this.initialValue,
-      required this.preferencesKey,
-      required this.serialize,
-      required this.deserialize});
+  SharedPreferencesStateProvider({required this.initialValue, required this.preferencesKey, required this.serialize, required this.deserialize});
 
   @override
   void init() {

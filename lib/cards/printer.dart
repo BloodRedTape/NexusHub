@@ -123,7 +123,12 @@ class _PrinterState extends State<Printer> {
 
   Widget _build(BuildContext context, double? bedTemperature, double? targetBedTemperature, double? extruderTemperature, double? targetExtruderTemperature,
       double? progress, bool? power, String? status, String? connection) {
-    if (power == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
+    if (power == null)
+      return PlainCard(
+        icon: Icons.error,
+        text: 'Unavailable',
+        subText: '3d Printer',
+      );
 
     final powerIcon = power ? Icons.power : Icons.power_off;
 

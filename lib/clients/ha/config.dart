@@ -7,11 +7,11 @@ class HomeAssistantConfig {
   static String serialize(HomeAssistantConfig? config) {
     if (config == null) return '';
 
-    return '${config.url}:${config.token}';
+    return '${config.url}~${config.token}';
   }
 
   static HomeAssistantConfig? deserialize(String string) {
-    final parts = string.split(':');
+    final parts = string.split('~');
 
     if (parts.length != 2) return null;
 

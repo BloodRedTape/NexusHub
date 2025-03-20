@@ -43,7 +43,7 @@ class MasterTab extends StatelessWidget {
                 formatter: Formatter.humidity,
               ),
               SmallSensorCard(
-                stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_master'),
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_custom0_master'),
                 icon: Icons.co2,
                 formatter: Formatter.carbonDioxide,
                 iconPainter: Painter.carbonDioxide,
@@ -67,9 +67,9 @@ class MasterTab extends StatelessWidget {
               ]),
               Printer(
                 bedTemperature: homeAssistantClient.sensorStateProvider('sensor.bed_temp_shui_master'),
-                targetBedTemperature: homeAssistantClient.sensorStateProvider('sensor.target_bed_temp_shui_master'),
+                targetBedTemperature: homeAssistantClient.sensorStateProvider('number.target_bed_temp_shui_master'),
                 extruderTemperature: homeAssistantClient.sensorStateProvider('sensor.extruder_temp_shui_master'),
-                targetExtruderTemperature: homeAssistantClient.sensorStateProvider('sensor.target_extruder_temp_shui_master'),
+                targetExtruderTemperature: homeAssistantClient.sensorStateProvider('number.target_extruder_temp_shui_master'),
                 progress: homeAssistantClient.sensorStateProvider('sensor.print_progress_shui_master'),
                 power: homeAssistantClient.switchStateProvider('switch.power_print3d_master'),
                 status: homeAssistantClient.entityStateProvider('sensor.print_status_shui_master'),

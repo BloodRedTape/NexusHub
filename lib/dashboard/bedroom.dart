@@ -40,7 +40,7 @@ class BedroomTab extends StatelessWidget {
                 formatter: Formatter.humidity,
               ),
               SmallSensorCard(
-                stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_master'),
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_qingping_bedroom'),
                 icon: Icons.co2,
                 formatter: Formatter.carbonDioxide,
                 iconPainter: Painter.carbonDioxide,
