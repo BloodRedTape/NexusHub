@@ -23,7 +23,7 @@ class BedroomTab extends StatelessWidget {
           ExpandedRow(children: [
             ExpandedColumn(children: [
               SmallSensorCard(
-                stateProvider: homeAssistantClient.sensorStateProvider('sensor.temp_ht_bedroom'),
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.temperature_qingping_bedroom'),
                 icon: Icons.thermostat,
                 formatter: Formatter.tempearture,
               ),
@@ -35,7 +35,7 @@ class BedroomTab extends StatelessWidget {
             ]),
             ExpandedColumn(children: [
               SmallSensorCard(
-                stateProvider: homeAssistantClient.sensorStateProvider('sensor.humidity_ht_bedroom'),
+                stateProvider: homeAssistantClient.sensorStateProvider('sensor.humidity_qingping_bedroom'),
                 icon: Icons.water_drop_outlined,
                 formatter: Formatter.humidity,
               ),
