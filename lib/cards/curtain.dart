@@ -3,11 +3,14 @@ import 'package:nexus/cards/plain.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/providers/state.dart';
 
+enum CurtainControlType { Button, Slider }
+
 class CurtainCard extends StatefulWidget {
   final StateProvider<double> stateProvider;
   final String? name;
+  final CurtainControlType control;
 
-  const CurtainCard({required this.stateProvider, this.name});
+  const CurtainCard({required this.stateProvider, required this.control, this.name});
 
   @override
   State<StatefulWidget> createState() => _CurtainCardState();
@@ -45,25 +48,45 @@ class _CurtainCardState<T> extends State<CurtainCard> {
     }
     List<Widget> widgets = [];
 
-    if (widget.name != null) {
-      widgets.add(Text(widget.name!,
-          style: TextStyle(
-              fontSize: primaryTextSize, fontWeight: FontWeight.bold)));
+    if (widget.control == CurtainControlType.Slider) {
+      if (widget.name != null) {
+        widgets.add(Text(widget.name!, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold)));
+      }
+
+      widgets.add(
+        Slider(value: state, min: 0, max: 100, onChanged: onValueChanged, onChangeEnd: widget.stateProvider.requestValue),
+      );
     }
 
-    widgets.add(
-      Slider(
-          value: state,
-          min: 0,
-          max: 100,
-          onChanged: onValueChanged,
-          onChangeEnd: widget.stateProvider.requestValue),
-    );
+    if (widget.control == CurtainControlType.Button) {
+      if (widget.name != null) {
+        String stateString;
+        if (state.toInt() == 100)
+          stateString = "Open";
+        else if (state.toInt() == 0)
+          stateString = "Closed";
+        else
+          stateString = "${state.toInt()}%";
 
-    return PlainCardBase(
-        icon: Icon(Icons.curtains,
-            size: iconSize, color: Colors.deepPurpleAccent[100]),
-        children: widgets);
+        widgets.add(Text("${stateString}", style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold)));
+      }
+
+      widgets.add(Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: 0,
+        children: [
+          Expanded(
+            child: ElevatedButton(onPressed: () => widget.stateProvider.requestValue(100), child: Icon(Icons.arrow_upward)),
+          ),
+          Expanded(
+            child: ElevatedButton(onPressed: () => widget.stateProvider.requestValue(0), child: Icon(Icons.arrow_downward)),
+          )
+        ],
+      ));
+    }
+
+    return PlainCardBase(icon: Icon(Icons.curtains, size: iconSize, color: Colors.deepPurpleAccent[100]), children: widgets);
   }
 
   IconData icon(bool? state) {

@@ -3,12 +3,14 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:nexus/cards/action.dart';
 import 'package:nexus/cards/curtain.dart';
 import 'package:nexus/cards/humidifier.dart';
+import 'package:nexus/cards/light.dart';
 import 'package:nexus/cards/sensor.dart';
 import 'package:nexus/cards/switch.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/providers/dummy_state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
+import 'package:nexus/utils/tint.dart';
 
 class BedroomTab extends StatelessWidget {
   final HomeAssistantClient homeAssistantClient;
@@ -61,22 +63,42 @@ class BedroomTab extends StatelessWidget {
                 iconPainter: Painter.aqi,
               ),
             ]),
-            ActionCard(name: 'Action', icon: MdiIcons.openInApp)
+            HumidifierCard(
+              stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2_bedroom'),
+              room: 'Humidifier',
+            ),
           ]),
         ]),
         ExpandedColumn(children: [
           ExpandedRow(
             children: [
-              ActionCard(name: 'Sleep', icon: MdiIcons.sleep),
-              HumidifierCard(
-                stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2_bedroom'),
-                room: 'Humidifier',
+              LightCard(
+                stateProvider: homeAssistantClient.lightStateProvider('light.led_custom0_bedroom'),
+                onIcon: MdiIcons.lightbulbSpot,
+                offIcon: MdiIcons.lightbulbSpotOff,
+                name: 'Bed Led',
+              ),
+              LightCard(
+                stateProvider: homeAssistantClient.lightStateProvider('light.chestnut_led'),
+                onIcon: MdiIcons.leaf,
+                offIcon: MdiIcons.leafOff,
+                name: 'Chestnut',
               ),
             ],
           ),
           ExpandedRow(children: [
-            CurtainCard(stateProvider: homeAssistantClient.curtainStateProvider('cover.driver_curtain0_bedroom'), name: 'Left'),
-            CurtainCard(stateProvider: homeAssistantClient.curtainStateProvider('cover.driver_curtain1_bedroom'), name: 'Right'),
+            CurtainCard(
+              stateProvider: homeAssistantClient.curtainStateProvider('cover.driver_curtains_bedroom'),
+              name: 'Curtains',
+              control: CurtainControlType.Button,
+            ),
+            SwitchCard(
+              stateProvider: homeAssistantClient.switchStateProvider('automation.open_curtains'),
+              onIcon: Icons.curtains,
+              offIcon: Icons.curtains_closed,
+              room: 'Open Curtains',
+              onColor: Tint.color(color: const Color.fromARGB(255, 42, 71, 233)),
+            ),
           ]),
         ])
       ],
