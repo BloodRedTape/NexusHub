@@ -5,6 +5,7 @@ import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/states/light.dart';
 import 'package:nexus/utils/generic_icon.dart';
+import 'package:nexus/utils/safe_slider.dart';
 import 'package:nexus/utils/tint.dart';
 
 class LightCardSettings extends StateCard<LightState> {
@@ -33,7 +34,7 @@ class LightCardSettings extends StateCard<LightState> {
     var brightness = state.brightness;
     if (brightness != null) {
       widgets.add(Text('Brightness', style: TextStyle(fontSize: secondaryTextSize)));
-      widgets.add(Slider(
+      widgets.add(SafeSlider(
         value: brightness.value,
         min: brightness.min,
         max: brightness.max,
