@@ -158,7 +158,24 @@ class HomeAssistantClient {
   }
 
   void _requestLightState(String entityId, LightState state) {
-    _entitiesStateProvider.executeServiceForEntity(entityId, state.isOn ? 'turn_on' : 'turn_off');
+    Map<String, dynamic> data = {};
+    data['entity_id'] = entityId;
+
+    if (state.color != null && state.isOn) {
+      data['rgb_color'] = [state.color!.value.r, state.color!.value.g, state.color!.value.b];
+    }
+
+    if (state.brightness != null && state.isOn) {
+      data['brightness_pct'] = (state.brightness!.value / (state.brightness!.max - state.brightness!.min)) * 100;
+    }
+
+    _entitiesStateProvider.executeService(
+      domain: 'light',
+      service: state.isOn ? 'turn_on' : 'turn_off',
+      serviceData: data,
+      returnResponse: false,
+      refetch: true,
+    );
   }
 
   SettingsItem makeSettings() {

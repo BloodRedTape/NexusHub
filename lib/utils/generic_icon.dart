@@ -6,19 +6,14 @@ class GenericIcon extends StatelessWidget {
 
   const GenericIcon({required this.icon, this.size});
 
-  GenericIcon.fromIcon({required IconData icon, this.size})
-      : icon = FittedBox(fit: BoxFit.fill, child: Icon(icon));
+  GenericIcon.fromIcon({required IconData icon, this.size}) : icon = FittedBox(fit: BoxFit.fill, child: Icon(icon));
 
   GenericIcon.fromImage({required Image image, this.size}) : icon = image;
 
   GenericIcon.fromFuture({required Future<Widget> image, this.size})
-      : icon = FutureBuilder<Widget>(
-            future: image,
-            builder: (context, snapshot) =>
-                _buildFutureIcon(context, snapshot));
+      : icon = FutureBuilder<Widget>(future: image, builder: (context, snapshot) => _buildFutureIcon(context, snapshot));
 
-  static Widget _buildFutureIcon(
-      BuildContext context, AsyncSnapshot<Widget> snapshot) {
+  static Widget _buildFutureIcon(BuildContext context, AsyncSnapshot<Widget> snapshot) {
     return snapshot.connectionState == ConnectionState.done
         ? snapshot.hasData
             ? snapshot.data ?? _buildError()
