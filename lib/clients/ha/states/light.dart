@@ -1,25 +1,24 @@
 import 'dart:ui';
 
-import 'package:home_assistant/home_assistant.dart';
+import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/light.dart';
 
 class LightStateProvider extends StateProvider<LightState> {
-  final String entityId;
-  final StateProvider<List<Entity>> entitiesStateProvider;
+  final StateProvider<Entity> entityProvider;
   final void Function(LightState) requestLightState;
 
-  LightStateProvider({required this.entityId, required this.entitiesStateProvider, required this.requestLightState});
+  LightStateProvider({required this.entityProvider, required this.requestLightState});
 
   @override
   void init() {
     super.init();
-    entitiesStateProvider.bindValueChanged(_onEntitiesChanged);
+    entityProvider.bindValueChanged(_onEntityChanged);
   }
 
   @override
   void dispose() {
-    entitiesStateProvider.unbind(_onEntitiesChanged);
+    entityProvider.unbind(_onEntityChanged);
     super.dispose();
   }
 
@@ -28,15 +27,13 @@ class LightStateProvider extends StateProvider<LightState> {
     requestLightState(value);
   }
 
-  void _onEntitiesChanged(List<Entity>? entities) {
-    List<Entity> filtered = (entities ?? []).where((e) => e.entityId == entityId).toList();
-
-    if (filtered.isEmpty) {
+  void _onEntityChanged(Entity? entity) {
+    if (entity == null) {
       setValue(null);
       return;
     }
 
-    Entity light = filtered.first;
+    Entity light = entity;
 
     bool? isOn = _parseOnState(light.state);
 
@@ -55,28 +52,28 @@ class LightStateProvider extends StateProvider<LightState> {
     setValue(newState);
   }
 
-  bool? _parseOnState(String state) {
+  bool? _parseOnState(String? state) {
     if (state == 'on') return true;
     if (state == 'off') return false;
     return null;
   }
 
-  LimitedValueState? _parseBrightnessState(EntityAttributes attributes) {
-    if (attributes.brightness == null) return null;
+  LimitedValueState? _parseBrightnessState(EntityAttributes? attributes) {
+    if (attributes?.brightness == null) return null;
 
-    return LimitedValueState(value: attributes.brightness!, min: 0, max: 255);
+    return LimitedValueState(value: attributes!.brightness!, min: 0, max: 255);
   }
 
-  LimitedValueState? _parseTemperatureState(EntityAttributes attributes) {
-    if (attributes.temperature == null || attributes.minTemp == null || attributes.maxTemp == null) return null;
+  LimitedValueState? _parseTemperatureState(EntityAttributes? attributes) {
+    if (attributes?.temperature == null || attributes?.minTemp == null || attributes?.maxTemp == null) return null;
 
-    return LimitedValueState(value: attributes.temperature!, min: attributes.minTemp!.toDouble(), max: attributes.maxTemp!.toDouble());
+    return LimitedValueState(value: attributes!.temperature!, min: attributes.minTemp!.toDouble(), max: attributes.maxTemp!.toDouble());
   }
 
-  ColorState? _parseColorState(EntityAttributes attributes) {
-    if (attributes.rgbColor == null || attributes.rgbColor!.length < 3) return null;
+  ColorState? _parseColorState(EntityAttributes? attributes) {
+    if (attributes?.rgbColor == null || (attributes?.rgbColor?.length ?? 0) < 3) return null;
 
-    final rgb = attributes.rgbColor!;
+    final rgb = attributes!.rgbColor!;
 
     return ColorState(value: Color.fromRGBO(rgb[0], rgb[1], rgb[2], 1.0));
   }

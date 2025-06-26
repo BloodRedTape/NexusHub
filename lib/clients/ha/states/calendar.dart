@@ -1,41 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:home_assistant/home_assistant.dart';
+import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/calendar.dart';
 
 class CalendarStateProvider extends StateProvider<CalendarState> {
-  final String entityId;
-  final StateProvider<List<Entity>> entitiesStateProvider;
+  final StateProvider<Entity> entityProvider;
   final Future<ServiceResponse?> Function(String, DateTime, DateTime) getCalendarEvents;
   final Duration rangeFromNow;
   final Duration timeZone;
 
-  CalendarStateProvider(
-      {required this.entityId,
-      required this.entitiesStateProvider,
-      required this.getCalendarEvents,
-      required this.rangeFromNow,
-      this.timeZone = const Duration(hours: 2)});
+  CalendarStateProvider({required this.entityProvider, required this.getCalendarEvents, required this.rangeFromNow, this.timeZone = const Duration(hours: 2)});
 
   @override
   void init() {
     super.init();
-    entitiesStateProvider.bindValueChanged(_onEntitiesChanged);
+    entityProvider.bindValueChanged(_onEntityChanged);
   }
 
   @override
   void dispose() {
-    entitiesStateProvider.unbind(_onEntitiesChanged);
+    entityProvider.unbind(_onEntityChanged);
     super.dispose();
   }
 
-  void _onEntitiesChanged(List<Entity>? entities) async {
-    List<Entity> filtered = (entities ?? []).where((e) => e.entityId == entityId).toList();
-
-    if (filtered.isEmpty) {
+  void _onEntityChanged(Entity? entity) async {
+    if (entity == null || entity.state == null) {
       setValue(null);
       return;
     }
+
+    final entityId = entity.entityId;
 
     final DateTime now = _withoutTime(DateTime.now());
 

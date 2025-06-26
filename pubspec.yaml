@@ -38,10 +38,10 @@ dependencies:
   open_meteo: 2.0.3
   installed_apps:
     git: https://github.com/BloodRedTape/installed_apps
-  home_assistant: 
+  home_assistant_ws: 
     git: 
-      url: https://github.com/BloodRedTape/home_assistant
-      ref: 09c210bbcc677d5c80e43e003fbbf5b06c3b4e4e
+      url: https://github.com/BloodRedTape/home_assistant_ws
+      ref: 3d05c56f11e97e8bc2bfa334fbd2f41ddef472ed
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

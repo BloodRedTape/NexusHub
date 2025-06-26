@@ -23,5 +23,9 @@ class StateProvider<T> {
     }
   }
 
+  T? getValue() {
+    return _state;
+  }
+
   void requestValue(T newValue) {}
 }

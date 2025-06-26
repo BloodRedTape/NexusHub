@@ -1,33 +1,28 @@
-import 'package:home_assistant/home_assistant.dart';
+import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/providers/state.dart';
 
 class SensorStateProvider extends StateProvider<double> {
-  final String entityId;
-  final StateProvider<List<Entity>> entitiesStateProvider;
-
-  SensorStateProvider({required this.entityId, required this.entitiesStateProvider});
+  final StateProvider<Entity> entityProvider;
+  SensorStateProvider({required this.entityProvider});
 
   @override
   void init() {
     super.init();
-    entitiesStateProvider.bindValueChanged(_onEntitiesChanged);
+    entityProvider.bindValueChanged(_onEntityChanged);
   }
 
   @override
   void dispose() {
-    entitiesStateProvider.unbind(_onEntitiesChanged);
+    entityProvider.unbind(_onEntityChanged);
     super.dispose();
   }
 
-  void _onEntitiesChanged(List<Entity>? entities) {
-    List<Entity> filtered = (entities ?? []).where((e) => e.entityId == entityId).toList();
-
-    if (filtered.isEmpty) {
-      //print("Can't find $entityId from ${entities?.length} entities");
+  void _onEntityChanged(Entity? entity) {
+    if (entity == null || entity.state == null) {
       setValue(null);
       return;
     }
 
-    setValue(double.tryParse(filtered.first.state));
+    setValue(double.tryParse(entity.state!));
   }
 }

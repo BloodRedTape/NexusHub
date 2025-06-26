@@ -1,22 +1,21 @@
-import 'package:home_assistant/home_assistant.dart';
+import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/providers/state.dart';
 
 class CurtainStateProvider extends StateProvider<double> {
-  final String entityId;
-  final StateProvider<List<Entity>> entitiesStateProvider;
+  final StateProvider<Entity> entityProvider;
   final void Function(double) requestState;
 
-  CurtainStateProvider({required this.entityId, required this.entitiesStateProvider, required this.requestState});
+  CurtainStateProvider({required this.entityProvider, required this.requestState});
 
   @override
   void init() {
     super.init();
-    entitiesStateProvider.bindValueChanged(_onEntitiesChanged);
+    entityProvider.bindValueChanged(_onEntityChanged);
   }
 
   @override
   void dispose() {
-    entitiesStateProvider.unbind(_onEntitiesChanged);
+    entityProvider.unbind(_onEntityChanged);
     super.dispose();
   }
 
@@ -25,13 +24,11 @@ class CurtainStateProvider extends StateProvider<double> {
     requestState(newValue);
   }
 
-  void _onEntitiesChanged(List<Entity>? entities) {
-    List<Entity> filtered = (entities ?? []).where((e) => e.entityId == entityId).toList();
-
-    if (filtered.isEmpty) {
+  void _onEntityChanged(Entity? entity) {
+    if (entity == null) {
       setValue(null);
       return;
     }
-    setValue(filtered.first.attributes.current_position);
+    setValue(entity.attributes?.currentPosition);
   }
 }

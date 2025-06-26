@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:home_assistant/home_assistant.dart';
+import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/state.dart';
 
@@ -15,8 +15,7 @@ class HomeAssistantEntityDebugWidget extends StatefulWidget {
   State<StatefulWidget> createState() => _HomeAssistantEntityDebugWidgetState();
 }
 
-class _HomeAssistantEntityDebugWidgetState
-    extends State<HomeAssistantEntityDebugWidget> {
+class _HomeAssistantEntityDebugWidgetState extends State<HomeAssistantEntityDebugWidget> {
   bool expanded = false;
 
   @override
@@ -25,8 +24,7 @@ class _HomeAssistantEntityDebugWidgetState
       '${widget.entity.entityId} - ${widget.entity.state}',
     );
 
-    final full = Text(JsonEncoder.withIndent('    ')
-        .convert(widget.entity.attributes.toJson()));
+    final full = Text(JsonEncoder.withIndent('    ').convert(widget.entity.attributes?.toJson()));
 
     return GestureDetector(
       onTap: () {
@@ -54,8 +52,7 @@ class HomeAssistantDebugWidget extends StateCard<List<Entity>> {
     if (state == null) return Center(child: Text('Null state'));
 
     return ListView.builder(
-      itemBuilder: (BuildContext context, int index) =>
-          HomeAssistantEntityDebugWidget(entity: state[index]),
+      itemBuilder: (BuildContext context, int index) => HomeAssistantEntityDebugWidget(entity: state[index]),
       itemCount: state.length,
       shrinkWrap: true,
     );

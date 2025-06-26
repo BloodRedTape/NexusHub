@@ -142,7 +142,7 @@ class _PrinterState extends State<Printer> {
 
     if (!power) return PlainCard(icon: printerIcon, text: 'Power Off', subAction: powerAction);
 
-    if (connection == null || status == null || status == 'unknown') return PlainCard(icon: printerIcon, text: 'No Connection', subAction: powerAction);
+    if (connection == null || status == null) return PlainCard(icon: printerIcon, text: 'No Connection', subAction: powerAction);
 
     bool printing = status == 'Printing' && progress != null;
 

@@ -1,22 +1,21 @@
-import 'package:home_assistant/home_assistant.dart';
+import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/providers/state.dart' show StateProvider;
 
 class SwitchStateProvider extends StateProvider<bool> {
-  final String entityId;
-  final StateProvider<List<Entity>> entitiesStateProvider;
+  final StateProvider<Entity> entityProvider;
   final void Function(bool) requestState;
 
-  SwitchStateProvider({required this.entityId, required this.entitiesStateProvider, required this.requestState});
+  SwitchStateProvider({required this.entityProvider, required this.requestState});
 
   @override
   void init() {
     super.init();
-    entitiesStateProvider.bindValueChanged(_onEntitiesChanged);
+    entityProvider.bindValueChanged(_onEntityChanged);
   }
 
   @override
   void dispose() {
-    entitiesStateProvider.unbind(_onEntitiesChanged);
+    entityProvider.unbind(_onEntityChanged);
     super.dispose();
   }
 
@@ -25,18 +24,16 @@ class SwitchStateProvider extends StateProvider<bool> {
     requestState(value);
   }
 
-  void _onEntitiesChanged(List<Entity>? entities) {
-    List<Entity> filtered = (entities ?? []).where((e) => e.entityId == entityId).toList();
-
-    if (filtered.isEmpty) {
+  void _onEntityChanged(Entity? entity) {
+    if (entity == null) {
       setValue(null);
       return;
     }
 
-    setValue(_parseState(filtered.first.state));
+    setValue(_parseState(entity.state));
   }
 
-  bool? _parseState(String state) {
+  bool? _parseState(String? state) {
     if (state == 'on') return true;
     if (state == 'off') return false;
     return null;
