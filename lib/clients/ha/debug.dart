@@ -5,6 +5,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/state.dart';
+import 'package:nexus/clients/ha/client.dart';
 
 class HomeAssistantEntityDebugWidget extends StatefulWidget {
   final Entity entity;
@@ -44,17 +45,15 @@ class _HomeAssistantEntityDebugWidgetState extends State<HomeAssistantEntityDebu
   }
 }
 
-class HomeAssistantDebugWidget extends StateCard<List<Entity>> {
+class HomeAssistantDebugWidget extends StateCard<HomeAssistantClientState> {
   HomeAssistantDebugWidget({required super.stateProvider});
 
   @override
-  Widget build(BuildContext context, List<Entity>? state) {
+  Widget build(BuildContext context, HomeAssistantClientState? state) {
     if (state == null) return Center(child: Text('Null state'));
 
-    return ListView.builder(
-      itemBuilder: (BuildContext context, int index) => HomeAssistantEntityDebugWidget(entity: state[index]),
-      itemCount: state.length,
-      shrinkWrap: true,
+    return Column(
+      children: [Text('Status ${state.status}')],
     );
   }
 }

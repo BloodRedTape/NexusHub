@@ -55,10 +55,18 @@ EntityAttributes applyAttributes(EntityAttributes target, EntityAttributes sourc
   return target;
 }
 
+class HomeAssistantClientState {
+  String status;
+
+  HomeAssistantClientState({required this.status});
+}
+
 class HomeAssistantClient {
   late StateProvider<HomeAssistantConfig> _configStateProvider;
   HomeAssistantWs? _homeAssistantWs = null;
   Timer? _pingPongTimer;
+
+  final _clientState = StateProvider<HomeAssistantClientState>();
 
   Map<String, StateProvider<Entity>> _entityProviders = {};
 
@@ -81,14 +89,19 @@ class HomeAssistantClient {
 
     _configStateProvider.init();
     _configStateProvider.bindValueChanged(_reconnect);
+
+    _clientState.setValue(HomeAssistantClientState(status: 'Initialized'));
   }
 
   Future<void> _restartConnection(HomeAssistantConfig? config) async {
+    _clientState.setValue(HomeAssistantClientState(status: 'disconnecting...'));
+
     _pingPongTimer?.cancel();
     await _homeAssistantWs?.disconnect();
-    _entityProviders.clear();
 
     if (config == null) return;
+
+    _clientState.setValue(HomeAssistantClientState(status: 'connecting...'));
 
     final uri = Uri.parse(config.url);
     _homeAssistantWs = HomeAssistantWs(
@@ -99,7 +112,9 @@ class HomeAssistantClient {
     );
     final ha = _homeAssistantWs!;
 
-    await ha.connect();
+    if (!await ha.connect()) {
+      _clientState.setValue(HomeAssistantClientState(status: 'Connect failed'));
+    }
 
     ha.subscribeEntities(_onEvent);
 
@@ -108,6 +123,8 @@ class HomeAssistantClient {
         await ha.ping();
       } catch (e) {}
     });
+
+    _clientState.setValue(HomeAssistantClientState(status: 'connected'));
   }
 
   void _reconnect(HomeAssistantConfig? config) {
@@ -119,9 +136,13 @@ class HomeAssistantClient {
     });
   }
 
-  void _onDone() {}
+  void _onDone() {
+    //_clientState.setValue(HomeAssistantClientState(status: 'done'));
+  }
 
-  void _onError(dynamic error) {}
+  void _onError(dynamic error) {
+    _clientState.setValue(HomeAssistantClientState(status: error.toString()));
+  }
 
   void _onEvent(EventMessage event) {
     if (event.available != null) {
@@ -302,8 +323,9 @@ class HomeAssistantClient {
             HomeAssistantConfigWidget(
               stateProvider: _configStateProvider,
             ),
-            Flexible(child: Spacer() //HomeAssistantDebugWidget(stateProvider: _entityProviders),
-                ),
+            Flexible(
+              child: HomeAssistantDebugWidget(stateProvider: _clientState),
+            ),
           ],
         ),
       ),

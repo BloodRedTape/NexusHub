@@ -88,7 +88,7 @@ class LightCard extends StateCard<LightState> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(name ?? 'Light'),
-          content: LightCardSettings(onIcon: onIcon, offIcon: offIcon, stateProvider: stateProvider),
+          content: SingleChildScrollView(child: LightCardSettings(onIcon: onIcon, offIcon: offIcon, stateProvider: stateProvider)),
           actions: <Widget>[
             TextButton(
               style: TextButton.styleFrom(textStyle: Theme.of(context).textTheme.labelLarge),

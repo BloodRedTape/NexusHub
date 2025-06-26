@@ -140,8 +140,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "3d05c56f11e97e8bc2bfa334fbd2f41ddef472ed"
-      resolved-ref: "3d05c56f11e97e8bc2bfa334fbd2f41ddef472ed"
+      ref: f50650edab72a720367d103fde55ab4f42db7ea0
+      resolved-ref: f50650edab72a720367d103fde55ab4f42db7ea0
       url: "https://github.com/BloodRedTape/home_assistant_ws"
     source: git
     version: "1.0.0"
