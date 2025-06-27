@@ -295,7 +295,9 @@ class HomeAssistantClient {
     data['entity_id'] = entityId;
 
     if (state.color != null && state.isOn) {
-      data['rgb_color'] = [state.color!.value.r, state.color!.value.g, state.color!.value.b];
+      //data['rgb_color'] = [state.color!.value.r, state.color!.value.g, state.color!.value.b];
+      final HSVColor color = HSVColor.fromColor(state.color!.value);
+      data['hs_color'] = [color.hue, color.saturation * 100];
     }
 
     if (state.brightness != null && state.isOn) {
