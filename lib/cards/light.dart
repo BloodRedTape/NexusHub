@@ -519,29 +519,38 @@ class LightCard extends StateCard<LightState> {
   final IconData onIcon;
   final IconData offIcon;
   final String? name;
+  final bool compact;
 
-  LightCard({required super.stateProvider, required this.onIcon, required this.offIcon, this.name});
+  LightCard({
+    required super.stateProvider,
+    required this.onIcon,
+    required this.offIcon,
+    this.name,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context, LightState? state) {
-    if (state == null)
-      return PlainCard(
-        icon: Icons.error,
-        text: 'Unavailable',
-        subText: name,
-      );
-
     return GestureDetector(
-      onLongPress: () => _buildControlDialog(context),
+      onLongPress: () {
+        if (state != null) _buildControlDialog(context);
+      },
       child: PlainCard(
-        color: Tint.color(color: state.color?.value, fraction: 0.4),
+        color: _color(state),
         icon: _icon(state),
         iconColor: _iconColor(state),
         text: _stateToText(state),
         subText: name,
-        action: () => switchState(state),
+        action: () {
+          if (state != null) switchState(state);
+        },
+        compact: compact,
       ),
     );
+  }
+
+  Color? _color(LightState? state) {
+    return state != null ? Tint.color(color: state.color?.value, fraction: 0.4) : null;
   }
 
   Future<void> _buildControlDialog(BuildContext context) {

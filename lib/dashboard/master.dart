@@ -25,44 +25,50 @@ class MasterTab extends StatelessWidget {
         ExpandedColumn(children: [
           ExpandedRow(children: [
             ExpandedColumn(children: [
-              SmallSensorCard(
+              SensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.temp_ht_master'),
                 icon: Icons.thermostat,
                 formatter: Formatter.tempearture,
+                compact: true,
               ),
-              SmallSensorCard(
+              SensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_master'),
                 icon: MdiIcons.windowOpenVariant,
                 formatter: Formatter.time,
+                compact: true,
               ),
             ]),
             ExpandedColumn(children: [
-              SmallSensorCard(
+              SensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.humidity_ht_master'),
                 icon: Icons.water_drop_outlined,
                 formatter: Formatter.humidity,
+                compact: true,
               ),
-              SmallSensorCard(
+              SensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.co2_custom0_master'),
                 icon: Icons.co2,
                 formatter: Formatter.carbonDioxide,
                 iconPainter: Painter.carbonDioxide,
+                compact: true,
               ),
             ]),
           ]),
           ExpandedRow(
             children: [
               ExpandedColumn(children: [
-                SmallSensorCard(
+                SensorCard(
                   stateProvider: homeAssistantClient.sensorStateProvider('sensor.illuminance_motion_nowhere'),
                   icon: Icons.sunny,
                   formatter: Formatter.illuminance,
+                  compact: true,
                 ),
-                SmallSensorCard(
+                SensorCard(
                   stateProvider: homeAssistantClient.sensorStateProvider('sensor.u_s_air_quality_index'),
                   icon: Icons.air_sharp,
                   formatter: Formatter.aqi,
                   iconPainter: Painter.aqi,
+                  compact: true,
                 ),
               ]),
               Printer(
@@ -97,7 +103,7 @@ class MasterTab extends StatelessWidget {
           ExpandedRow(children: [
             HumidifierCard(
               stateProvider: homeAssistantClient.switchStateProvider('fan.xiaomi_mi_smart_humidifier_2'),
-              room: 'Humidifier',
+              room: 'Mi Humidifier',
             ),
             SwitchCard(
               stateProvider: homeAssistantClient.switchStateProvider('switch.power_plug1_nowhere'),

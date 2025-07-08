@@ -10,6 +10,7 @@ class SwitchCard extends StateCard<bool> {
   final Color? onColor;
   final Color? offColor;
   final String? room;
+  final bool compact;
 
   SwitchCard(
       {required super.stateProvider,
@@ -19,17 +20,20 @@ class SwitchCard extends StateCard<bool> {
       this.offIconColor,
       this.onColor,
       this.offColor,
-      this.room});
+      this.room,
+      this.compact = false});
 
   @override
   Widget build(BuildContext context, bool? state) {
     return PlainCard(
-        color: _color(state),
-        icon: _icon(state),
-        iconColor: _iconColor(state),
-        text: _stateToText(state),
-        subText: room,
-        action: () => switchState(state));
+      color: _color(state),
+      icon: _icon(state),
+      iconColor: _iconColor(state),
+      text: _stateToText(state),
+      subText: room,
+      action: () => switchState(state),
+      compact: compact,
+    );
   }
 
   void switchState(bool? state) {

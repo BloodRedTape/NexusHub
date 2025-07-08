@@ -130,6 +130,8 @@ class PlainCard extends StatelessWidget {
 
   final Color? color;
 
+  final bool compact;
+
   PlainCard({
     required IconData icon,
     Color? iconColor,
@@ -140,6 +142,7 @@ class PlainCard extends StatelessWidget {
     this.subText,
     this.subTextColor,
     this.color,
+    this.compact = false,
   }) : iconWidget = Icon(icon, color: iconColor, size: iconSize);
 
   PlainCard.fromIconWidget({
@@ -151,10 +154,32 @@ class PlainCard extends StatelessWidget {
     this.subText,
     this.subTextColor,
     this.color,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (compact) {
+      return BaseCard(
+        action: action,
+        color: color,
+        child: Padding(
+          padding: EdgeInsets.all(cardPadding),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              iconWidget,
+              const SizedBox(width: cardPadding * 0.25),
+              Expanded(
+                child: Text(text, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final textWidget = FittedBox(
       alignment: Alignment.bottomLeft,
       fit: BoxFit.scaleDown,
@@ -175,38 +200,6 @@ class PlainCard extends StatelessWidget {
         textWidget,
         subTextWidget,
       ],
-    );
-  }
-}
-
-class SmallPlainCard extends StatelessWidget {
-  final Widget iconWidget;
-  final String text;
-  final void Function()? action;
-  final Color? color;
-
-  SmallPlainCard({required IconData icon, Color? iconColor, this.color, required this.text, this.action})
-      : iconWidget = Icon(icon, size: iconSize, color: iconColor);
-
-  @override
-  Widget build(BuildContext context) {
-    return BaseCard(
-      action: action,
-      color: color,
-      child: Padding(
-        padding: EdgeInsets.all(cardPadding),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            iconWidget,
-            const SizedBox(width: cardPadding * 0.25),
-            Expanded(
-              child: Text(text, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
