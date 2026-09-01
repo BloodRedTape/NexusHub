@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/cards/state.dart';
-import 'package:nexus/providers/state.dart';
 
 const tabPadding = EdgeInsets.all(24.0);
 

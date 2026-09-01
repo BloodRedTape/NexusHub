@@ -62,34 +62,6 @@ class PlainLayoutBase extends StatelessWidget {
   }
 }
 
-class PlainLayout extends StatelessWidget {
-  final Widget icon;
-
-  final PlainAction? subAction;
-
-  final String text;
-  final Color? textColor;
-
-  final String? subText;
-  final Color? subTextColor;
-
-  const PlainLayout({required this.icon, this.subAction, required this.text, this.textColor, required this.subText, this.subTextColor});
-
-  @override
-  Widget build(BuildContext context) {
-    final textWidget = FittedBox(
-        alignment: Alignment.bottomLeft,
-        fit: BoxFit.scaleDown,
-        child: Text(text, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold, color: textColor)));
-
-    final subTextWidget = subText != null
-        ? Text(subText!, style: TextStyle(fontSize: secondaryTextSize, color: subTextColor), maxLines: 1, overflow: TextOverflow.ellipsis)
-        : SizedBox();
-
-    return PlainLayoutBase(icon: icon, subAction: subAction, children: [textWidget, subTextWidget]);
-  }
-}
-
 /// One sensor value, redrawn on its own as the sensor updates.
 class Reading extends StateCard<double> {
   final String Function(double) formatter;

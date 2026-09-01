@@ -7,7 +7,6 @@ import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/light.dart';
-import 'package:nexus/utils/safe_slider.dart';
 import 'package:nexus/utils/tint.dart';
 
 // The main light control dialog

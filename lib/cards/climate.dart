@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/sensor.dart';
-import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/providers/state.dart';
 
