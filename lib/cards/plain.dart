@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/cards/base.dart';
+import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
 
 class PlainAction {
@@ -53,7 +54,8 @@ class PlainLayoutBase extends StatelessWidget {
                 child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: children,
+              // a lone child would be centered otherwise - let it fill instead
+              children: children.length == 1 ? [Expanded(child: children.single)] : children,
             ))
           ],
         ));
@@ -83,6 +85,62 @@ class PlainLayout extends StatelessWidget {
     final subTextWidget = subText != null ? Text(subText!, style: TextStyle(fontSize: secondaryTextSize, color: subTextColor)) : SizedBox();
 
     return PlainLayoutBase(icon: icon, subAction: subAction, children: [textWidget, subTextWidget]);
+  }
+}
+
+/// One sensor value, redrawn on its own as the sensor updates.
+class Reading extends StateCard<double> {
+  final String Function(double) formatter;
+  final bool primary;
+  final Color? color;
+
+  const Reading({required super.stateProvider, required this.formatter, this.primary = false, this.color});
+
+  @override
+  Widget build(BuildContext context, double? state) {
+    final text = state == null ? '-' : formatter(state);
+
+    final style = TextStyle(
+      fontSize: primary ? primaryTextSize : secondaryTextSize,
+      fontWeight: primary ? FontWeight.bold : FontWeight.normal,
+      color: color,
+    );
+
+    if (!primary) return Text(text, style: style);
+
+    return FittedBox(alignment: Alignment.bottomLeft, fit: BoxFit.scaleDown, child: Text(text, style: style));
+  }
+}
+
+/// Big value with a second line right under it, and a name pinned to the bottom.
+/// Both lines are widgets so each reading can update on its own.
+class StackedLayout extends StatelessWidget {
+  final Widget primary;
+  final Widget secondary;
+  final String? name;
+
+  const StackedLayout({super.key, required this.primary, required this.secondary, this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [primary, secondary],
+        ),
+        if (name != null)
+          Text(
+            name!,
+            style: TextStyle(fontSize: secondaryTextSize),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+      ],
+    );
   }
 }
 

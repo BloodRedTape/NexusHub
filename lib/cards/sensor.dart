@@ -33,6 +33,10 @@ class Formatter {
     return '${hours}h ${minutes}m';
   }
 
+  static String particulate(double state) {
+    return '${state.toInt()}µg';
+  }
+
   static String carbonDioxide(double state) {
     return '${state.toInt()}';
   }

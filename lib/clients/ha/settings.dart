@@ -23,11 +23,35 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
     widget.stateProvider.bindValueChanged(_onConfigChanged);
   }
 
+  bool _hideUnavailable = true;
+  bool _hideEmptyAreas = true;
+
   void _onConfigChanged(HomeAssistantConfig? config) {
     if (config == null) return;
 
     _urlController.text = config.url.toString();
     _tokenController.text = config.token.toString();
+    _hideUnavailable = config.hideUnavailable;
+    _hideEmptyAreas = config.hideEmptyAreas;
+  }
+
+  /// Flags apply right away - unlike the text fields, which are saved on close.
+  Widget _flag(String title, bool value, void Function(bool) apply) {
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+      value: value,
+      onChanged: (newValue) {
+        setState(() => apply(newValue));
+
+        widget.stateProvider.setValue(HomeAssistantConfig(
+          url: _urlController.text,
+          token: _tokenController.text,
+          hideUnavailable: _hideUnavailable,
+          hideEmptyAreas: _hideEmptyAreas,
+        ));
+      },
+    );
   }
 
   @override
@@ -39,6 +63,8 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
         HomeAssistantConfig(
           url: _urlController.text,
           token: _tokenController.text,
+          hideUnavailable: _hideUnavailable,
+          hideEmptyAreas: _hideEmptyAreas,
         ),
       );
     }
@@ -68,6 +94,8 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
               border: OutlineInputBorder(),
             ),
           ),
+          _flag('Hide unavailable devices', _hideUnavailable, (value) => _hideUnavailable = value),
+          _flag('Hide rooms without devices', _hideEmptyAreas, (value) => _hideEmptyAreas = value),
         ],
       ),
     );

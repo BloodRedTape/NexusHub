@@ -32,6 +32,9 @@ class _MyAppState extends State<MyApp> {
 
     _androidClient = AndroidClient(homeAssistantClient: _homeAssistantClient);
 
+    // an area is only worth a tab if some device in it gets a card
+    _homeAssistantClient.isDeviceShowable = (device) => matchCard(device) != null;
+
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,

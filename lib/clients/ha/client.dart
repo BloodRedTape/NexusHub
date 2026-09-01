@@ -27,6 +27,8 @@ EntityAttributes applyAttributes(EntityAttributes target, EntityAttributes sourc
   if (source.userId != null) target.userId = source.userId;
   if (source.deviceTrackers.isNotEmpty) target.deviceTrackers = List.from(source.deviceTrackers);
   if (source.friendlyName != null) target.friendlyName = source.friendlyName;
+  if (source.deviceClass != null) target.deviceClass = source.deviceClass;
+  if (source.unitOfMeasurement != null) target.unitOfMeasurement = source.unitOfMeasurement;
 
   if (source.options != null) target.options = List.from(source.options!);
   if (source.supportedColorModes != null) target.supportedColorModes = List.from(source.supportedColorModes!);
@@ -61,14 +63,17 @@ class DeviceEntities {
   final String name;
   final List<RegistryEntry> entities;
 
-  const DeviceEntities({required this.deviceId, required this.name, required this.entities});
+  /// Kind of every entity, by entity id - see [HomeAssistantClient.kindOf].
+  final Map<String, String> kindsById;
 
-  /// Entity domains this device exposes - what a card can be matched against.
-  Set<String> get domains => entities.map((entry) => entry.domain).toSet();
+  const DeviceEntities({required this.deviceId, required this.name, required this.entities, required this.kindsById});
 
-  RegistryEntry? entityOf(String domain) {
+  /// Entity kinds this device exposes.
+  Set<String> get kinds => kindsById.values.toSet();
+
+  RegistryEntry? entityOf(String kind) {
     for (final entry in entities) {
-      if (entry.domain == domain) return entry;
+      if (kindsById[entry.entityId] == kind) return entry;
     }
 
     return null;
@@ -101,6 +106,54 @@ class HomeAssistantClient {
   List<Device> _devices = [];
   Map<String, String?> _deviceAreas = {};
 
+  List<Area>? _pendingAreas;
+  bool _hasStates = false;
+
+  /// Areas become visible once both the registries and the first states are in.
+  void _publishAreas() {
+    final areas = _pendingAreas;
+
+    if (areas == null || !_hasStates) return;
+
+    _pendingAreas = null;
+
+    final counts = {for (final area in areas) area.areaId: _cardCount(area.areaId)};
+
+    final result = areas.where((area) => !_hideEmptyAreas || counts[area.areaId]! > 0).toList();
+
+    // busiest rooms first, alphabetical among equals
+    result.sort((a, b) {
+      final byCount = counts[b.areaId]!.compareTo(counts[a.areaId]!);
+
+      return byCount != 0 ? byCount : a.name.compareTo(b.name);
+    });
+
+    _areas.setValue(result);
+  }
+
+  /// How many devices of an area would end up with a card.
+  int _cardCount(String areaId) {
+    final showable = isDeviceShowable;
+    final devices = devicesOfArea(areaId);
+
+    if (showable == null) return devices.length;
+
+    return devices.where(showable).length;
+  }
+
+  /// What a card is matched against: the entity domain, and for sensors the
+  /// device class too - 'light', 'sensor.temperature', ...
+  ///
+  /// The registry often leaves the device class empty, so fall back to the one
+  /// the entity reports in its own state.
+  String kindOf(RegistryEntry entry) {
+    if (entry.domain != 'sensor') return entry.domain;
+
+    final deviceClass = entry.effectiveDeviceClass ?? _entityProviders[entry.entityId]?.getValue()?.attributes?.deviceClass;
+
+    return deviceClass == null ? entry.domain : 'sensor.$deviceClass';
+  }
+
   /// Devices of [areaId] with the entities that belong to them, sorted by name.
   /// Entities without a device of their own are grouped under a synthetic one.
   List<DeviceEntities> devicesOfArea(String areaId) {
@@ -117,6 +170,7 @@ class HomeAssistantClient {
               deviceId: e.key,
               name: names[e.key] ?? e.value.first.displayName,
               entities: e.value,
+              kindsById: {for (final entry in e.value) entry.entityId: kindOf(entry)},
             ))
         .toList();
 
@@ -125,12 +179,27 @@ class HomeAssistantClient {
     return result;
   }
 
+  bool _hideUnavailable = true;
+  bool _hideEmptyAreas = true;
+
+  /// Tells whether a device can be shown at all. Set by the dashboard, which
+  /// owns the card matchers; without it every device counts as showable.
+  bool Function(DeviceEntities device)? isDeviceShowable;
+
+  /// True unless Home Assistant says the entity has no usable state.
+  bool _isAvailable(String entityId) {
+    final state = _entityProviders[entityId]?.getValue()?.state;
+
+    return state != null && state != 'unavailable' && state != 'unknown';
+  }
+
   /// Registry entries that live in [areaId], sorted by name.
   /// An entity without an area of its own inherits the one of its device.
   List<RegistryEntry> entitiesOfArea(String areaId) {
     final result = _registry
         .where((entry) => !entry.disabled && !entry.hidden)
         .where((entry) => (entry.areaId ?? _deviceAreas[entry.deviceId]) == areaId)
+        .where((entry) => !_hideUnavailable || _isAvailable(entry.entityId))
         .toList();
 
     result.sort((a, b) => a.displayName.compareTo(b.displayName));
@@ -144,7 +213,7 @@ class HomeAssistantClient {
   void _setStatus(String status, {String? detail}) {
     if (detail != null) {
       _log.add('${DateFormat('HH:mm:ss').format(DateTime.now())}  $detail');
-      if (_log.length > 50) _log.removeRange(0, _log.length - 50);
+      if (_log.length > 500) _log.removeRange(0, _log.length - 500);
     }
 
     _clientState.setValue(
@@ -186,6 +255,12 @@ class HomeAssistantClient {
 
   Future<void> _restartConnection(HomeAssistantConfig? config) async {
     _setStatus('disconnecting...');
+
+    _hasStates = false;
+    _pendingAreas = null;
+
+    _hideUnavailable = config?.hideUnavailable ?? true;
+    _hideEmptyAreas = config?.hideEmptyAreas ?? true;
 
     _pingPongTimer?.cancel();
     await _homeAssistantWs?.disconnect();
@@ -239,10 +314,12 @@ class HomeAssistantClient {
       _deviceAreas = {for (final device in devices) device.deviceId: device.areaId};
       _registry = await ha.getEntityRegistry();
 
-      final areas = await ha.getAreas();
-      _areas.setValue(areas);
+      // entity states carry the device class the registry usually omits, so
+      // hold the areas back until the first batch of states has arrived
+      _pendingAreas = await ha.getAreas();
+      _publishAreas();
 
-      _setStatus('connected', detail: 'Loaded ${areas.length} areas, ${devices.length} devices, ${_registry.length} entities');
+      _setStatus('connected', detail: 'Loaded ${_pendingAreas?.length ?? 0} areas, ${devices.length} devices, ${_registry.length} entities');
     } catch (e) {
       _setStatus('connected', detail: 'Failed to load registries: ${_describe(e)}');
     }
@@ -291,6 +368,9 @@ class HomeAssistantClient {
   void _onEvent(EventMessage event) {
     if (event.available != null) {
       _onAvailable(event.available!);
+
+      _hasStates = true;
+      _publishAreas();
     }
 
     if (event.change != null) {
