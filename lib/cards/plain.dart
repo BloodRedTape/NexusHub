@@ -82,7 +82,9 @@ class PlainLayout extends StatelessWidget {
         fit: BoxFit.scaleDown,
         child: Text(text, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold, color: textColor)));
 
-    final subTextWidget = subText != null ? Text(subText!, style: TextStyle(fontSize: secondaryTextSize, color: subTextColor)) : SizedBox();
+    final subTextWidget = subText != null
+        ? Text(subText!, style: TextStyle(fontSize: secondaryTextSize, color: subTextColor), maxLines: 1, overflow: TextOverflow.ellipsis)
+        : SizedBox();
 
     return PlainLayoutBase(icon: icon, subAction: subAction, children: [textWidget, subTextWidget]);
   }
@@ -228,7 +230,7 @@ class PlainCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               iconWidget,
-              const SizedBox(width: cardPadding * 0.25),
+              SizedBox(width: cardPadding * 0.25),
               Expanded(
                 child: Text(text, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
               ),
@@ -247,7 +249,9 @@ class PlainCard extends StatelessWidget {
       ),
     );
 
-    final subTextWidget = subText != null ? Text(subText!, style: TextStyle(fontSize: secondaryTextSize, color: subTextColor)) : SizedBox();
+    final subTextWidget = subText != null
+        ? Text(subText!, style: TextStyle(fontSize: secondaryTextSize, color: subTextColor), maxLines: 1, overflow: TextOverflow.ellipsis)
+        : SizedBox();
 
     return PlainCardBase(
       icon: iconWidget,
