@@ -33,6 +33,10 @@ class Formatter {
     return '${hours}h ${minutes}m';
   }
 
+  static String percent(double state) {
+    return '${state.toInt()}%';
+  }
+
   static String particulate(double state) {
     return '${state.toInt()}µg';
   }

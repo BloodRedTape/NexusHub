@@ -6,7 +6,9 @@ import 'package:nexus/cards/light.dart';
 import 'package:nexus/cards/motion.dart';
 import 'package:nexus/cards/outlet.dart';
 import 'package:nexus/cards/sensor.dart';
+import 'package:nexus/cards/system.dart';
 import 'package:nexus/clients/ha/client.dart';
+import 'package:nexus/providers/state.dart';
 import 'package:nexus/dashboard/grid.dart';
 
 /// A card that can represent a device, provided the device exposes [requires].
@@ -17,7 +19,21 @@ class CardMatcher {
 
   final Widget Function(HomeAssistantClient client, DeviceEntities device) build;
 
-  const CardMatcher({required this.requires, required this.build});
+  /// Extra condition for devices that [requires] cannot describe, and how many
+  /// entities it accounts for when comparing matchers.
+  final bool Function(DeviceEntities device)? accepts;
+  final int weight;
+
+  const CardMatcher({required this.requires, required this.build, this.accepts, this.weight = 0});
+
+  bool matches(DeviceEntities device) {
+    if (!requires.every(device.kinds.contains)) return false;
+
+    return accepts == null || accepts!(device);
+  }
+
+  /// How much of a device this matcher covers - richer matches win.
+  int get coverage => requires.length + weight;
 }
 
 /// Cards we know how to build, matched against a device by its entity kinds.
@@ -29,7 +45,27 @@ const List<CardMatcher> cardMatchers = [
   CardMatcher(requires: {'sensor.carbon_dioxide', 'sensor.pm25', 'sensor.pm10'}, build: _buildAirQuality),
   CardMatcher(requires: {'sensor.illuminance'}, build: _buildIlluminance),
   CardMatcher(requires: {'binary_sensor.occupancy', 'sensor.illuminance'}, build: _buildMotion),
+  CardMatcher(requires: {}, accepts: _isMachine, weight: 4, build: _buildSystem),
 ];
+
+/// System Monitor leaves the device class empty, so go by the entity names.
+bool _isMachine(DeviceEntities device) => device.entityEndingWith('processor_use') != null;
+
+Widget _buildSystem(HomeAssistantClient client, DeviceEntities device) {
+  StateProvider<double>? sensor(String suffix) {
+    final entry = device.entityEndingWith(suffix);
+
+    return entry == null ? null : client.sensorStateProvider(entry.entityId);
+  }
+
+  return SystemCard(
+    processor: sensor('processor_use')!,
+    temperature: sensor('processor_temperature'),
+    memory: sensor('memory_use_percent'),
+    disk: sensor('disk_use_percent'),
+    name: device.name,
+  );
+}
 
 Widget _buildMotion(HomeAssistantClient client, DeviceEntities device) {
   return MotionCard(
@@ -97,9 +133,9 @@ CardMatcher? matchCard(DeviceEntities device) {
   CardMatcher? best;
 
   for (final matcher in cardMatchers) {
-    if (!matcher.requires.every(device.kinds.contains)) continue;
+    if (!matcher.matches(device)) continue;
 
-    if (best == null || matcher.requires.length > best.requires.length) best = matcher;
+    if (best == null || matcher.coverage > best.coverage) best = matcher;
   }
 
   return best;

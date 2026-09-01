@@ -71,6 +71,16 @@ class DeviceEntities {
   /// Entity kinds this device exposes.
   Set<String> get kinds => kindsById.values.toSet();
 
+  /// First entity whose id ends with [suffix] - for integrations that name
+  /// their entities meaningfully but leave the device class empty.
+  RegistryEntry? entityEndingWith(String suffix) {
+    for (final entry in entities) {
+      if (entry.entityId.endsWith(suffix)) return entry;
+    }
+
+    return null;
+  }
+
   RegistryEntry? entityOf(String kind) {
     for (final entry in entities) {
       if (kindsById[entry.entityId] == kind) return entry;
@@ -147,11 +157,14 @@ class HomeAssistantClient {
   /// The registry often leaves the device class empty, so fall back to the one
   /// the entity reports in its own state.
   String kindOf(RegistryEntry entry) {
-    if (entry.domain != 'sensor' && entry.domain != 'binary_sensor') return entry.domain;
+    // diagnostics are readouts about the device - keep them out of the plain kinds
+    final prefix = entry.entityCategory == 'diagnostic' ? 'diagnostic:' : '';
+
+    if (entry.domain != 'sensor' && entry.domain != 'binary_sensor') return '$prefix${entry.domain}';
 
     final deviceClass = entry.effectiveDeviceClass ?? _entityProviders[entry.entityId]?.getValue()?.attributes?.deviceClass;
 
-    return deviceClass == null ? entry.domain : '${entry.domain}.$deviceClass';
+    return '$prefix${deviceClass == null ? entry.domain : '${entry.domain}.$deviceClass'}';
   }
 
   /// Devices of [areaId] with the entities that belong to them, sorted by name.
@@ -197,8 +210,9 @@ class HomeAssistantClient {
   /// An entity without an area of its own inherits the one of its device.
   List<RegistryEntry> entitiesOfArea(String areaId) {
     final result = _registry
-        // config and diagnostic entities are knobs about the device, not the device itself
-        .where((entry) => !entry.disabled && !entry.hidden && entry.isPrimary)
+        // config entities are knobs about the device, not the device itself.
+        // diagnostics stay, marked by kindOf, so only cards that ask get them.
+        .where((entry) => !entry.disabled && !entry.hidden && entry.entityCategory != 'config')
         .where((entry) => (entry.areaId ?? _deviceAreas[entry.deviceId]) == areaId)
         .where((entry) => !_hideUnavailable || _isAvailable(entry.entityId))
         .toList();
