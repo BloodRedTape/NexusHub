@@ -1,27 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/clients/android/config.dart';
 import 'package:nexus/providers/state.dart';
-
-/// Android-settings style section header: accent coloured, above its tiles.
-class _SectionHeader extends StatelessWidget {
-  final String title;
-
-  const _SectionHeader(this.title);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-    );
-  }
-}
+import 'package:nexus/utils/settings_section.dart';
 
 class AndroidConfigWidget extends StatefulWidget {
   final StateProvider<AndroidConfig> stateProvider;
@@ -246,7 +226,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
     final intervals = _screenOnIntervals.where((interval) => interval.blocking == blocking).toList();
 
     return [
-      _SectionHeader(title),
+      SettingsSectionHeader(title),
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
         child: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
@@ -287,7 +267,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: <Widget>[
-        _SectionHeader('Display'),
+        SettingsSectionHeader('Display'),
         SwitchListTile(
           secondary: Icon(Icons.brightness_auto),
           title: Text('Auto brightness'),
@@ -340,7 +320,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
           icon: Icons.block,
         ),
         Divider(height: 1),
-        _SectionHeader('Screen on sensors'),
+        SettingsSectionHeader('Screen on sensors'),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(

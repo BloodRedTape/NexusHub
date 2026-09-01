@@ -570,15 +570,17 @@ class HomeAssistantClient {
       name: 'Home Assistant',
       details: DetailsPage(
         title: Text('Home Assistant Settings'),
-        body: Column(
-          children: [
-            HomeAssistantConfigWidget(
-              stateProvider: _configStateProvider,
-            ),
-            Flexible(
+        body: HomeAssistantConfigWidget(
+          stateProvider: _configStateProvider,
+          // Its own page: the log has a scroll of its own and does not belong
+          // inside the settings list.
+          openDiagnostics: (context) => DetailsPage(
+            title: Text('Connection'),
+            body: Padding(
+              padding: const EdgeInsets.all(16),
               child: HomeAssistantDebugWidget(stateProvider: _clientState, onReconnect: reconnect),
             ),
-          ],
+          ).navigateTo(context),
         ),
       ),
     );
