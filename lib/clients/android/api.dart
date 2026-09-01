@@ -60,6 +60,19 @@ class AndroidClientApi {
     }
   }
 
+  static Future<bool> setKeepScreenOn(bool on) async {
+    try {
+      if (Platform.isAndroid) {
+        dynamic result = await _channel.invokeMethod<dynamic>('setKeepScreenOn', {'on': on});
+        return result is bool ? result : false;
+      } else {
+        throw UnimplementedError();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<bool> setBrightness(double brightness) async {
     try {
       if (Platform.isAndroid) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:installed_apps/app_info.dart';
 import 'package:nexus/cards/details.dart';
@@ -18,6 +20,8 @@ class AndroidClient {
   late StateProvider<AndroidConfig> _configStateProvider;
   AlarmStateProvider _alarmStateProvider = AlarmStateProvider();
   StateProvider<List<AppInfo>> _appsStateProvider = AppsStateProvider();
+  Timer? _screenOnTimer;
+  bool? _screenOnState;
 
   StateProvider<List<AppInfo>> getAppsStateProvider() {
     return _appsStateProvider;
@@ -37,6 +41,31 @@ class AndroidClient {
     _appsStateProvider.init();
 
     _initAutoBrightness();
+    _initScreenOnSchedule();
+  }
+
+  void _initScreenOnSchedule() {
+    _configStateProvider.bindValueChanged((AndroidConfig? _) => _applyScreenOnSchedule());
+    _screenOnTimer = Timer.periodic(Duration(minutes: 1), (_) => _applyScreenOnSchedule());
+    _applyScreenOnSchedule();
+  }
+
+  void _applyScreenOnSchedule() {
+    final config = _configStateProvider.getValue();
+
+    if (config == null) return;
+
+    final now = DateTime.now();
+    final shouldKeepOn = config.screenOnIntervals.any((interval) => interval.contains(now));
+
+    if (shouldKeepOn == _screenOnState) return;
+
+    _screenOnState = shouldKeepOn;
+    AndroidClientApi.setKeepScreenOn(shouldKeepOn);
+  }
+
+  void dispose() {
+    _screenOnTimer?.cancel();
   }
 
   void _initAutoBrightness() {

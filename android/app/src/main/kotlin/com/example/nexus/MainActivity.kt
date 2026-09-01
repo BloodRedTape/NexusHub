@@ -48,6 +48,10 @@ class MainActivity : FlutterActivity(){
                 "canModifySystemSettings" -> {
                     result.success(canModifySystemSettings())
                 }
+                "setKeepScreenOn" -> {
+                    val on = call.argument<Boolean>("on") ?: false
+                    result.success(setKeepScreenOn(on))
+                }
                 else -> {
                     result.notImplemented()
                 }
@@ -133,6 +137,19 @@ class MainActivity : FlutterActivity(){
             return true
         } catch (_: Exception) {
             return false
+        }
+    }
+
+    private fun setKeepScreenOn(on: Boolean): Boolean {
+        return try {
+            val flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+            runOnUiThread { if (on) window.addFlags(flags) else window.clearFlags(flags) }
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 
