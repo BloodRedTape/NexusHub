@@ -55,6 +55,26 @@ EntityAttributes applyAttributes(EntityAttributes target, EntityAttributes sourc
   return target;
 }
 
+/// A device of an area together with the entities it exposes.
+class DeviceEntities {
+  final String? deviceId;
+  final String name;
+  final List<RegistryEntry> entities;
+
+  const DeviceEntities({required this.deviceId, required this.name, required this.entities});
+
+  /// Entity domains this device exposes - what a card can be matched against.
+  Set<String> get domains => entities.map((entry) => entry.domain).toSet();
+
+  RegistryEntry? entityOf(String domain) {
+    for (final entry in entities) {
+      if (entry.domain == domain) return entry;
+    }
+
+    return null;
+  }
+}
+
 class HomeAssistantClientState {
   String status;
   String? url;
@@ -78,7 +98,32 @@ class HomeAssistantClient {
   StateProvider<List<Area>> get areas => _areas;
 
   List<RegistryEntry> _registry = [];
+  List<Device> _devices = [];
   Map<String, String?> _deviceAreas = {};
+
+  /// Devices of [areaId] with the entities that belong to them, sorted by name.
+  /// Entities without a device of their own are grouped under a synthetic one.
+  List<DeviceEntities> devicesOfArea(String areaId) {
+    final Map<String?, List<RegistryEntry>> byDevice = {};
+
+    for (final entry in entitiesOfArea(areaId)) {
+      byDevice.putIfAbsent(entry.deviceId, () => []).add(entry);
+    }
+
+    final names = {for (final device in _devices) device.deviceId: device.displayName};
+
+    final result = byDevice.entries
+        .map((e) => DeviceEntities(
+              deviceId: e.key,
+              name: names[e.key] ?? e.value.first.displayName,
+              entities: e.value,
+            ))
+        .toList();
+
+    result.sort((a, b) => a.name.compareTo(b.name));
+
+    return result;
+  }
 
   /// Registry entries that live in [areaId], sorted by name.
   /// An entity without an area of its own inherits the one of its device.
@@ -190,6 +235,7 @@ class HomeAssistantClient {
 
     try {
       final devices = await ha.getDevices();
+      _devices = devices;
       _deviceAreas = {for (final device in devices) device.deviceId: device.areaId};
       _registry = await ha.getEntityRegistry();
 
