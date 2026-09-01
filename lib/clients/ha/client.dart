@@ -147,11 +147,11 @@ class HomeAssistantClient {
   /// The registry often leaves the device class empty, so fall back to the one
   /// the entity reports in its own state.
   String kindOf(RegistryEntry entry) {
-    if (entry.domain != 'sensor') return entry.domain;
+    if (entry.domain != 'sensor' && entry.domain != 'binary_sensor') return entry.domain;
 
     final deviceClass = entry.effectiveDeviceClass ?? _entityProviders[entry.entityId]?.getValue()?.attributes?.deviceClass;
 
-    return deviceClass == null ? entry.domain : 'sensor.$deviceClass';
+    return deviceClass == null ? entry.domain : '${entry.domain}.$deviceClass';
   }
 
   /// Devices of [areaId] with the entities that belong to them, sorted by name.
@@ -197,7 +197,8 @@ class HomeAssistantClient {
   /// An entity without an area of its own inherits the one of its device.
   List<RegistryEntry> entitiesOfArea(String areaId) {
     final result = _registry
-        .where((entry) => !entry.disabled && !entry.hidden)
+        // config and diagnostic entities are knobs about the device, not the device itself
+        .where((entry) => !entry.disabled && !entry.hidden && entry.isPrimary)
         .where((entry) => (entry.areaId ?? _deviceAreas[entry.deviceId]) == areaId)
         .where((entry) => !_hideUnavailable || _isAvailable(entry.entityId))
         .toList();

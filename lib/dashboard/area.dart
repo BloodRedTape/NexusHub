@@ -3,6 +3,7 @@ import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/cards/air_quality.dart';
 import 'package:nexus/cards/climate.dart';
 import 'package:nexus/cards/light.dart';
+import 'package:nexus/cards/motion.dart';
 import 'package:nexus/cards/outlet.dart';
 import 'package:nexus/cards/sensor.dart';
 import 'package:nexus/clients/ha/client.dart';
@@ -26,7 +27,26 @@ const List<CardMatcher> cardMatchers = [
   CardMatcher(requires: {'switch', 'sensor.voltage', 'sensor.power', 'sensor.energy'}, build: _buildOutlet),
   CardMatcher(requires: {'sensor.carbon_dioxide'}, build: _buildCarbonDioxide),
   CardMatcher(requires: {'sensor.carbon_dioxide', 'sensor.pm25', 'sensor.pm10'}, build: _buildAirQuality),
+  CardMatcher(requires: {'sensor.illuminance'}, build: _buildIlluminance),
+  CardMatcher(requires: {'binary_sensor.occupancy', 'sensor.illuminance'}, build: _buildMotion),
 ];
+
+Widget _buildMotion(HomeAssistantClient client, DeviceEntities device) {
+  return MotionCard(
+    stateProvider: client.switchStateProvider(device.entityOf('binary_sensor.occupancy')!.entityId),
+    illuminance: client.sensorStateProvider(device.entityOf('sensor.illuminance')!.entityId),
+    name: device.name,
+  );
+}
+
+Widget _buildIlluminance(HomeAssistantClient client, DeviceEntities device) {
+  return SensorCard(
+    stateProvider: client.sensorStateProvider(device.entityOf('sensor.illuminance')!.entityId),
+    icon: Icons.sunny,
+    formatter: Formatter.illuminance,
+    room: device.name,
+  );
+}
 
 Widget _buildAirQuality(HomeAssistantClient client, DeviceEntities device) {
   return AirQualityCard(
@@ -42,7 +62,6 @@ Widget _buildCarbonDioxide(HomeAssistantClient client, DeviceEntities device) {
     stateProvider: client.sensorStateProvider(device.entityOf('sensor.carbon_dioxide')!.entityId),
     icon: Icons.co2,
     formatter: Formatter.carbonDioxide,
-    iconPainter: Painter.carbonDioxide,
     room: device.name,
   );
 }
