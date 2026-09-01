@@ -206,6 +206,17 @@ class HomeAssistantClient {
     return state != null && state != 'unavailable' && state != 'unknown';
   }
 
+  /// Every binary sensor in the registry, sorted by name.
+  List<RegistryEntry> binarySensors() {
+    final result = _registry
+        .where((entry) => entry.domain == 'binary_sensor' && !entry.disabled && !entry.hidden)
+        .toList();
+
+    result.sort((a, b) => a.displayName.compareTo(b.displayName));
+
+    return result;
+  }
+
   /// Registry entries that live in [areaId], sorted by name.
   /// An entity without an area of its own inherits the one of its device.
   List<RegistryEntry> entitiesOfArea(String areaId) {

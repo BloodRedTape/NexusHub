@@ -22,6 +22,7 @@ class AndroidClient {
   StateProvider<List<AppInfo>> _appsStateProvider = AppsStateProvider();
   Timer? _screenOnTimer;
   bool? _screenOnState;
+  final Map<String, StateProvider<bool>> _screenOnSensorProviders = {};
 
   StateProvider<List<AppInfo>> getAppsStateProvider() {
     return _appsStateProvider;
@@ -45,9 +46,30 @@ class AndroidClient {
   }
 
   void _initScreenOnSchedule() {
-    _configStateProvider.bindValueChanged((AndroidConfig? _) => _applyScreenOnSchedule());
+    _configStateProvider.bindValueChanged((AndroidConfig? config) {
+      _bindScreenOnSensors(config?.screenOnSensors ?? const []);
+      _applyScreenOnSchedule();
+    });
     _screenOnTimer = Timer.periodic(Duration(minutes: 1), (_) => _applyScreenOnSchedule());
+    _bindScreenOnSensors(_configStateProvider.getValue()?.screenOnSensors ?? const []);
     _applyScreenOnSchedule();
+  }
+
+  void _onScreenOnSensorChanged(bool? _) => _applyScreenOnSchedule();
+
+  void _bindScreenOnSensors(List<String> entityIds) {
+    for (final entityId in _screenOnSensorProviders.keys.toList()) {
+      if (entityIds.contains(entityId)) continue;
+
+      _screenOnSensorProviders.remove(entityId)?.unbind(_onScreenOnSensorChanged);
+    }
+
+    for (final entityId in entityIds) {
+      if (entityId.isEmpty || _screenOnSensorProviders.containsKey(entityId)) continue;
+
+      _screenOnSensorProviders[entityId] = _homeAssistantClient.switchStateProvider(entityId)
+        ..bindValueChanged(_onScreenOnSensorChanged);
+    }
   }
 
   void _applyScreenOnSchedule() {
@@ -55,8 +77,10 @@ class AndroidClient {
 
     if (config == null) return;
 
-    final now = DateTime.now();
-    final shouldKeepOn = config.screenOnIntervals.any((interval) => interval.contains(now));
+    final shouldKeepOn = config.shouldKeepScreenOn(
+      DateTime.now(),
+      _screenOnSensorProviders.map((id, provider) => MapEntry(id, provider.getValue())),
+    );
 
     if (shouldKeepOn == _screenOnState) return;
 
@@ -66,6 +90,9 @@ class AndroidClient {
 
   void dispose() {
     _screenOnTimer?.cancel();
+    for (final provider in _screenOnSensorProviders.values) {
+      provider.unbind(_onScreenOnSensorChanged);
+    }
   }
 
   void _initAutoBrightness() {
@@ -115,10 +142,12 @@ class AndroidClient {
       name: 'Android',
       details: DetailsPage(
         title: Text('Android Settings'),
-        body: Column(
-          children: [
-            AndroidConfigWidget(stateProvider: _configStateProvider),
-          ],
+        body: AndroidConfigWidget(
+          stateProvider: _configStateProvider,
+          binarySensors: () => {
+            for (final entry in _homeAssistantClient.binarySensors()) entry.entityId: entry.displayName,
+          },
+          entityState: _homeAssistantClient.entityStateProvider,
         ),
       ),
     );

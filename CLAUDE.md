@@ -1,4 +1,4 @@
-# Android smart home launcher
+# Android smart home launcher in spirit of Google Nest Hub
 
 - Minimal android 7.1
 
