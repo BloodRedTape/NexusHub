@@ -17,7 +17,7 @@ class OutletCard extends StateCard<bool> {
     return PlainCardBase(
       icon: Icon(_icon(state), color: _iconColor(state), size: iconSize),
       color: state == true ? _onColor : null,
-      action: state == null ? null : () => setState(!state),
+      action: state == null ? null : () => _toggle(context, state),
       children: [
         StackedLayout(
           primary: FittedBox(
@@ -33,6 +33,31 @@ class OutletCard extends StateCard<bool> {
   }
 
   static final _onColor = Tint.color(color: const Color.fromARGB(255, 255, 94, 0));
+
+  /// Turning off an outlet that is drawing power cuts whatever is plugged in,
+  /// so ask first. Everything else toggles right away.
+  Future<void> _toggle(BuildContext context, bool state) async {
+    final draw = power.getValue() ?? 0;
+
+    if (!state || draw <= 0) {
+      setState(!state);
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Turn off ${name ?? 'outlet'}?'),
+        content: Text('It is drawing ${draw.toStringAsFixed(draw < 10 ? 1 : 0)} W right now.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Turn off')),
+        ],
+      ),
+    );
+
+    if (confirmed == true) setState(false);
+  }
 
   String _stateText(bool? state) {
     if (state == null) return 'Unavailable';
