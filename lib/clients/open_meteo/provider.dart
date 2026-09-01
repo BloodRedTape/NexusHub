@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/providers/state.dart';
-import 'package:weather_icons/weather_icons.dart';
 import 'package:nexus/states/weather.dart';
 import 'package:open_meteo/open_meteo.dart';
 
@@ -85,34 +84,34 @@ class OpenMeteoWeatherStateProvider extends WeatherStateProvider {
 
     switch (wmo.toInt()) {
       case 0:
-        return WeatherIcons.day_sunny; // Clear sky
+        return Icons.wb_sunny; // Clear sky
       case 1:
       case 2:
       case 3:
-        return WeatherIcons.day_cloudy; // Partly cloudy
+        return Icons.wb_cloudy; // Partly cloudy
       case 4:
       case 5:
       case 6:
       case 7:
-        return WeatherIcons.cloud; // Mostly cloudy
+        return Icons.cloud_queue; // Mostly cloudy
       case 8:
-        return WeatherIcons.cloudy; // Overcast
+        return Icons.cloud; // Overcast
       case 9:
       case 10:
-        return WeatherIcons.showers; // Light rain showers
+        return Icons.grain; // Light rain showers
       case 11:
-        return WeatherIcons.rain; // Rain showers
+        return Icons.umbrella; // Rain showers
       case 12:
       case 13:
-        return WeatherIcons.snow; // Snow or sleet
+        return Icons.ac_unit; // Snow or sleet
       case 14:
       case 15:
       case 16:
       case 17:
-        return WeatherIcons.thunderstorm; // Thunderstorms
+        return Icons.flash_on; // Thunderstorms
       case 18:
       case 19:
-        return WeatherIcons.fog; // Fog or mist
+        return Icons.foggy; // Fog or mist
       default:
         return Icons.error; // Unhandled WMO code
     }

@@ -6,6 +6,7 @@ class AlarmInfo {
 
 class AlarmState {
   final AlarmInfo? next;
+  final bool canDismiss;
 
-  const AlarmState({required this.next});
+  const AlarmState({required this.next, this.canDismiss = false});
 }

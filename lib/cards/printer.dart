@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/providers/state.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class Printer extends StatefulWidget {
   final StateProvider<double> bedTemperature;
@@ -138,7 +137,7 @@ class _PrinterState extends State<Printer> {
 
     final powerAction = PlainAction(icon: powerIcon, onTap: switchPower);
 
-    final printerIcon = MdiIcons.printer3D;
+    final printerIcon = Icons.print;
 
     if (!power) return PlainCard(icon: printerIcon, text: 'Power Off', subAction: powerAction);
 

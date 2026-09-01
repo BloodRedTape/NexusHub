@@ -32,12 +32,16 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
 
   @override
   void dispose() {
-    widget.stateProvider.setValue(
-      HomeAssistantConfig(
-        url: _urlController.text,
-        token: _tokenController.text,
-      ),
-    );
+    final current = widget.stateProvider.getValue();
+
+    if (current?.url != _urlController.text || current?.token != _tokenController.text) {
+      widget.stateProvider.setValue(
+        HomeAssistantConfig(
+          url: _urlController.text,
+          token: _tokenController.text,
+        ),
+      );
+    }
     widget.stateProvider.unbind(_onConfigChanged);
     super.dispose();
   }

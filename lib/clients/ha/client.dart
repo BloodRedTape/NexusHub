@@ -78,6 +78,7 @@ class HomeAssistantClient {
   Map<String, LightStateProvider> _lightStateProviders = {};
 
   Future<void>? _restartFuture;
+  HomeAssistantConfig? _pendingConfig;
 
   HomeAssistantClient() {
     _configStateProvider = SharedPreferencesStateProvider(
@@ -114,6 +115,7 @@ class HomeAssistantClient {
 
     if (!await ha.connect()) {
       _clientState.setValue(HomeAssistantClientState(status: 'Connect failed'));
+      return;
     }
 
     ha.subscribeEntities(_onEvent);
@@ -128,11 +130,16 @@ class HomeAssistantClient {
   }
 
   void _reconnect(HomeAssistantConfig? config) {
+    _pendingConfig = config;
+
     if (_restartFuture != null) return;
 
     _restartFuture = _restartConnection(config);
     _restartFuture?.whenComplete(() {
       _restartFuture = null;
+
+      // config changed while we were connecting - redo it with the latest one
+      if (!identical(_pendingConfig, config)) _reconnect(_pendingConfig);
     });
   }
 

@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.nexus"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "30.0.16138531"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

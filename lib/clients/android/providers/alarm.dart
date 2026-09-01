@@ -26,7 +26,17 @@ class AlarmStateProvider extends StateProvider<AlarmState> {
 
   Future<void> fetchAlarmData() async {
     DateTime? next = await AndroidClientApi.getNextAlarmClockTriggerTime();
+    bool canDismiss = await AndroidClientApi.canDismissAlarm();
 
-    setValue(AlarmState(next: next == null ? null : AlarmInfo(fire: next)));
+    setValue(AlarmState(next: next == null ? null : AlarmInfo(fire: next), canDismiss: canDismiss));
+  }
+
+  Future<bool> dismissNextAlarm() async {
+    bool result = await AndroidClientApi.dismissNextAlarm();
+    if (result) {
+      // Refresh alarm data after dismissal
+      await fetchAlarmData();
+    }
+    return result;
   }
 }

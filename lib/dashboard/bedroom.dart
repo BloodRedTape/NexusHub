@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:nexus/cards/action.dart';
 import 'package:nexus/cards/curtain.dart';
 import 'package:nexus/cards/humidifier.dart';
@@ -32,7 +31,7 @@ class BedroomTab extends StatelessWidget {
               ),
               SensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_bedroom'),
-                icon: MdiIcons.windowOpenVariant,
+                icon: Icons.sensor_window,
                 formatter: Formatter.time,
                 compact: true,
               ),
@@ -94,23 +93,23 @@ class BedroomTab extends StatelessWidget {
             children: [
               SwitchCard(
                 stateProvider: homeAssistantClient.switchStateProvider('fan.fan_rztk_nowhere'),
-                onIcon: MdiIcons.fan,
-                offIcon: MdiIcons.fanOff,
+                onIcon: Icons.wind_power,
+                offIcon: Icons.mode_fan_off,
                 room: 'Rztk Smart Fan',
                 onColor: const Color.fromARGB(255, 47, 107, 49),
               ),
               ExpandedColumn(children: [
                 LightCard(
                   stateProvider: homeAssistantClient.lightStateProvider('light.led_custom0_bedroom'),
-                  onIcon: MdiIcons.ledStripVariant,
-                  offIcon: MdiIcons.ledStripVariantOff,
+                  onIcon: Icons.linear_scale,
+                  offIcon: Icons.linear_scale_outlined,
                   name: 'Bed Led',
                   compact: true,
                 ),
                 LightCard(
                   stateProvider: homeAssistantClient.lightStateProvider('light.chestnut_led'),
-                  onIcon: MdiIcons.leafMaple,
-                  offIcon: MdiIcons.leafMapleOff,
+                  onIcon: Icons.eco,
+                  offIcon: Icons.eco_outlined,
                   name: 'Chestnut',
                   compact: true,
                 ),

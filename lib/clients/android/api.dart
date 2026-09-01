@@ -20,4 +20,56 @@ class AndroidClientApi {
       return null;
     }
   }
+
+  static Future<bool> canDismissAlarm() async {
+    try {
+      if (Platform.isAndroid) {
+        dynamic result = await _channel.invokeMethod<dynamic>('canDismissAlarm');
+        return result is bool ? result : false;
+      } else {
+        throw UnimplementedError();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> dismissNextAlarm() async {
+    try {
+      if (Platform.isAndroid) {
+        dynamic result = await _channel.invokeMethod<dynamic>('dismissNextAlarm');
+        return result is bool ? result : false;
+      } else {
+        throw UnimplementedError();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> canModifySystemSettings() async {
+    try {
+      if (Platform.isAndroid) {
+        dynamic result = await _channel.invokeMethod<dynamic>('canModifySystemSettings');
+        return result is bool ? result : false;
+      } else {
+        throw UnimplementedError();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> setBrightness(double brightness) async {
+    try {
+      if (Platform.isAndroid) {
+        dynamic result = await _channel.invokeMethod<dynamic>('setBrightness', {'brightness': brightness});
+        return result is bool ? result : false;
+      } else {
+        throw UnimplementedError();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
 }

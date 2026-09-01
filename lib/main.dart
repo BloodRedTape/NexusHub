@@ -25,11 +25,13 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final OpenMeteoWeatherClient _weatherClient = OpenMeteoWeatherClient();
   final HomeAssistantClient _homeAssistantClient = HomeAssistantClient();
-  final AndroidClient _androidClient = AndroidClient();
+  late final AndroidClient _androidClient;
 
   @override
   void initState() {
     super.initState();
+
+    _androidClient = AndroidClient(homeAssistantClient: _homeAssistantClient);
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations([
@@ -70,6 +72,7 @@ class _MyAppState extends State<MyApp> {
           TabItem(
             tab: const Tab(text: 'Settings'),
             child: SettingsTab(items: [
+              _androidClient.makeSystemSettings(),
               _androidClient.makeSettings(),
               _weatherClient.makeSettings(),
               _homeAssistantClient.makeSettings(),
@@ -80,12 +83,12 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         brightness: Brightness.light,
         useMaterial3: true,
-        cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
+        cardTheme: CardThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
-        cardTheme: CardTheme(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
+        cardTheme: CardThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
       ),
       themeMode: ThemeMode.dark,
     );

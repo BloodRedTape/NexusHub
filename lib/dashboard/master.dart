@@ -10,7 +10,6 @@ import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/providers/dummy_state.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:nexus/utils/tint.dart';
 
 class MasterTab extends StatelessWidget {
@@ -33,7 +32,7 @@ class MasterTab extends StatelessWidget {
               ),
               SensorCard(
                 stateProvider: homeAssistantClient.sensorStateProvider('sensor.time_ventilation_master'),
-                icon: MdiIcons.windowOpenVariant,
+                icon: Icons.sensor_window,
                 formatter: Formatter.time,
                 compact: true,
               ),
@@ -94,8 +93,8 @@ class MasterTab extends StatelessWidget {
                   name: 'Bulbs'),
               LightCard(
                 stateProvider: homeAssistantClient.lightStateProvider('light.light_led_master'),
-                onIcon: MdiIcons.lightbulbSpot,
-                offIcon: MdiIcons.lightbulbSpotOff,
+                onIcon: Icons.lightbulb,
+                offIcon: Icons.lightbulb_outline,
                 name: 'Led Strip',
               ),
             ],
@@ -107,8 +106,8 @@ class MasterTab extends StatelessWidget {
             ),
             SwitchCard(
               stateProvider: homeAssistantClient.switchStateProvider('switch.power_plug1_nowhere'),
-              onIcon: MdiIcons.powerPlug,
-              offIcon: MdiIcons.powerPlugOff,
+              onIcon: Icons.power,
+              offIcon: Icons.power_off,
               room: 'Heater',
               onColor: Tint.color(color: const Color.fromARGB(255, 255, 94, 0)),
             ),
