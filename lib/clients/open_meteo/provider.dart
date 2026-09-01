@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:nexus/utils/weather_icons.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/weather.dart';
@@ -56,65 +54,80 @@ class OpenMeteoWeatherStateProvider extends WeatherStateProvider {
             WeatherCurrent.weather_code,
             WeatherCurrent.temperature_2m
           },
+          hourly: {
+            WeatherHourly.temperature_2m,
+            WeatherHourly.weather_code
+          },
           daily: {
             WeatherDaily.temperature_2m_min,
-            WeatherDaily.temperature_2m_max
+            WeatherDaily.temperature_2m_max,
+            WeatherDaily.weather_code,
+            WeatherDaily.precipitation_probability_max
           });
 
+      final forecast = _buildForecast(response);
+      final hourly = _buildHourly(response);
+
       setValue(WeatherState(
-        icon: getWeatherIcon(
+        kind: WeatherKind.fromWmo(
             response.currentData[WeatherCurrent.weather_code]?.value),
         temperature:
             response.currentData[WeatherCurrent.temperature_2m]?.value ?? 0,
-        maximumTemperature: response.dailyData[WeatherDaily.temperature_2m_max]
-                ?.values.entries.first.value
-                .toDouble() ??
-            0,
-        minimalTemperature: response.dailyData[WeatherDaily.temperature_2m_min]
-                ?.values.entries.first.value
-                .toDouble() ??
-            0,
+        maximumTemperature:
+            forecast.isEmpty ? 0 : forecast.first.maximumTemperature,
+        minimalTemperature:
+            forecast.isEmpty ? 0 : forecast.first.minimalTemperature,
+        forecast: forecast,
+        hourly: hourly,
       ));
     } catch (e) {
       setValue(null);
     }
   }
 
-  IconData getWeatherIcon(double? wmo) {
-    if (wmo == null) return Icons.error;
+  // Only the hours still ahead are worth showing. The API returns the whole
+  // day including hours already past, so the list is cut at the current hour.
+  List<WeatherHour> _buildHourly(ApiResponse<WeatherApi> response) {
+    final temperature = response.hourlyData[WeatherHourly.temperature_2m]?.values;
+    if (temperature == null) return [];
 
-    switch (wmo.toInt()) {
-      case 0:
-        return WeatherIcons.day_sunny; // Clear sky
-      case 1:
-      case 2:
-      case 3:
-        return WeatherIcons.day_cloudy; // Partly cloudy
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-        return WeatherIcons.cloud; // Mostly cloudy
-      case 8:
-        return WeatherIcons.cloudy; // Overcast
-      case 9:
-      case 10:
-        return WeatherIcons.showers; // Light rain showers
-      case 11:
-        return WeatherIcons.rain; // Rain showers
-      case 12:
-      case 13:
-        return WeatherIcons.snow; // Snow or sleet
-      case 14:
-      case 15:
-      case 16:
-      case 17:
-        return WeatherIcons.thunderstorm; // Thunderstorms
-      case 18:
-      case 19:
-        return WeatherIcons.fog; // Fog or mist
-      default:
-        return Icons.error; // Unhandled WMO code
-    }
+    final codes = response.hourlyData[WeatherHourly.weather_code]?.values;
+    final hour = DateTime.now();
+    final times = temperature.keys.where((t) => !t.isBefore(hour.subtract(const Duration(hours: 1)))).toList()..sort();
+
+    return [
+      for (final time in times)
+        WeatherHour(
+          time: time,
+          kind: WeatherKind.fromWmo(codes?[time]?.toDouble()),
+          temperature: temperature[time]!.toDouble(),
+        )
+    ];
+  }
+
+  // The daily rows arrive as separate date->value maps. They are keyed by date
+  // rather than zipped by position: a row the API left short would otherwise
+  // shift every following day onto the wrong date.
+  List<WeatherDay> _buildForecast(ApiResponse<WeatherApi> response) {
+    final max = response.dailyData[WeatherDaily.temperature_2m_max]?.values;
+    if (max == null) return [];
+
+    final min = response.dailyData[WeatherDaily.temperature_2m_min]?.values;
+    final codes = response.dailyData[WeatherDaily.weather_code]?.values;
+    final rain =
+        response.dailyData[WeatherDaily.precipitation_probability_max]?.values;
+
+    final days = max.keys.toList()..sort();
+
+    return [
+      for (final date in days)
+        WeatherDay(
+          date: date,
+          kind: WeatherKind.fromWmo(codes?[date]?.toDouble()),
+          maximumTemperature: max[date]!.toDouble(),
+          minimalTemperature: min?[date]?.toDouble() ?? max[date]!.toDouble(),
+          precipitationChance: rain?[date]?.toDouble(),
+        )
+    ];
   }
 }

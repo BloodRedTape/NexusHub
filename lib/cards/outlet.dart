@@ -32,7 +32,7 @@ class OutletCard extends StateCard<bool> {
     );
   }
 
-  static final _onColor = Tint.color(color: const Color.fromARGB(255, 255, 94, 0));
+  static final _onColor = Tint.color(color: const Color.fromARGB(255, 252, 124, 51));
 
   /// Turning off an outlet that is drawing power cuts whatever is plugged in,
   /// so ask first. Everything else toggles right away.

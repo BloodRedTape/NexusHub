@@ -80,6 +80,10 @@ class _LightControlContentState extends State<LightControlContent> {
   // equals this is a stale echo, anything else is news and outranks _pending.
   LightState? _pendingWasBefore;
   Timer? _pendingTimeout;
+  // Open while a throttled commit is cooling down; holds the drag's last frame
+  // so the final colour still goes out after the user lets go.
+  Timer? _throttleCooldown;
+  bool _throttleMissed = false;
   void Function(LightState?)? _valueChangedCallback;
   ControlMode _controlMode = ControlMode.brightness;
 
@@ -101,6 +105,11 @@ class _LightControlContentState extends State<LightControlContent> {
   // value first. Until then the user's choice wins - but not forever, or a
   // command the light ignored would leave the dialog lying about its state.
   static const _pendingLifetime = Duration(seconds: 4);
+
+  // The colour wheel reports every frame of a drag and has no end-of-gesture
+  // callback, so commits are throttled to this and the last frame is flushed
+  // when the drag stops arriving.
+  static const _throttleInterval = Duration(milliseconds: 200);
 
   // What the UI draws: the user's intent while it is in flight, else the truth.
   LightState? get _light => _pending ?? _confirmed;
@@ -125,6 +134,7 @@ class _LightControlContentState extends State<LightControlContent> {
   @override
   void dispose() {
     _pendingTimeout?.cancel();
+    _throttleCooldown?.cancel();
     if (_valueChangedCallback != null) {
       widget.stateProvider.unbind(_valueChangedCallback!);
     }
@@ -174,6 +184,25 @@ class _LightControlContentState extends State<LightControlContent> {
     _pendingTimeout?.cancel();
     _pendingTimeout = Timer(_pendingLifetime, () {
       if (mounted) setState(_clearPending);
+    });
+  }
+
+  // Commit at most once per _throttleInterval. A change arriving mid-cooldown is
+  // not dropped: it is remembered and sent when the cooldown ends, so whatever
+  // the user landed on is always the last thing the light hears.
+  void _commitThrottled() {
+    if (_throttleCooldown != null) {
+      _throttleMissed = true;
+      return;
+    }
+
+    _commit();
+    _throttleCooldown = Timer(_throttleInterval, () {
+      _throttleCooldown = null;
+      if (!_throttleMissed) return;
+
+      _throttleMissed = false;
+      if (mounted) _commitThrottled();
     });
   }
 
@@ -427,7 +456,7 @@ class _LightControlContentState extends State<LightControlContent> {
         light.color!.value = color;
         light.isOn = true; // Turn on when color is changed
       });
-      _commit();
+      _commitThrottled();
     }
 
     // The picker sizes its wheel from colorPickerWidth and stacks its own slider
@@ -675,51 +704,6 @@ extension LightControlExtension on BuildContext {
       title: title,
       subtitle: subtitle,
       stateProvider: stateProvider,
-    );
-  }
-}
-
-class LightCardSettings extends StateCard<LightState> {
-  final IconData onIcon;
-  final IconData offIcon;
-
-  LightCardSettings({required this.onIcon, required this.offIcon, required super.stateProvider});
-
-  @override
-  Widget build(BuildContext context, LightState? state) {
-    if (state == null) return Text('Unavailable');
-
-    List<Widget> widgets = [];
-
-    var color = state.color;
-    if (color != null) {
-      widgets.add(Text('Color', style: TextStyle(fontSize: secondaryTextSize)));
-      widgets.add(ColorPicker(
-        enableAlpha: false,
-        pickerColor: color.value,
-        onColorChanged: (newColor) => stateProvider
-            .requestValue(LightState(isOn: state.isOn, brightness: state.brightness, color: ColorState(value: newColor), temperature: state.temperature)),
-      ));
-    }
-
-    var brightness = state.brightness;
-    if (brightness != null) {
-      widgets.add(Text('Brightness', style: TextStyle(fontSize: secondaryTextSize)));
-      widgets.add(SafeSlider(
-        value: brightness.value,
-        min: brightness.min,
-        max: brightness.max,
-        onChanged: (value) => stateProvider.requestValue(LightState(
-            isOn: state.isOn,
-            brightness: LimitedValueState(value: value, min: brightness.min, max: brightness.max),
-            color: state.color,
-            temperature: state.temperature)),
-      ));
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: widgets,
     );
   }
 }

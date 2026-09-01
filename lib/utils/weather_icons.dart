@@ -17,4 +17,7 @@ class WeatherIcons {
   static const IconData snow = IconData(0xf01b, fontFamily: _family);
   static const IconData thunderstorm = IconData(0xf01e, fontFamily: _family);
   static const IconData fog = IconData(0xf014, fontFamily: _family);
+  static const IconData sprinkle = IconData(0xf01c, fontFamily: _family);
+  static const IconData rain_mix = IconData(0xf017, fontFamily: _family);
+  static const IconData hail = IconData(0xf015, fontFamily: _family);
 }
