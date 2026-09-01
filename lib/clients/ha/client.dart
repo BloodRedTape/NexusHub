@@ -71,7 +71,27 @@ class HomeAssistantClient {
   Timer? _pingPongTimer;
 
   final _clientState = StateProvider<HomeAssistantClientState>();
+  final _areas = StateProvider<List<Area>>();
   final List<String> _log = [];
+
+  /// Areas (rooms) as configured in Home Assistant, null until the first successful connect.
+  StateProvider<List<Area>> get areas => _areas;
+
+  List<RegistryEntry> _registry = [];
+  Map<String, String?> _deviceAreas = {};
+
+  /// Registry entries that live in [areaId], sorted by name.
+  /// An entity without an area of its own inherits the one of its device.
+  List<RegistryEntry> entitiesOfArea(String areaId) {
+    final result = _registry
+        .where((entry) => !entry.disabled && !entry.hidden)
+        .where((entry) => (entry.areaId ?? _deviceAreas[entry.deviceId]) == areaId)
+        .toList();
+
+    result.sort((a, b) => a.displayName.compareTo(b.displayName));
+
+    return result;
+  }
   String? _wsUrl;
   bool _hasToken = false;
   DateTime? _lastConnected;
@@ -167,6 +187,19 @@ class HomeAssistantClient {
     }
 
     ha.subscribeEntities(_onEvent);
+
+    try {
+      final devices = await ha.getDevices();
+      _deviceAreas = {for (final device in devices) device.deviceId: device.areaId};
+      _registry = await ha.getEntityRegistry();
+
+      final areas = await ha.getAreas();
+      _areas.setValue(areas);
+
+      _setStatus('connected', detail: 'Loaded ${areas.length} areas, ${devices.length} devices, ${_registry.length} entities');
+    } catch (e) {
+      _setStatus('connected', detail: 'Failed to load registries: ${_describe(e)}');
+    }
 
     _pingPongTimer = Timer.periodic(Duration(seconds: 30), (_) async {
       try {

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:home_assistant_ws/home_assistant_ws.dart';
+import 'package:nexus/cards/state.dart';
+import 'package:nexus/providers/state.dart';
 
 const tabPadding = EdgeInsets.all(24.0);
 
@@ -11,6 +14,16 @@ class TabItem {
     required this.tab,
     required this.child,
   });
+}
+
+// Tab content inset from the screen edges. Tabs opt in - Dashboard never pads.
+class PaddedTab extends StatelessWidget {
+  final Widget child;
+
+  const PaddedTab({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) => Padding(padding: tabPadding, child: child);
 }
 
 // A tab that hosts its own sub tabs, switched by a bottom bar.
@@ -32,7 +45,7 @@ class _SubTabsState extends State<SubTabs> {
       backgroundColor: Colors.transparent,
       body: IndexedStack(
         index: _index,
-        children: widget.items.map((item) => Padding(padding: tabPadding, child: item.child)).toList(),
+        children: widget.items.map((item) => item.child).toList(),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
@@ -44,6 +57,31 @@ class _SubTabsState extends State<SubTabs> {
                 ))
             .toList(),
       ),
+    );
+  }
+}
+
+// One sub tab per Home Assistant area, rebuilt whenever the area list arrives.
+class AreaTabs extends StateCard<List<Area>> {
+  final Widget Function(Area area) builder;
+
+  AreaTabs({required super.stateProvider, required this.builder});
+
+  @override
+  Widget build(BuildContext context, List<Area>? areas) {
+    if (areas == null) return Center(child: Text('Loading rooms...'));
+
+    if (areas.isEmpty) return Center(child: Text('No areas configured in Home Assistant'));
+
+    return SubTabs(
+      // rebuild the sub tab state when the set of rooms actually changes
+      key: ValueKey(areas.map((area) => area.areaId).join(',')),
+      items: areas
+          .map((area) => TabItem(
+                tab: Tab(text: area.name, icon: Icon(Icons.meeting_room)),
+                child: PaddedTab(child: builder(area)),
+              ))
+          .toList(),
     );
   }
 }
@@ -67,10 +105,7 @@ class Dashboard extends StatelessWidget {
           tabs: items.map((item) => item.tab).toList(),
         ),
         body: TabBarView(
-          // SubTabs pads its own content, so its bottom bar can span the full width
-          children: items
-              .map((item) => item.child is SubTabs ? item.child : Padding(padding: tabPadding, child: item.child))
-              .toList(),
+          children: items.map((item) => item.child).toList(),
         ),
       ),
     );

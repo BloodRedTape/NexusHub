@@ -4,8 +4,7 @@ import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/apps.dart';
-import 'package:nexus/dashboard/bedroom.dart';
-import 'package:nexus/dashboard/master.dart';
+import 'package:nexus/dashboard/area.dart';
 import 'package:nexus/dashboard/morning.dart';
 import 'package:nexus/dashboard/settings.dart';
 import 'dashboard/dashboard.dart';
@@ -47,41 +46,35 @@ class _MyAppState extends State<MyApp> {
         items: [
           TabItem(
             tab: Tab(text: 'Glance'),
-            child: MorningTab(
-              weatherClient: _weatherClient,
-              homeAssistantClient: _homeAssistantClient,
-              androidClient: _androidClient,
+            child: PaddedTab(
+              child: MorningTab(
+                weatherClient: _weatherClient,
+                homeAssistantClient: _homeAssistantClient,
+                androidClient: _androidClient,
+              ),
             ),
           ),
           TabItem(
-            tab: Tab(text: 'Rooms'),
-            child: SubTabs(items: [
-              TabItem(
-                tab: Tab(text: 'Master Room', icon: Icon(Icons.weekend)),
-                child: MasterTab(
-                  homeAssistantClient: _homeAssistantClient,
-                ),
-              ),
-              TabItem(
-                tab: Tab(text: 'Bedroom', icon: Icon(Icons.bed)),
-                child: BedroomTab(
-                  homeAssistantClient: _homeAssistantClient,
-                ),
-              ),
-            ]),
+            tab: Tab(text: 'Home'),
+            child: AreaTabs(
+              stateProvider: _homeAssistantClient.areas,
+              builder: (area) => AreaTab(homeAssistantClient: _homeAssistantClient, area: area),
+            ),
           ),
           TabItem(
             tab: Tab(text: 'Apps'),
-            child: AppsTab(stateProvider: _androidClient.getAppsStateProvider()),
+            child: PaddedTab(child: AppsTab(stateProvider: _androidClient.getAppsStateProvider())),
           ),
           TabItem(
             tab: const Tab(text: 'Settings'),
-            child: SettingsTab(items: [
-              _androidClient.makeSystemSettings(),
-              _androidClient.makeSettings(),
-              _weatherClient.makeSettings(),
-              _homeAssistantClient.makeSettings(),
-            ]),
+            child: PaddedTab(
+              child: SettingsTab(items: [
+                _androidClient.makeSystemSettings(),
+                _androidClient.makeSettings(),
+                _weatherClient.makeSettings(),
+                _homeAssistantClient.makeSettings(),
+              ]),
+            ),
           ),
         ],
       ),
