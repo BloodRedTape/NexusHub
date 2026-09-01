@@ -10,7 +10,7 @@ import 'package:nexus/clients/android/settings.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/dashboard/settings.dart';
 import 'package:nexus/providers/state.dart';
-import 'package:nexus/config/config_storage.dart';
+import 'package:nexus/clients/config_storage.dart';
 import 'package:nexus/states/alarm.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
@@ -33,8 +33,7 @@ class AndroidClient {
     return _appsStateProvider;
   }
 
-  AndroidClient({required HomeAssistantClient homeAssistantClient})
-      : _homeAssistantClient = homeAssistantClient {
+  AndroidClient({required HomeAssistantClient homeAssistantClient}) : _homeAssistantClient = homeAssistantClient {
     _alarmStateProvider.init();
     _appsStateProvider.init();
 
@@ -92,8 +91,7 @@ class AndroidClient {
     for (final entityId in entityIds) {
       if (entityId.isEmpty || _screenOnSensorProviders.containsKey(entityId)) continue;
 
-      _screenOnSensorProviders[entityId] = _homeAssistantClient.switchStateProvider(entityId)
-        ..bindValueChanged(_onScreenOnSensorChanged);
+      _screenOnSensorProviders[entityId] = _homeAssistantClient.switchStateProvider(entityId)..bindValueChanged(_onScreenOnSensorChanged);
     }
   }
 

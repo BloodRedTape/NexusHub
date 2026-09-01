@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/alarm.dart';
-import 'package:nexus/cards/clock.dart';
-import 'package:nexus/cards/calendar.dart';
+import 'package:nexus/cards/os/alarm.dart';
+import 'package:nexus/cards/os/clock.dart';
+import 'package:nexus/cards/os/calendar.dart';
 import 'package:nexus/clients/android/client.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
@@ -9,7 +9,7 @@ import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
 import 'package:provider/provider.dart';
 
-import 'package:nexus/cards/weather.dart';
+import 'package:nexus/cards/os/weather.dart';
 
 class MorningTab extends StatelessWidget {
   const MorningTab({super.key});
