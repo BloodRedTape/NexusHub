@@ -3,6 +3,7 @@ import 'package:nexus/clients/android/client.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/config/config.dart';
+import 'package:provider/provider.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/apps.dart';
 import 'package:nexus/dashboard/area.dart';
@@ -50,55 +51,72 @@ class _MyAppState extends State<MyApp> {
   }
 
   @override
+  void dispose() {
+    _androidClient.dispose();
+    _homeAssistantClient.dispose();
+    _weatherClient.dispose();
+    _config.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Dashboard(
-        items: [
-          TabItem(
-            tab: Tab(text: 'Glance'),
-            child: PaddedTab(
-              child: MorningTab(
-                weatherClient: _weatherClient,
-                homeAssistantClient: _homeAssistantClient,
-                androidClient: _androidClient,
+    // The clients outlive every page, so they are provided above the app
+    // itself rather than handed down through each tab.
+    return MultiProvider(
+      providers: [
+        Provider<AppConfig>.value(value: _config),
+        Provider<OpenMeteoWeatherClient>.value(value: _weatherClient),
+        Provider<HomeAssistantClient>.value(value: _homeAssistantClient),
+        Provider<AndroidClient>.value(value: _androidClient),
+      ],
+      child: MaterialApp(
+        home: Dashboard(
+          items: [
+            TabItem(
+              tab: Tab(text: 'Glance'),
+              child: PaddedTab(
+                child: MorningTab(),
               ),
             ),
-          ),
-          TabItem(
-            tab: Tab(text: 'Home'),
-            child: AreaTabs(
-              stateProvider: _homeAssistantClient.areas,
-              builder: (area) => AreaTab(homeAssistantClient: _homeAssistantClient, area: area),
+            TabItem(
+              tab: Tab(text: 'Home'),
+              child: AreaTabs(
+                stateProvider: _homeAssistantClient.areas,
+                builder: (area) => AreaTab(area: area),
+              ),
             ),
-          ),
-          TabItem(
-            tab: Tab(text: 'Apps'),
-            child: PaddedTab(child: AppsTab(stateProvider: _androidClient.getAppsStateProvider())),
-          ),
-          TabItem(
-            tab: const Tab(text: 'Settings'),
-            child: PaddedTab(
-              child: SettingsTab(items: [
-                _androidClient.makeSystemSettings(),
-                _androidClient.makeSettings(),
-                _weatherClient.makeSettings(),
-                _homeAssistantClient.makeSettings(),
-              ]),
+            TabItem(
+              tab: Tab(text: 'Apps'),
+              child: PaddedTab(child: AppsTab(stateProvider: _androidClient.getAppsStateProvider())),
             ),
-          ),
-        ],
+            TabItem(
+              tab: const Tab(text: 'Settings'),
+              child: PaddedTab(
+                child: SettingsTab(items: [
+                  _androidClient.makeSystemSettings(),
+                  _androidClient.makeSettings(),
+                  _weatherClient.makeSettings(),
+                  _homeAssistantClient.makeSettings(),
+                ]),
+              ),
+            ),
+          ],
+        ),
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+          cardTheme:
+              CardThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
+        ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+          useMaterial3: true,
+          cardTheme:
+              CardThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
+        ),
+        themeMode: ThemeMode.dark,
       ),
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-        cardTheme: CardThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
-        useMaterial3: true,
-        cardTheme: CardThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
-      ),
-      themeMode: ThemeMode.dark,
     );
   }
 }

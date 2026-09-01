@@ -7,18 +7,19 @@ import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:nexus/utils/expanded_row.dart';
 import 'package:nexus/utils/expanded_column.dart';
+import 'package:provider/provider.dart';
 
 import 'package:nexus/cards/weather.dart';
 
 class MorningTab extends StatelessWidget {
-  final OpenMeteoWeatherClient weatherClient;
-  final HomeAssistantClient homeAssistantClient;
-  final AndroidClient androidClient;
-
-  const MorningTab({super.key, required this.weatherClient, required this.homeAssistantClient, required this.androidClient});
+  const MorningTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final weatherClient = context.read<OpenMeteoWeatherClient>();
+    final homeAssistantClient = context.read<HomeAssistantClient>();
+    final androidClient = context.read<AndroidClient>();
+
     return ExpandedRow(
       children: [
         ExpandedColumn(children: [

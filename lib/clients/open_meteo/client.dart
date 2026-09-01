@@ -46,6 +46,10 @@ class OpenMeteoWeatherClient {
     return _weatherStateProvider;
   }
 
+  void dispose() {
+    _weatherStateProvider.dispose();
+  }
+
   final GlobalKey<State> _settingsKey = GlobalKey<State>();
 
   SettingsItem makeSettings() {

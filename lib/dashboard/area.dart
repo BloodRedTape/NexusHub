@@ -11,6 +11,7 @@ import 'package:nexus/cards/vacuum.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/dashboard/grid.dart';
+import 'package:provider/provider.dart';
 
 /// A card that can represent a device, provided the device exposes [requires].
 class CardMatcher {
@@ -152,13 +153,13 @@ CardMatcher? matchCard(DeviceEntities device) {
 
 /// Devices of one area, each shown with the card that fits it best.
 class AreaTab extends StatelessWidget {
-  final HomeAssistantClient homeAssistantClient;
   final Area area;
 
-  const AreaTab({super.key, required this.homeAssistantClient, required this.area});
+  const AreaTab({super.key, required this.area});
 
   @override
   Widget build(BuildContext context) {
+    final homeAssistantClient = context.read<HomeAssistantClient>();
     final tiles = <Tile>[];
 
     for (final device in homeAssistantClient.devicesOfArea(area.areaId)) {
