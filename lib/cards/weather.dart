@@ -14,20 +14,17 @@ const _rainThreshold = 10.0;
 /// keeps every reading legible without darkening the gradient itself.
 const _cardShadow = [Shadow(color: Color(0x99000000), blurRadius: 6, offset: Offset(0, 1))];
 
-/// One of the two panels the forecast is split into: a titled Material surface
-/// with a scrolling list of rows.
+/// The type size the forecast is built from - everything else is a multiple.
+const _fontSize = 20.0;
+
+/// A titled Material surface, the way the reference lays a forecast out: the
+/// section name with its icon sits inside the card, above the content.
 class _ForecastPanel extends StatelessWidget {
   final IconData icon;
   final String title;
-  final double fontSize;
-  final List<Widget> children;
+  final Widget child;
 
-  const _ForecastPanel({
-    required this.icon,
-    required this.title,
-    required this.fontSize,
-    required this.children,
-  });
+  const _ForecastPanel({required this.icon, required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -37,39 +34,26 @@ class _ForecastPanel extends StatelessWidget {
       margin: EdgeInsets.zero,
       color: colors.surfaceContainer,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: cardPadding, vertical: cardPadding * 0.5),
+        padding: EdgeInsets.all(cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: cardPadding * 0.5),
-              child: Row(
-                children: [
-                  Icon(icon, size: fontSize * 0.9, color: colors.onSurfaceVariant),
-                  SizedBox(width: fontSize * 0.4),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: fontSize * 0.7,
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
+            Row(
+              children: [
+                Icon(icon, size: _fontSize * 0.9, color: colors.onSurfaceVariant),
+                SizedBox(width: _fontSize * 0.4),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: _fontSize * 0.8,
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: EdgeInsets.zero,
-                itemCount: children.length,
-                separatorBuilder: (_, __) => Divider(height: 1, color: colors.outlineVariant),
-                itemBuilder: (context, i) => Padding(
-                  padding: EdgeInsets.symmetric(vertical: cardPadding * 0.5),
-                  child: children[i],
                 ),
-              ),
+              ],
             ),
+            SizedBox(height: cardPadding * 0.75),
+            Expanded(child: child),
           ],
         ),
       ),
@@ -97,11 +81,20 @@ class _RangeBar extends StatelessWidget {
     this.now,
   });
 
-  /// Cool blue at the cold end of the forecast, warm amber at the hot end, so a
-  /// colour means the same temperature on every row. These stay fixed rather
-  /// than following the seed colour: they carry meaning, not branding.
-  static Color _colorAt(double fraction) =>
-      Color.lerp(const Color(0xFF4FC3F7), const Color(0xFFFFB74D), fraction.clamp(0.0, 1.0))!;
+  /// Material blue at the cold end, green through the middle, orange at the hot
+  /// end, so a colour means the same temperature on every row. These stay fixed
+  /// rather than following the seed colour: they carry meaning, not branding.
+  static const _cold = Color(0xFF42A5F5);
+  static const _mild = Color(0xFF66BB6A);
+  static const _hot = Color(0xFFFFA726);
+
+  static Color _colorAt(double fraction) {
+    final f = fraction.clamp(0.0, 1.0);
+
+    return f < 0.5
+        ? Color.lerp(_cold, _mild, f * 2)!
+        : Color.lerp(_mild, _hot, (f - 0.5) * 2)!;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +131,9 @@ class _RangeBar extends StatelessWidget {
                   height: height,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(height),
-                    gradient: LinearGradient(colors: [_colorAt(start), _colorAt(end)]),
+                    gradient: LinearGradient(
+                      colors: [_colorAt(start), _colorAt(end)],
+                    ),
                   ),
                 ),
               ),
@@ -171,7 +166,6 @@ class _WeatherDayRow extends StatelessWidget {
   final bool isToday;
   final double minimum;
   final double maximum;
-  final double fontSize;
   final double? now;
 
   const _WeatherDayRow({
@@ -179,7 +173,6 @@ class _WeatherDayRow extends StatelessWidget {
     required this.isToday,
     required this.minimum,
     required this.maximum,
-    required this.fontSize,
     this.now,
   });
 
@@ -191,11 +184,11 @@ class _WeatherDayRow extends StatelessWidget {
     return Row(
       children: [
         SizedBox(
-          width: fontSize * 3.2,
+          width: _fontSize * 3.2,
           child: Text(
             isToday ? 'Today' : DateFormat('EEE').format(day.date),
             style: TextStyle(
-              fontSize: fontSize,
+              fontSize: _fontSize,
               fontWeight: isToday ? FontWeight.w600 : FontWeight.w500,
               color: colors.onSurface,
             ),
@@ -204,16 +197,16 @@ class _WeatherDayRow extends StatelessWidget {
         // Icon and rain chance stack, so a wet day says how wet without a
         // column standing empty on every dry one.
         SizedBox(
-          width: fontSize * 2.0,
+          width: _fontSize * 2.0,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(day.icon, size: fontSize * 1.1, color: colors.onSurface),
+              Icon(day.icon, size: _fontSize * 1.1, color: colors.onSurface),
               if (rain != null && rain >= _rainThreshold)
                 Text(
                   '${rain.round()}%',
                   style: TextStyle(
-                    fontSize: fontSize * 0.6,
+                    fontSize: _fontSize * 0.6,
                     color: colors.primary,
                     fontWeight: FontWeight.w600,
                   ),
@@ -222,30 +215,30 @@ class _WeatherDayRow extends StatelessWidget {
           ),
         ),
         SizedBox(
-          width: fontSize * 1.9,
+          width: _fontSize * 1.9,
           child: Text(
             '${day.minimalTemperature.round()}°',
             textAlign: TextAlign.right,
-            style: TextStyle(fontSize: fontSize, color: colors.onSurfaceVariant),
+            style: TextStyle(fontSize: _fontSize, color: colors.onSurfaceVariant),
           ),
         ),
-        SizedBox(width: fontSize * 0.5),
+        SizedBox(width: _fontSize * 0.5),
         Expanded(
           child: _RangeBar(
             day: day,
             minimum: minimum,
             maximum: maximum,
-            height: fontSize * 0.28,
+            height: _fontSize * 0.28,
             now: now,
           ),
         ),
-        SizedBox(width: fontSize * 0.5),
+        SizedBox(width: _fontSize * 0.5),
         SizedBox(
-          width: fontSize * 1.9,
+          width: _fontSize * 1.9,
           child: Text(
             '${day.maximumTemperature.round()}°',
             textAlign: TextAlign.right,
-            style: TextStyle(fontSize: fontSize, color: colors.onSurface),
+            style: TextStyle(fontSize: _fontSize, color: colors.onSurface),
           ),
         ),
       ],
@@ -253,47 +246,96 @@ class _WeatherDayRow extends StatelessWidget {
   }
 }
 
-/// One hour: the time, the sky, the temperature.
-class _WeatherHourRow extends StatelessWidget {
+/// One hour, as a column the way the reference draws it: temperature on top,
+/// the sky in the middle, the time underneath.
+class _WeatherHourColumn extends StatelessWidget {
   final WeatherHour hour;
   final bool isNow;
-  final double fontSize;
 
-  const _WeatherHourRow({required this.hour, required this.isNow, required this.fontSize});
+  const _WeatherHourColumn({required this.hour, required this.isNow});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Row(
-      children: [
-        SizedBox(
-          width: fontSize * 3.2,
-          child: Text(
-            isNow ? 'Now' : DateFormat('HH:mm').format(hour.time),
+    return SizedBox(
+      width: _fontSize * 3.4,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '${hour.temperature.round()}°',
             style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: isNow ? FontWeight.w600 : FontWeight.w500,
+              fontSize: _fontSize,
+              fontWeight: FontWeight.w600,
               color: colors.onSurface,
             ),
           ),
-        ),
-        Expanded(child: Icon(hour.icon, size: fontSize * 1.1, color: colors.onSurface)),
+          Icon(hour.icon, size: _fontSize * 1.3, color: colors.onSurface),
+          Text(
+            isNow ? 'Now' : DateFormat('HH:mm').format(hour.time),
+            style: TextStyle(
+              fontSize: _fontSize * 0.75,
+              color: isNow ? colors.onSurface : colors.onSurfaceVariant,
+              fontWeight: isNow ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What the sky is doing right now: the reading the rest of the page is
+/// context for.
+class _CurrentConditions extends StatelessWidget {
+  final WeatherState state;
+
+  const _CurrentConditions({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
         Text(
-          '${hour.temperature.round()}°',
-          textAlign: TextAlign.right,
-          style: TextStyle(fontSize: fontSize, color: colors.onSurface),
+          state.label,
+          style: TextStyle(fontSize: _fontSize * 1.2, color: colors.onSurfaceVariant),
+        ),
+        SizedBox(height: cardPadding * 0.5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '${state.temperature.round()}°',
+              style: TextStyle(
+                fontSize: _fontSize * 4,
+                fontWeight: FontWeight.w400,
+                height: 1,
+                color: colors.onSurface,
+              ),
+            ),
+            SizedBox(width: _fontSize * 0.4),
+            Icon(state.icon, size: _fontSize * 2.4, color: colors.onSurface),
+          ],
+        ),
+        SizedBox(height: cardPadding * 0.75),
+        Text(
+          'High ${state.maximumTemperature.round()}° · Low ${state.minimalTemperature.round()}°',
+          style: TextStyle(fontSize: _fontSize * 0.9, color: colors.onSurfaceVariant),
         ),
       ],
     );
   }
 }
 
-/// The forecast page: the coming hours on the left, the coming days on the
-/// right.
+/// The forecast page, laid out for a landscape screen: what it is doing now on
+/// the left, the two forecast panels stacked on the right.
 class WeatherForecast extends StatelessWidget {
-  /// Far enough ahead to plan the day around; past that the daily column says
-  /// it better than another twenty rows of hours would.
+  /// Far enough ahead to plan the day around; past that the daily panel says it
+  /// better than another twenty columns of hours would.
   static const hoursShown = 16;
 
   final WeatherState state;
@@ -302,18 +344,29 @@ class WeatherForecast extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const fontSize = 20.0;
-
     final hours = state.hourly.take(hoursShown).toList();
 
     final hourly = _ForecastPanel(
       icon: Icons.schedule,
-      title: 'HOURLY FORECAST',
-      fontSize: fontSize,
-      children: [
-        for (var i = 0; i < hours.length; i++)
-          _WeatherHourRow(hour: hours[i], isNow: i == 0, fontSize: fontSize),
-      ],
+      title: 'Hourly forecast',
+      // However wide the panel lands, the strip cuts through a column. Fading
+      // that edge out says "there is more" instead of looking clipped.
+      child: ShaderMask(
+        shaderCallback: (bounds) => LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: const [Colors.white, Colors.white, Colors.transparent],
+          stops: const [0.0, 0.9, 1.0],
+        ).createShader(bounds),
+        blendMode: BlendMode.dstIn,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.zero,
+          itemCount: hours.length,
+          separatorBuilder: (_, __) => SizedBox(width: cardPadding * 0.5),
+          itemBuilder: (context, i) => _WeatherHourColumn(hour: hours[i], isNow: i == 0),
+        ),
+      ),
     );
 
     final minimum = state.forecastMinimum;
@@ -321,31 +374,41 @@ class WeatherForecast extends StatelessWidget {
 
     final daily = _ForecastPanel(
       icon: Icons.calendar_month,
-      title: 'DAILY FORECAST',
-      fontSize: fontSize,
-      children: [
-        for (var i = 0; i < state.forecast.length; i++)
-          _WeatherDayRow(
-            day: state.forecast[i],
-            isToday: i == 0,
-            minimum: minimum,
-            maximum: maximum,
-            fontSize: fontSize,
-            now: i == 0 ? state.temperature : null,
-          ),
-      ],
+      title: 'Daily forecast',
+      child: ListView.separated(
+        padding: EdgeInsets.zero,
+        itemCount: state.forecast.length,
+        separatorBuilder: (_, __) => SizedBox(height: cardPadding * 0.5),
+        itemBuilder: (context, i) => _WeatherDayRow(
+          day: state.forecast[i],
+          isToday: i == 0,
+          minimum: minimum,
+          maximum: maximum,
+          now: i == 0 ? state.temperature : null,
+        ),
+      ),
     );
 
     return Padding(
       padding: EdgeInsets.all(cardPadding),
-      // The hourly column carries one number per row against the daily
-      // column's five, so it takes the narrower share of the width.
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(flex: 2, child: hourly),
+          Expanded(flex: 2, child: _CurrentConditions(state: state)),
           SizedBox(width: cardPadding),
-          Expanded(flex: 3, child: daily),
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // The hourly strip only needs the height of one column; the days
+                // take whatever is left.
+                SizedBox(height: _fontSize * 7.5, child: hourly),
+                SizedBox(height: cardPadding),
+                Expanded(child: daily),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -370,7 +433,13 @@ class WeatherCard extends StateCard<WeatherState> {
         (state.forecast.isEmpty
             ? null
             : DetailsPage(
-                title: const Text('Forecast'),
+                title: Text.rich(TextSpan(children: [
+                  const TextSpan(text: 'Forecast'),
+                  TextSpan(
+                    text: ' · ${state.label}',
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                ])),
                 body: WeatherForecast(state: state)));
 
     return DetailsCard(
