@@ -8,6 +8,7 @@ import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/ha/config.dart';
 import 'package:nexus/clients/ha/debug.dart';
 import 'package:nexus/clients/ha/settings.dart';
+import 'package:nexus/utils/settings_section.dart';
 import 'package:nexus/clients/ha/states/calendar.dart';
 import 'package:nexus/clients/ha/states/curtain.dart';
 import 'package:nexus/clients/ha/states/entity.dart';
@@ -562,6 +563,8 @@ class HomeAssistantClient {
     );
   }
 
+  final GlobalKey<State> _settingsKey = GlobalKey<State>();
+
   SettingsItem makeSettings() {
     return SettingsItem.details(
       icon: GenericIcon.fromImage(
@@ -570,7 +573,9 @@ class HomeAssistantClient {
       name: 'Home Assistant',
       details: DetailsPage(
         title: Text('Home Assistant Settings'),
+        actions: [SettingsSaveButton(_settingsKey)],
         body: HomeAssistantConfigWidget(
+          key: _settingsKey,
           stateProvider: _configStateProvider,
           // Its own page: the log has a scroll of its own and does not belong
           // inside the settings list.

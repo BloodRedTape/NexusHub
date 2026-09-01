@@ -9,22 +9,38 @@ class HomeAssistantConfigWidget extends StatefulWidget {
   /// Opens the connection diagnostics page.
   final void Function(BuildContext context) openDiagnostics;
 
-  HomeAssistantConfigWidget({required this.stateProvider, required this.openDiagnostics});
+  HomeAssistantConfigWidget({Key? key, required this.stateProvider, required this.openDiagnostics})
+      : super(key: key);
 
   @override
   _HomeAssistantConfigWidgetState createState() =>
       _HomeAssistantConfigWidgetState();
 }
 
-class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
+class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> implements SettingsSaver {
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _tokenController = TextEditingController();
+
+  @override
+  final ValueNotifier<bool> dirty = ValueNotifier(false);
 
   @override
   void initState() {
     super.initState();
 
     widget.stateProvider.bindValueChanged(_onConfigChanged);
+    _urlController.addListener(_refreshDirty);
+    _tokenController.addListener(_refreshDirty);
+  }
+
+  void _refreshDirty() {
+    final current = widget.stateProvider.getValue();
+
+    dirty.value = current == null ||
+        current.url != _urlController.text ||
+        current.token != _tokenController.text ||
+        current.hideUnavailable != _hideUnavailable ||
+        current.hideEmptyAreas != _hideEmptyAreas;
   }
 
   bool _hideUnavailable = true;
@@ -37,9 +53,10 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
     _tokenController.text = config.token.toString();
     _hideUnavailable = config.hideUnavailable;
     _hideEmptyAreas = config.hideEmptyAreas;
+
+    _refreshDirty();
   }
 
-  /// Flags apply right away - unlike the text fields, which are saved on close.
   Widget _flag(String title, String subtitle, IconData icon, bool value, void Function(bool) apply) {
     return SwitchListTile(
       secondary: Icon(icon),
@@ -48,32 +65,29 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
       value: value,
       onChanged: (newValue) {
         setState(() => apply(newValue));
-
-        widget.stateProvider.setValue(HomeAssistantConfig(
-          url: _urlController.text,
-          token: _tokenController.text,
-          hideUnavailable: _hideUnavailable,
-          hideEmptyAreas: _hideEmptyAreas,
-        ));
+        _refreshDirty();
       },
     );
   }
 
   @override
-  void dispose() {
-    final current = widget.stateProvider.getValue();
+  void save() {
+    widget.stateProvider.setValue(
+      HomeAssistantConfig(
+        url: _urlController.text,
+        token: _tokenController.text,
+        hideUnavailable: _hideUnavailable,
+        hideEmptyAreas: _hideEmptyAreas,
+      ),
+    );
 
-    if (current?.url != _urlController.text || current?.token != _tokenController.text) {
-      widget.stateProvider.setValue(
-        HomeAssistantConfig(
-          url: _urlController.text,
-          token: _tokenController.text,
-          hideUnavailable: _hideUnavailable,
-          hideEmptyAreas: _hideEmptyAreas,
-        ),
-      );
-    }
+    _refreshDirty();
+  }
+
+  @override
+  void dispose() {
     widget.stateProvider.unbind(_onConfigChanged);
+    dirty.dispose();
     super.dispose();
   }
 
@@ -86,7 +100,6 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
         SettingsTextField(
           controller: _urlController,
           label: 'Home Assistant Url',
-          helperText: 'Saved when you leave this screen',
           icon: Icons.link,
           keyboardType: TextInputType.url,
         ),
@@ -96,7 +109,6 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
           helperText: 'Long lived access token from your HA profile',
           icon: Icons.key,
         ),
-        Divider(height: 1),
         SettingsSectionHeader('Dashboard'),
         _flag(
           'Hide unavailable devices',
@@ -112,7 +124,6 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> {
           _hideEmptyAreas,
           (value) => _hideEmptyAreas = value,
         ),
-        Divider(height: 1),
         SettingsSectionHeader('Diagnostics'),
         ListTile(
           leading: Icon(Icons.lan_outlined),

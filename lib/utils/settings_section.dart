@@ -69,3 +69,52 @@ class SettingsTextField extends StatelessWidget {
     );
   }
 }
+
+/// Settings pages that the app bar's save button can commit. The page raises
+/// [dirty] while it holds edits the provider has not seen yet.
+abstract class SettingsSaver {
+  ValueNotifier<bool> get dirty;
+
+  /// Writes the edited values through to the config provider.
+  void save();
+}
+
+/// App bar save button for a settings page, enabled only while that page has
+/// unsaved edits.
+class SettingsSaveButton extends StatelessWidget {
+  final GlobalKey<State> settingsKey;
+
+  const SettingsSaveButton(this.settingsKey, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // The settings page builds after this one, so its state is not reachable
+    // on the first frame - rebuild once it is.
+    final saver = settingsKey.currentState as SettingsSaver?;
+
+    if (saver == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) (context as Element).markNeedsBuild();
+      });
+
+      return IconButton(icon: Icon(Icons.save_outlined), onPressed: null);
+    }
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: saver.dirty,
+      builder: (context, dirty, _) => IconButton(
+        icon: Icon(Icons.save_outlined),
+        tooltip: dirty ? 'Save' : 'Nothing to save',
+        onPressed: dirty
+            ? () {
+                saver.save();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Saved'), duration: Duration(seconds: 1)),
+                );
+              }
+            : null,
+      ),
+    );
+  }
+}

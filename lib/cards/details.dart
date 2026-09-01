@@ -4,12 +4,13 @@ import 'package:nexus/cards/base.dart';
 class DetailsPage extends StatelessWidget {
   final Widget body;
   final Widget? title;
+  final List<Widget>? actions;
 
-  const DetailsPage({required this.body, this.title});
+  const DetailsPage({required this.body, this.title, this.actions});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: title), body: body);
+    return Scaffold(appBar: AppBar(title: title, actions: actions), body: body);
   }
 
   void navigateTo(BuildContext context) {

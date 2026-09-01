@@ -7,21 +7,34 @@ import 'package:nexus/utils/settings_section.dart';
 class OpenMeteoConfigWidget extends StatefulWidget {
   final StateProvider<OpenMeteoConfig> stateProvider;
 
-  OpenMeteoConfigWidget({required this.stateProvider});
+  OpenMeteoConfigWidget({Key? key, required this.stateProvider}) : super(key: key);
 
   @override
   _OpenMeteoConfigWidgetState createState() => _OpenMeteoConfigWidgetState();
 }
 
-class _OpenMeteoConfigWidgetState extends State<OpenMeteoConfigWidget> {
+class _OpenMeteoConfigWidgetState extends State<OpenMeteoConfigWidget> implements SettingsSaver {
   final TextEditingController _latController = TextEditingController();
   final TextEditingController _longController = TextEditingController();
+
+  @override
+  final ValueNotifier<bool> dirty = ValueNotifier(false);
 
   @override
   void initState() {
     super.initState();
 
     widget.stateProvider.bindValueChanged(_onConfigChanged);
+    _latController.addListener(_refreshDirty);
+    _longController.addListener(_refreshDirty);
+  }
+
+  void _refreshDirty() {
+    final current = widget.stateProvider.getValue();
+    final lat = double.tryParse(_latController.text);
+    final long = double.tryParse(_longController.text);
+
+    dirty.value = lat != null && long != null && (lat != current?.lat || long != current?.long);
   }
 
   void _onConfigChanged(OpenMeteoConfig? config) {
@@ -29,10 +42,12 @@ class _OpenMeteoConfigWidgetState extends State<OpenMeteoConfigWidget> {
 
     _latController.text = config.lat.toString();
     _longController.text = config.long.toString();
+
+    _refreshDirty();
   }
 
   @override
-  void dispose() {
+  void save() {
     final current = widget.stateProvider.getValue();
     final lat = double.tryParse(_latController.text);
     final long = double.tryParse(_longController.text);
@@ -42,7 +57,13 @@ class _OpenMeteoConfigWidgetState extends State<OpenMeteoConfigWidget> {
       widget.stateProvider.setValue(OpenMeteoConfig(lat: lat, long: long));
     }
 
+    _refreshDirty();
+  }
+
+  @override
+  void dispose() {
     widget.stateProvider.unbind(_onConfigChanged);
+    dirty.dispose();
     super.dispose();
   }
 
@@ -55,7 +76,6 @@ class _OpenMeteoConfigWidgetState extends State<OpenMeteoConfigWidget> {
         SettingsTextField(
           controller: _latController,
           label: 'Latitude',
-          helperText: 'Saved when you leave this screen',
           icon: Icons.my_location,
           keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
           inputFormatters: [

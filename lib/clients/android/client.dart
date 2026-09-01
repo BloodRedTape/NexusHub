@@ -14,6 +14,7 @@ import 'package:nexus/providers/shared_preferences_state.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/alarm.dart';
 import 'package:nexus/utils/generic_icon.dart';
+import 'package:nexus/utils/settings_section.dart';
 
 class AndroidClient {
   final HomeAssistantClient _homeAssistantClient;
@@ -134,6 +135,8 @@ class AndroidClient {
     return SettingsItem.fromPackage(name: 'System Settings', package: 'com.android.settings');
   }
 
+  final GlobalKey<State> _settingsKey = GlobalKey<State>();
+
   SettingsItem makeSettings() {
     return SettingsItem.details(
       icon: GenericIcon.fromIcon(
@@ -142,7 +145,9 @@ class AndroidClient {
       name: 'Android',
       details: DetailsPage(
         title: Text('Android Settings'),
+        actions: [SettingsSaveButton(_settingsKey)],
         body: AndroidConfigWidget(
+          key: _settingsKey,
           stateProvider: _configStateProvider,
           binarySensors: () => {
             for (final entry in _homeAssistantClient.binarySensors()) entry.entityId: entry.displayName,

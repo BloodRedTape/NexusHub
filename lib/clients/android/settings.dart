@@ -13,26 +13,45 @@ class AndroidConfigWidget extends StatefulWidget {
   final StateProvider<String> Function(String entityId) entityState;
 
   AndroidConfigWidget({
+    Key? key,
     required this.stateProvider,
     required this.binarySensors,
     required this.entityState,
-  });
+  }) : super(key: key);
 
   @override
   _AndroidConfigWidgetState createState() => _AndroidConfigWidgetState();
 }
 
-class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
+class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements SettingsSaver {
   bool _autoBrightnessEnabled = false;
   double _brightnessThreshold = 70.0;
   List<ScreenOnInterval> _screenOnIntervals = const [];
   List<String> _screenOnSensors = const [];
 
   @override
+  final ValueNotifier<bool> dirty = ValueNotifier(false);
+
+  @override
   void initState() {
     super.initState();
 
     widget.stateProvider.bindValueChanged(_onConfigChanged);
+  }
+
+  AndroidConfig _edited() {
+    return AndroidConfig(
+      autoBrightnessEnabled: _autoBrightnessEnabled,
+      brightnessThreshold: _brightnessThreshold,
+      screenOnIntervals: _screenOnIntervals,
+      screenOnSensors: _screenOnSensors,
+    );
+  }
+
+  /// Compared through serialize - intervals carry no equality of their own.
+  void _refreshDirty() {
+    dirty.value =
+        AndroidConfig.serialize(_edited()) != AndroidConfig.serialize(widget.stateProvider.getValue());
   }
 
   /// Sensor state providers we are subscribed to, by entity id.
@@ -73,23 +92,20 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
       _screenOnIntervals = config.screenOnIntervals;
       _screenOnSensors = config.screenOnSensors;
     });
+
+    _refreshDirty();
   }
 
-  void _save() {
-    widget.stateProvider.setValue(
-      AndroidConfig(
-        autoBrightnessEnabled: _autoBrightnessEnabled,
-        brightnessThreshold: _brightnessThreshold,
-        screenOnIntervals: _screenOnIntervals,
-        screenOnSensors: _screenOnSensors,
-      ),
-    );
+  @override
+  void save() {
+    widget.stateProvider.setValue(_edited());
+    _refreshDirty();
   }
 
   @override
   void dispose() {
-    _save();
     widget.stateProvider.unbind(_onConfigChanged);
+    dirty.dispose();
 
     for (final provider in _sensorStates.values) {
       provider.unbind(_onSensorStateChanged);
@@ -136,7 +152,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
       _screenOnIntervals = intervals;
     });
 
-    _save();
+    _refreshDirty();
   }
 
   void _removeInterval(ScreenOnInterval interval) {
@@ -144,7 +160,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
       _screenOnIntervals = List<ScreenOnInterval>.from(_screenOnIntervals)..remove(interval);
     });
 
-    _save();
+    _refreshDirty();
   }
 
   Future<void> _addSensor() async {
@@ -189,7 +205,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
       _screenOnSensors = sensors;
     });
 
-    _save();
+    _refreshDirty();
   }
 
   void _removeSensor(String entityId) {
@@ -201,7 +217,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
       _screenOnSensors = sensors;
     });
 
-    _save();
+    _refreshDirty();
   }
 
   /// Current state of a chosen sensor, as an icon: on, off, unavailable, or
@@ -277,7 +293,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
             setState(() {
               _autoBrightnessEnabled = value;
             });
-            _save();
+            _refreshDirty();
           },
         ),
         ListTile(
@@ -300,26 +316,23 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> {
                     setState(() {
                       _brightnessThreshold = value;
                     });
+                    _refreshDirty();
                   }
                 : null,
-            onChangeEnd: (double value) => _save(),
           ),
         ),
-        Divider(height: 1),
         ..._intervalSection(
           blocking: false,
           title: 'Keep screen on',
           subtitle: 'Screen stays awake during these times while the launcher is running',
           icon: Icons.lightbulb_outline,
         ),
-        Divider(height: 1),
         ..._intervalSection(
           blocking: true,
           title: 'Never turn screen on',
           subtitle: 'Screen stays off during these times, whatever the schedule and the sensor say',
           icon: Icons.block,
         ),
-        Divider(height: 1),
         SettingsSectionHeader('Screen on sensors'),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),

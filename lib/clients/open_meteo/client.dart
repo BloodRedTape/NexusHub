@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/open_meteo/provider.dart';
 import 'package:nexus/clients/open_meteo/settings.dart';
+import 'package:nexus/utils/settings_section.dart';
 import 'package:nexus/dashboard/settings.dart';
 import 'package:nexus/providers/shared_preferences_state.dart';
 import 'package:nexus/providers/state.dart';
@@ -56,13 +57,17 @@ class OpenMeteoWeatherClient {
     return _weatherStateProvider;
   }
 
+  final GlobalKey<State> _settingsKey = GlobalKey<State>();
+
   SettingsItem makeSettings() {
     return SettingsItem.details(
         icon: GenericIcon.fromIcon(icon: Icons.cloud),
         name: 'Open Meteo',
         details: DetailsPage(
             title: Text('Open Meteo Settings'),
+            actions: [SettingsSaveButton(_settingsKey)],
             body: OpenMeteoConfigWidget(
+              key: _settingsKey,
               stateProvider: _configStateProvider,
             )));
   }
