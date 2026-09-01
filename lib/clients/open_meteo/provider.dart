@@ -1,19 +1,16 @@
 import 'dart:async';
 
 import 'package:nexus/clients/open_meteo/client.dart';
-import 'package:nexus/config/config.dart';
 import 'package:nexus/states/weather.dart';
 import 'package:open_meteo/open_meteo.dart';
 
 class OpenMeteoWeatherStateProvider extends WeatherStateProvider {
-  final OpenMeteoConfigCubit configCubit;
   OpenMeteoConfig? _config;
   Timer? _timer;
-  StreamSubscription<OpenMeteoConfig>? _configSubscription;
 
-  OpenMeteoWeatherStateProvider({required this.configCubit});
-
-  void _onConfigChanged(OpenMeteoConfig config) {
+  /// The client hands the coordinates over once they are loaded, and again
+  /// every time they are saved; each time restarts the polling.
+  void setConfig(OpenMeteoConfig config) {
     _config = config;
 
     _timer?.cancel();
@@ -24,18 +21,9 @@ class OpenMeteoWeatherStateProvider extends WeatherStateProvider {
   }
 
   @override
-  void init() {
-    super.init();
-
-    _onConfigChanged(configCubit.state);
-    _configSubscription = configCubit.stream.listen(_onConfigChanged);
-  }
-
-  @override
   void dispose() {
     _timer?.cancel();
 
-    _configSubscription?.cancel();
     super.dispose();
   }
 

@@ -1,61 +1,129 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/ha/config.dart';
-import 'package:nexus/config/config.dart';
 import 'package:nexus/utils/settings_section.dart';
 
-class HomeAssistantConfigWidget extends StatefulWidget {
-  final HomeAssistantConfigCubit configCubit;
+/// The connection settings as edited. Url and token stay text so a half typed
+/// address is something the form can hold.
+class HomeAssistantFormState {
+  final String url;
+  final String token;
+  final bool hideUnavailable;
+  final bool hideEmptyAreas;
 
-  /// Opens the connection diagnostics page.
-  final void Function(BuildContext context) openDiagnostics;
+  const HomeAssistantFormState({
+    required this.url,
+    required this.token,
+    required this.hideUnavailable,
+    required this.hideEmptyAreas,
+  });
 
-  HomeAssistantConfigWidget({Key? key, required this.configCubit, required this.openDiagnostics})
-      : super(key: key);
-
-  @override
-  _HomeAssistantConfigWidgetState createState() =>
-      _HomeAssistantConfigWidgetState();
+  HomeAssistantFormState copyWith({
+    String? url,
+    String? token,
+    bool? hideUnavailable,
+    bool? hideEmptyAreas,
+  }) {
+    return HomeAssistantFormState(
+      url: url ?? this.url,
+      token: token ?? this.token,
+      hideUnavailable: hideUnavailable ?? this.hideUnavailable,
+      hideEmptyAreas: hideEmptyAreas ?? this.hideEmptyAreas,
+    );
+  }
 }
 
-class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> implements SettingsSaver {
-  StreamSubscription<HomeAssistantConfig>? _configSubscription;
-  final TextEditingController _urlController = TextEditingController();
-  final TextEditingController _tokenController = TextEditingController();
+class HomeAssistantFormCubit extends SettingsFormCubit<HomeAssistantFormState> {
+  final HomeAssistantClient client;
+
+  HomeAssistantFormCubit(this.client)
+      : super(HomeAssistantFormState(
+          url: client.config.url,
+          token: client.config.token,
+          hideUnavailable: client.config.hideUnavailable,
+          hideEmptyAreas: client.config.hideEmptyAreas,
+        ));
+
+  void setUrl(String url) => emit(state.copyWith(url: url));
+
+  void setToken(String token) => emit(state.copyWith(token: token));
+
+  void setHideUnavailable(bool value) => emit(state.copyWith(hideUnavailable: value));
+
+  void setHideEmptyAreas(bool value) => emit(state.copyWith(hideEmptyAreas: value));
+
+  HomeAssistantConfig get _edited => HomeAssistantConfig(
+        url: state.url,
+        token: state.token,
+        hideUnavailable: state.hideUnavailable,
+        hideEmptyAreas: state.hideEmptyAreas,
+      );
 
   @override
-  final ValueNotifier<bool> dirty = ValueNotifier(false);
+  bool get dirty {
+    final current = client.config;
+
+    return current.url != state.url ||
+        current.token != state.token ||
+        current.hideUnavailable != state.hideUnavailable ||
+        current.hideEmptyAreas != state.hideEmptyAreas;
+  }
+
+  @override
+  void save() {
+    client.saveConfig(_edited);
+
+    // The client now matches the form; re-emit so the save button follows.
+    emit(state.copyWith());
+  }
+}
+
+class HomeAssistantSettingsPage extends StatelessWidget {
+  const HomeAssistantSettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => HomeAssistantFormCubit(context.read<HomeAssistantClient>()),
+      child: Builder(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: Text('Home Assistant Settings'),
+            actions: [SettingsSaveButton(context.watch<HomeAssistantFormCubit>())],
+          ),
+          body: const _HomeAssistantForm(),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeAssistantForm extends StatefulWidget {
+  const _HomeAssistantForm();
+
+  @override
+  State<_HomeAssistantForm> createState() => _HomeAssistantFormState();
+}
+
+class _HomeAssistantFormState extends State<_HomeAssistantForm> {
+  late final HomeAssistantFormCubit _form = context.read<HomeAssistantFormCubit>();
+  late final TextEditingController _urlController = TextEditingController(text: _form.state.url);
+  late final TextEditingController _tokenController = TextEditingController(text: _form.state.token);
 
   @override
   void initState() {
     super.initState();
 
-    _onConfigChanged(widget.configCubit.state);
-    _configSubscription = widget.configCubit.stream.listen(_onConfigChanged);
-    _urlController.addListener(_refreshDirty);
-    _tokenController.addListener(_refreshDirty);
+    _urlController.addListener(() => _form.setUrl(_urlController.text));
+    _tokenController.addListener(() => _form.setToken(_tokenController.text));
   }
 
-  void _refreshDirty() {
-    final current = widget.configCubit.state;
-
-    dirty.value = current.url != _urlController.text ||
-        current.token != _tokenController.text ||
-        current.hideUnavailable != _hideUnavailable ||
-        current.hideEmptyAreas != _hideEmptyAreas;
-  }
-
-  bool _hideUnavailable = true;
-  bool _hideEmptyAreas = true;
-
-  void _onConfigChanged(HomeAssistantConfig config) {
-    _urlController.text = config.url.toString();
-    _tokenController.text = config.token.toString();
-    _hideUnavailable = config.hideUnavailable;
-    _hideEmptyAreas = config.hideEmptyAreas;
-
-    _refreshDirty();
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _tokenController.dispose();
+    super.dispose();
   }
 
   Widget _flag(String title, String subtitle, IconData icon, bool value, void Function(bool) apply) {
@@ -64,36 +132,14 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> i
       title: Text(title),
       subtitle: Text(subtitle),
       value: value,
-      onChanged: (newValue) {
-        setState(() => apply(newValue));
-        _refreshDirty();
-      },
+      onChanged: apply,
     );
-  }
-
-  @override
-  void save() {
-    widget.configCubit.save(
-      HomeAssistantConfig(
-        url: _urlController.text,
-        token: _tokenController.text,
-        hideUnavailable: _hideUnavailable,
-        hideEmptyAreas: _hideEmptyAreas,
-      ),
-    );
-
-    _refreshDirty();
-  }
-
-  @override
-  void dispose() {
-    _configSubscription?.cancel();
-    dirty.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<HomeAssistantFormCubit>().state;
+
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: <Widget>[
@@ -115,15 +161,15 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> i
           'Hide unavailable devices',
           'Devices Home Assistant reports as unavailable stay off the dashboard',
           Icons.visibility_off_outlined,
-          _hideUnavailable,
-          (value) => _hideUnavailable = value,
+          state.hideUnavailable,
+          _form.setHideUnavailable,
         ),
         _flag(
           'Hide rooms without devices',
           'Areas with nothing to show are skipped',
           Icons.meeting_room_outlined,
-          _hideEmptyAreas,
-          (value) => _hideEmptyAreas = value,
+          state.hideEmptyAreas,
+          _form.setHideEmptyAreas,
         ),
         SettingsSectionHeader('Diagnostics'),
         ListTile(
@@ -131,7 +177,7 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> i
           title: Text('Connection status'),
           subtitle: Text('Socket state, reconnect and the message log'),
           trailing: Icon(Icons.chevron_right),
-          onTap: () => widget.openDiagnostics(context),
+          onTap: () => _form.client.openDiagnostics(context),
         ),
       ],
     );

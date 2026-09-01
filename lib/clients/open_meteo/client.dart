@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/open_meteo/provider.dart';
 import 'package:nexus/clients/open_meteo/settings.dart';
-import 'package:nexus/utils/settings_section.dart';
 import 'package:nexus/dashboard/settings.dart';
-import 'package:nexus/config/config.dart';
+import 'package:nexus/clients/config_storage.dart';
 import 'package:nexus/states/weather.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
@@ -27,19 +25,41 @@ class OpenMeteoConfig {
 
     if (parts[0].isEmpty || parts[1].isEmpty) return null;
 
-    return OpenMeteoConfig(
-        lat: double.parse(parts[0]), long: double.parse(parts[1]));
+    return OpenMeteoConfig(lat: double.parse(parts[0]), long: double.parse(parts[1]));
   }
 }
 
 class OpenMeteoWeatherClient {
-  final OpenMeteoConfigCubit _configCubit;
-  late WeatherStateProvider _weatherStateProvider;
+  static final _fallback = OpenMeteoConfig(lat: 50.4375, long: 30.5);
 
-  OpenMeteoWeatherClient({required OpenMeteoConfigCubit configCubit}) : _configCubit = configCubit {
-    _weatherStateProvider = OpenMeteoWeatherStateProvider(configCubit: _configCubit);
+  final _storage = const ConfigStorage('OPEN_METEO_CONFIG');
+  final _weatherStateProvider = OpenMeteoWeatherStateProvider();
 
+  OpenMeteoConfig _config = _fallback;
+
+  OpenMeteoConfig get config => _config;
+
+  OpenMeteoWeatherClient() {
     _weatherStateProvider.init();
+    _loadConfig();
+  }
+
+  Future<void> _loadConfig() async {
+    final stored = await _storage.read();
+
+    // Settings written by an older build can stop parsing; the default stands.
+    final loaded = stored == null ? null : OpenMeteoConfig.deserialize(stored);
+
+    if (loaded != null) _config = loaded;
+
+    _weatherStateProvider.setConfig(_config);
+  }
+
+  void saveConfig(OpenMeteoConfig config) {
+    _config = config;
+
+    _storage.write(OpenMeteoConfig.serialize(config));
+    _weatherStateProvider.setConfig(config);
   }
 
   WeatherStateProvider getStateProvider() {
@@ -50,18 +70,14 @@ class OpenMeteoWeatherClient {
     _weatherStateProvider.dispose();
   }
 
-  final GlobalKey<State> _settingsKey = GlobalKey<State>();
-
   SettingsItem makeSettings() {
-    return SettingsItem.details(
-        icon: GenericIcon.fromIcon(icon: Icons.cloud),
-        name: 'Open Meteo',
-        details: DetailsPage(
-            title: Text('Open Meteo Settings'),
-            actions: [SettingsSaveButton(_settingsKey)],
-            body: OpenMeteoConfigWidget(
-              key: _settingsKey,
-              configCubit: _configCubit,
-            )));
+    return SettingsItem.action(
+      icon: GenericIcon.fromIcon(icon: Icons.cloud),
+      name: 'Open Meteo',
+      action: (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const OpenMeteoSettingsPage()),
+      ),
+    );
   }
 }

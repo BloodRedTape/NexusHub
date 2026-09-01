@@ -5,10 +5,9 @@ import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:intl/intl.dart';
 import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/ha/config.dart';
-import 'package:nexus/config/config.dart';
+import 'package:nexus/clients/config_storage.dart';
 import 'package:nexus/clients/ha/debug.dart';
 import 'package:nexus/clients/ha/settings.dart';
-import 'package:nexus/utils/settings_section.dart';
 import 'package:nexus/clients/ha/states/calendar.dart';
 import 'package:nexus/clients/ha/states/curtain.dart';
 import 'package:nexus/clients/ha/states/entity.dart';
@@ -103,8 +102,13 @@ class HomeAssistantClientState {
 }
 
 class HomeAssistantClient {
-  final HomeAssistantConfigCubit _configCubit;
-  StreamSubscription<HomeAssistantConfig>? _configSubscription;
+  static final _fallback = HomeAssistantConfig(token: '', url: 'https://192.168.1.209:8443');
+
+  final _storage = const ConfigStorage('HOME_ASSISTANT_CONFIG');
+  HomeAssistantConfig _config = _fallback;
+
+  HomeAssistantConfig get config => _config;
+
   HomeAssistantWs? _homeAssistantWs = null;
   Timer? _pingPongTimer;
 
@@ -211,9 +215,7 @@ class HomeAssistantClient {
 
   /// Every binary sensor in the registry, sorted by name.
   List<RegistryEntry> binarySensors() {
-    final result = _registry
-        .where((entry) => entry.domain == 'binary_sensor' && !entry.disabled && !entry.hidden)
-        .toList();
+    final result = _registry.where((entry) => entry.domain == 'binary_sensor' && !entry.disabled && !entry.hidden).toList();
 
     result.sort((a, b) => a.displayName.compareTo(b.displayName));
 
@@ -235,6 +237,7 @@ class HomeAssistantClient {
 
     return result;
   }
+
   String? _wsUrl;
   bool _hasToken = false;
   DateTime? _lastConnected;
@@ -269,11 +272,28 @@ class HomeAssistantClient {
   Future<void>? _restartFuture;
   HomeAssistantConfig? _pendingConfig;
 
-  HomeAssistantClient({required HomeAssistantConfigCubit configCubit}) : _configCubit = configCubit {
-    _reconnect(_configCubit.state);
-    _configSubscription = _configCubit.stream.listen(_reconnect);
+  HomeAssistantClient() {
+    _loadConfig();
 
     _setStatus('Initialized', detail: 'Client initialized');
+  }
+
+  Future<void> _loadConfig() async {
+    final stored = await _storage.read();
+
+    // Settings written by an older build can stop parsing; the default stands.
+    final loaded = stored == null ? null : HomeAssistantConfig.deserialize(stored);
+
+    if (loaded != null) _config = loaded;
+
+    _reconnect(_config);
+  }
+
+  void saveConfig(HomeAssistantConfig config) {
+    _config = config;
+
+    _storage.write(HomeAssistantConfig.serialize(config));
+    _reconnect(config);
   }
 
   Future<void> _restartConnection(HomeAssistantConfig? config) async {
@@ -376,14 +396,13 @@ class HomeAssistantClient {
   }
 
   void dispose() {
-    _configSubscription?.cancel();
     _pingPongTimer?.cancel();
     _homeAssistantWs?.disconnect();
   }
 
   void reconnect() {
     _setStatus('reconnecting...', detail: 'Manual reconnect requested');
-    _reconnect(_configCubit.state);
+    _reconnect(_config);
   }
 
   void _onDone() {
@@ -596,30 +615,27 @@ class HomeAssistantClient {
     if (service != null) _homeAssistantWs?.executeServiceForEntity(entityId, service);
   }
 
-  final GlobalKey<State> _settingsKey = GlobalKey<State>();
+  /// The connection log. Its own page: it has a scroll of its own and does not
+  /// belong inside the settings list.
+  void openDiagnostics(BuildContext context) {
+    DetailsPage(
+      title: Text('Connection'),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: HomeAssistantDebugWidget(stateProvider: _clientState, onReconnect: reconnect),
+      ),
+    ).navigateTo(context);
+  }
 
   SettingsItem makeSettings() {
-    return SettingsItem.details(
+    return SettingsItem.action(
       icon: GenericIcon.fromImage(
         image: Image.network('https://community-assets.home-assistant.io/original/3X/6/3/63f75921214e158bc02336dc864c096b11889f14.png'),
       ),
       name: 'Home Assistant',
-      details: DetailsPage(
-        title: Text('Home Assistant Settings'),
-        actions: [SettingsSaveButton(_settingsKey)],
-        body: HomeAssistantConfigWidget(
-          key: _settingsKey,
-          configCubit: _configCubit,
-          // Its own page: the log has a scroll of its own and does not belong
-          // inside the settings list.
-          openDiagnostics: (context) => DetailsPage(
-            title: Text('Connection'),
-            body: Padding(
-              padding: const EdgeInsets.all(16),
-              child: HomeAssistantDebugWidget(stateProvider: _clientState, onReconnect: reconnect),
-            ),
-          ).navigateTo(context),
-        ),
+      action: (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeAssistantSettingsPage()),
       ),
     );
   }

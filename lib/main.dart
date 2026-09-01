@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:nexus/clients/android/client.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
-import 'package:nexus/config/config.dart';
 import 'package:provider/provider.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/apps.dart';
@@ -24,7 +23,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final AppConfig _config = AppConfig();
   late final OpenMeteoWeatherClient _weatherClient;
   late final HomeAssistantClient _homeAssistantClient;
   late final AndroidClient _androidClient;
@@ -33,12 +31,9 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    _weatherClient = OpenMeteoWeatherClient(configCubit: _config.openMeteo);
-    _homeAssistantClient = HomeAssistantClient(configCubit: _config.homeAssistant);
-    _androidClient = AndroidClient(
-      homeAssistantClient: _homeAssistantClient,
-      configCubit: _config.android,
-    );
+    _weatherClient = OpenMeteoWeatherClient();
+    _homeAssistantClient = HomeAssistantClient();
+    _androidClient = AndroidClient(homeAssistantClient: _homeAssistantClient);
 
     // an area is only worth a tab if some device in it gets a card
     _homeAssistantClient.isDeviceShowable = (device) => matchCard(device) != null;
@@ -55,7 +50,6 @@ class _MyAppState extends State<MyApp> {
     _androidClient.dispose();
     _homeAssistantClient.dispose();
     _weatherClient.dispose();
-    _config.close();
     super.dispose();
   }
 
@@ -65,7 +59,6 @@ class _MyAppState extends State<MyApp> {
     // itself rather than handed down through each tab.
     return MultiProvider(
       providers: [
-        Provider<AppConfig>.value(value: _config),
         Provider<OpenMeteoWeatherClient>.value(value: _weatherClient),
         Provider<HomeAssistantClient>.value(value: _homeAssistantClient),
         Provider<AndroidClient>.value(value: _androidClient),

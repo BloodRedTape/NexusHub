@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Android-settings style section header: accent coloured, above its tiles.
 class SettingsSectionHeader extends StatelessWidget {
@@ -70,51 +71,42 @@ class SettingsTextField extends StatelessWidget {
   }
 }
 
-/// Settings pages that the app bar's save button can commit. The page raises
-/// [dirty] while it holds edits the provider has not seen yet.
-abstract class SettingsSaver {
-  ValueNotifier<bool> get dirty;
+/// A settings form's own state: what the fields hold right now, and whether
+/// that differs from what the client was given. The values live here rather
+/// than in the client, which only hears about them on [save].
+abstract class SettingsFormCubit<T> extends Cubit<T> {
+  SettingsFormCubit(super.initialState);
 
-  /// Writes the edited values through to the config provider.
+  /// Whether the form holds edits the client has not been given yet.
+  bool get dirty;
+
+  /// Hands the edited values to the client, which persists them.
   void save();
 }
 
 /// App bar save button for a settings page, enabled only while that page has
 /// unsaved edits.
 class SettingsSaveButton extends StatelessWidget {
-  final GlobalKey<State> settingsKey;
+  final SettingsFormCubit form;
 
-  const SettingsSaveButton(this.settingsKey, {Key? key}) : super(key: key);
+  const SettingsSaveButton(this.form, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // The settings page builds after this one, so its state is not reachable
-    // on the first frame - rebuild once it is.
-    final saver = settingsKey.currentState as SettingsSaver?;
+    final dirty = form.dirty;
 
-    if (saver == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) (context as Element).markNeedsBuild();
-      });
+    return IconButton(
+      icon: Icon(Icons.save_outlined),
+      tooltip: dirty ? 'Save' : 'Nothing to save',
+      onPressed: dirty
+          ? () {
+              form.save();
 
-      return IconButton(icon: Icon(Icons.save_outlined), onPressed: null);
-    }
-
-    return ValueListenableBuilder<bool>(
-      valueListenable: saver.dirty,
-      builder: (context, dirty, _) => IconButton(
-        icon: Icon(Icons.save_outlined),
-        tooltip: dirty ? 'Save' : 'Nothing to save',
-        onPressed: dirty
-            ? () {
-                saver.save();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Saved'), duration: Duration(seconds: 1)),
-                );
-              }
-            : null,
-      ),
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Saved'), duration: Duration(seconds: 1)),
+              );
+            }
+          : null,
     );
   }
 }

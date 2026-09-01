@@ -1,66 +1,91 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nexus/clients/android/client.dart';
 import 'package:nexus/clients/android/config.dart';
-import 'package:nexus/config/config.dart';
+import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/utils/settings_section.dart';
 
-class AndroidConfigWidget extends StatefulWidget {
-  final AndroidConfigCubit configCubit;
+/// The form edits a whole [AndroidConfig], so the config itself is the state.
+class AndroidFormCubit extends SettingsFormCubit<AndroidConfig> {
+  final AndroidClient client;
 
-  /// Selectable binary sensors, by entity id and name.
-  final Map<String, String> Function() binarySensors;
+  AndroidFormCubit(this.client) : super(client.config);
 
-  /// Live state of one entity: 'on', 'off', 'unavailable', null when unknown.
-  final StateProvider<String> Function(String entityId) entityState;
+  void setAutoBrightness(bool value) => emit(state.copyWith(autoBrightnessEnabled: value));
 
-  AndroidConfigWidget({
-    Key? key,
-    required this.configCubit,
-    required this.binarySensors,
-    required this.entityState,
-  }) : super(key: key);
+  void setBrightnessThreshold(double value) => emit(state.copyWith(brightnessThreshold: value));
+
+  void setIntervals(List<ScreenOnInterval> intervals) => emit(state.copyWith(screenOnIntervals: intervals));
+
+  void setSensors(List<String> sensors) => emit(state.copyWith(screenOnSensors: sensors));
+
+  /// Compared through serialize - intervals carry no equality of their own.
+  @override
+  bool get dirty => AndroidConfig.serialize(state) != AndroidConfig.serialize(client.config);
 
   @override
-  _AndroidConfigWidgetState createState() => _AndroidConfigWidgetState();
+  void save() {
+    client.saveConfig(state);
+
+    // The client now matches the form; re-emit so the save button follows.
+    emit(state.copyWith());
+  }
 }
 
-class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements SettingsSaver {
-  bool _autoBrightnessEnabled = false;
-  double _brightnessThreshold = 70.0;
-  List<ScreenOnInterval> _screenOnIntervals = const [];
-  List<String> _screenOnSensors = const [];
-  StreamSubscription<AndroidConfig>? _configSubscription;
+class AndroidSettingsPage extends StatelessWidget {
+  const AndroidSettingsPage({super.key});
 
   @override
-  final ValueNotifier<bool> dirty = ValueNotifier(false);
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => AndroidFormCubit(context.read<AndroidClient>()),
+      child: Builder(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: Text('Android Settings'),
+            actions: [SettingsSaveButton(context.watch<AndroidFormCubit>())],
+          ),
+          body: const _AndroidForm(),
+        ),
+      ),
+    );
+  }
+}
+
+class _AndroidForm extends StatefulWidget {
+  const _AndroidForm();
+
+  @override
+  State<_AndroidForm> createState() => _AndroidFormState();
+}
+
+class _AndroidFormState extends State<_AndroidForm> {
+  late final AndroidFormCubit _form = context.read<AndroidFormCubit>();
+  late final HomeAssistantClient _homeAssistant = context.read<HomeAssistantClient>();
+
+  /// Sensor state providers we are subscribed to, by entity id.
+  final Map<String, StateProvider<String>> _sensorStates = {};
 
   @override
   void initState() {
     super.initState();
 
-    _onConfigChanged(widget.configCubit.state);
-    _configSubscription = widget.configCubit.stream.listen(_onConfigChanged);
+    _bindSensorStates(_form.state.screenOnSensors);
   }
 
-  AndroidConfig _edited() {
-    return AndroidConfig(
-      autoBrightnessEnabled: _autoBrightnessEnabled,
-      brightnessThreshold: _brightnessThreshold,
-      screenOnIntervals: _screenOnIntervals,
-      screenOnSensors: _screenOnSensors,
-    );
+  @override
+  void dispose() {
+    for (final provider in _sensorStates.values) {
+      provider.unbind(_onSensorStateChanged);
+    }
+
+    super.dispose();
   }
 
-  /// Compared through serialize - intervals carry no equality of their own.
-  void _refreshDirty() {
-    dirty.value =
-        AndroidConfig.serialize(_edited()) != AndroidConfig.serialize(widget.configCubit.state);
-  }
-
-  /// Sensor state providers we are subscribed to, by entity id.
-  final Map<String, StateProvider<String>> _sensorStates = {};
+  Map<String, String> _binarySensors() => {
+        for (final entry in _homeAssistant.binarySensors()) entry.entityId: entry.displayName,
+      };
 
   void _onSensorStateChanged(String? _) {
     if (!mounted) return;
@@ -82,42 +107,17 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
     for (final entityId in entityIds) {
       if (_sensorStates.containsKey(entityId)) continue;
 
-      _sensorStates[entityId] = widget.entityState(entityId)..bindValueChanged(_onSensorStateChanged);
+      _sensorStates[entityId] = _homeAssistant.entityStateProvider(entityId)
+        ..bindValueChanged(_onSensorStateChanged);
     }
   }
 
-  void _onConfigChanged(AndroidConfig config) {
-    _bindSensorStates(config.screenOnSensors);
-
-    setState(() {
-      _autoBrightnessEnabled = config.autoBrightnessEnabled;
-      _brightnessThreshold = config.brightnessThreshold;
-      _screenOnIntervals = config.screenOnIntervals;
-      _screenOnSensors = config.screenOnSensors;
-    });
-
-    _refreshDirty();
-  }
-
-  @override
-  void save() {
-    widget.configCubit.save(_edited());
-    _refreshDirty();
-  }
-
-  @override
-  void dispose() {
-    _configSubscription?.cancel();
-    dirty.dispose();
-
-    for (final provider in _sensorStates.values) {
-      provider.unbind(_onSensorStateChanged);
-    }
-
-    super.dispose();
-  }
-
-  Future<void> _editInterval({required bool blocking, ScreenOnInterval? existing, int? index}) async {
+  Future<void> _editInterval({
+    required bool blocking,
+    required List<ScreenOnInterval> intervals,
+    ScreenOnInterval? existing,
+    int? index,
+  }) async {
     final defaultStart = existing?.startMinutes ?? (blocking ? 1320 : 510);
     final defaultEnd = existing?.endMinutes ?? (blocking ? 480 : 600);
 
@@ -143,31 +143,19 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
       blocking: blocking,
     );
 
-    setState(() {
-      final intervals = List<ScreenOnInterval>.from(_screenOnIntervals);
+    final edited = List<ScreenOnInterval>.from(intervals);
 
-      if (index == null) {
-        intervals.add(interval);
-      } else {
-        intervals[index] = interval;
-      }
+    if (index == null) {
+      edited.add(interval);
+    } else {
+      edited[index] = interval;
+    }
 
-      _screenOnIntervals = intervals;
-    });
-
-    _refreshDirty();
+    _form.setIntervals(edited);
   }
 
-  void _removeInterval(ScreenOnInterval interval) {
-    setState(() {
-      _screenOnIntervals = List<ScreenOnInterval>.from(_screenOnIntervals)..remove(interval);
-    });
-
-    _refreshDirty();
-  }
-
-  Future<void> _addSensor() async {
-    final available = widget.binarySensors()..removeWhere((id, _) => _screenOnSensors.contains(id));
+  Future<void> _addSensor(List<String> sensors) async {
+    final available = _binarySensors()..removeWhere((id, _) => sensors.contains(id));
 
     final selected = await showDialog<String>(
       context: context,
@@ -200,27 +188,17 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
 
     if (selected == null) return;
 
-    final sensors = [..._screenOnSensors, selected];
+    final edited = [...sensors, selected];
 
-    _bindSensorStates(sensors);
-
-    setState(() {
-      _screenOnSensors = sensors;
-    });
-
-    _refreshDirty();
+    _bindSensorStates(edited);
+    _form.setSensors(edited);
   }
 
-  void _removeSensor(String entityId) {
-    final sensors = List<String>.from(_screenOnSensors)..remove(entityId);
+  void _removeSensor(List<String> sensors, String entityId) {
+    final edited = List<String>.from(sensors)..remove(entityId);
 
-    _bindSensorStates(sensors);
-
-    setState(() {
-      _screenOnSensors = sensors;
-    });
-
-    _refreshDirty();
+    _bindSensorStates(edited);
+    _form.setSensors(edited);
   }
 
   /// Current state of a chosen sensor, as an icon: on, off, unavailable, or
@@ -241,8 +219,9 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
     required String title,
     required String subtitle,
     required IconData icon,
+    required List<ScreenOnInterval> all,
   }) {
-    final intervals = _screenOnIntervals.where((interval) => interval.blocking == blocking).toList();
+    final intervals = all.where((interval) => interval.blocking == blocking).toList();
 
     return [
       SettingsSectionHeader(title),
@@ -259,12 +238,13 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
           ),
           onTap: () => _editInterval(
             blocking: blocking,
+            intervals: all,
             existing: interval,
-            index: _screenOnIntervals.indexOf(interval),
+            index: all.indexOf(interval),
           ),
           trailing: IconButton(
             icon: Icon(Icons.delete_outline),
-            onPressed: () => _removeInterval(interval),
+            onPressed: () => _form.setIntervals(List<ScreenOnInterval>.from(all)..remove(interval)),
           ),
         ),
       ListTile(
@@ -273,15 +253,16 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
           'Add time range',
           style: TextStyle(color: Theme.of(context).colorScheme.primary),
         ),
-        onTap: () => _editInterval(blocking: blocking),
+        onTap: () => _editInterval(blocking: blocking, intervals: all),
       ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final threshold = _brightnessThreshold.toInt();
-    final sensorNames = widget.binarySensors();
+    final config = context.watch<AndroidFormCubit>().state;
+    final threshold = config.brightnessThreshold.toInt();
+    final sensorNames = _binarySensors();
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
@@ -291,16 +272,11 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
           secondary: Icon(Icons.brightness_auto),
           title: Text('Auto brightness'),
           subtitle: Text('Adjust screen brightness based on room illuminance'),
-          value: _autoBrightnessEnabled,
-          onChanged: (bool value) {
-            setState(() {
-              _autoBrightnessEnabled = value;
-            });
-            _refreshDirty();
-          },
+          value: config.autoBrightnessEnabled,
+          onChanged: _form.setAutoBrightness,
         ),
         ListTile(
-          enabled: _autoBrightnessEnabled,
+          enabled: config.autoBrightnessEnabled,
           leading: Icon(Icons.light_mode_outlined),
           title: Text('Brightness threshold'),
           subtitle: Text('Above $threshold lux full brightness, at or below it minimum'),
@@ -309,19 +285,12 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Slider(
-            value: _brightnessThreshold,
+            value: config.brightnessThreshold,
             min: 0,
             max: 200,
             divisions: 40,
             label: '$threshold lux',
-            onChanged: _autoBrightnessEnabled
-                ? (double value) {
-                    setState(() {
-                      _brightnessThreshold = value;
-                    });
-                    _refreshDirty();
-                  }
-                : null,
+            onChanged: config.autoBrightnessEnabled ? _form.setBrightnessThreshold : null,
           ),
         ),
         ..._intervalSection(
@@ -329,24 +298,26 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
           title: 'Keep screen on',
           subtitle: 'Screen stays awake during these times while the launcher is running',
           icon: Icons.lightbulb_outline,
+          all: config.screenOnIntervals,
         ),
         ..._intervalSection(
           blocking: true,
           title: 'Never turn screen on',
           subtitle: 'Screen stays off during these times, whatever the schedule and the sensor say',
           icon: Icons.block,
+          all: config.screenOnIntervals,
         ),
         SettingsSectionHeader('Screen on sensors'),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(
-            _screenOnSensors.isEmpty
+            config.screenOnSensors.isEmpty
                 ? 'Schedule alone decides when the screen turns on'
                 : 'Any one of them being on lets the screen turn on',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
-        for (final sensor in _screenOnSensors)
+        for (final sensor in config.screenOnSensors)
           ListTile(
             leading: Icon(Icons.sensors),
             title: Text(sensorNames[sensor] ?? sensor, overflow: TextOverflow.ellipsis),
@@ -357,7 +328,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
                 _sensorStatus(sensor),
                 IconButton(
                   icon: Icon(Icons.delete_outline),
-                  onPressed: () => _removeSensor(sensor),
+                  onPressed: () => _removeSensor(config.screenOnSensors, sensor),
                 ),
               ],
             ),
@@ -365,7 +336,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
         ListTile(
           leading: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
           title: Text('Add sensor', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-          onTap: _addSensor,
+          onTap: () => _addSensor(config.screenOnSensors),
         ),
       ],
     );
