@@ -46,7 +46,7 @@ class _MyAppState extends State<MyApp> {
       home: Dashboard(
         items: [
           TabItem(
-            tab: Tab(text: 'Your morning'),
+            tab: Tab(text: 'Glance'),
             child: MorningTab(
               weatherClient: _weatherClient,
               homeAssistantClient: _homeAssistantClient,
@@ -54,16 +54,21 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
           TabItem(
-            tab: Tab(text: 'Master Room'),
-            child: MasterTab(
-              homeAssistantClient: _homeAssistantClient,
-            ),
-          ),
-          TabItem(
-            tab: Tab(text: 'Bedroom'),
-            child: BedroomTab(
-              homeAssistantClient: _homeAssistantClient,
-            ),
+            tab: Tab(text: 'Rooms'),
+            child: SubTabs(items: [
+              TabItem(
+                tab: Tab(text: 'Master Room', icon: Icon(Icons.weekend)),
+                child: MasterTab(
+                  homeAssistantClient: _homeAssistantClient,
+                ),
+              ),
+              TabItem(
+                tab: Tab(text: 'Bedroom', icon: Icon(Icons.bed)),
+                child: BedroomTab(
+                  homeAssistantClient: _homeAssistantClient,
+                ),
+              ),
+            ]),
           ),
           TabItem(
             tab: Tab(text: 'Apps'),
