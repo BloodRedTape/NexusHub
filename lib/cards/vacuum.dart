@@ -62,16 +62,14 @@ class VacuumControlDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog.fullscreen(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      child: VacuumControlContent(title: title ?? 'Vacuum', stateProvider: stateProvider),
-    );
+    return VacuumControlContent(title: title ?? 'Vacuum', stateProvider: stateProvider);
   }
 
+  /// A page rather than a dialog: the app bar's back button is the way out.
   static Future<void> show(BuildContext context, {String? title, required StateProvider<VacuumState> stateProvider}) {
-    return showDialog<void>(
-      context: context,
-      builder: (context) => VacuumControlDialog(title: title, stateProvider: stateProvider),
+    return Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => VacuumControlDialog(title: title, stateProvider: stateProvider)),
     );
   }
 }
@@ -85,13 +83,13 @@ class VacuumControlContent extends StateCard<VacuumState> {
   Widget build(BuildContext context, VacuumState? state) {
     final theme = Theme.of(context);
 
-    return SafeArea(
-      child: Padding(
+    return Scaffold(
+      appBar: AppBar(title: _buildTitle(context, state)),
+      body: Padding(
         padding: EdgeInsets.all(cardPadding * 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildHeader(context, state),
             Expanded(
               child: Center(
                 child: Icon(
@@ -113,26 +111,19 @@ class VacuumControlContent extends StateCard<VacuumState> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, VacuumState? state) {
+  Widget _buildTitle(BuildContext context, VacuumState? state) {
     final theme = Theme.of(context);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: primaryTextSize, fontWeight: primartyTextWeight)),
-              Text(
-                state == null ? 'Unavailable' : _label(state.status),
-                style: TextStyle(fontSize: secondaryTextSize, color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ],
-          ),
+    return Text.rich(
+      TextSpan(children: [
+        TextSpan(text: title),
+        TextSpan(
+          text: ' · ${state == null ? 'Unavailable' : _label(state.status)}',
+          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
         ),
-        IconButton(icon: const Icon(Icons.close), iconSize: iconSize * 0.7, onPressed: () => Navigator.of(context).pop()),
-      ],
+      ]),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 

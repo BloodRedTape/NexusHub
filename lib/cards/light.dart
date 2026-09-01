@@ -25,32 +25,31 @@ class LightControlDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog.fullscreen(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      child: LightControlContent(
-        title: title ?? 'Light',
-        subtitle: subtitle,
-        stateProvider: stateProvider,
-      ),
+    return LightControlContent(
+      title: title ?? 'Light',
+      subtitle: subtitle,
+      stateProvider: stateProvider,
     );
   }
 
-  // Helper method to show the dialog
+  /// A page rather than a dialog: the app bar's back button is the way out.
   static Future<void> show(
     BuildContext context, {
     String? title,
     String? subtitle,
     required StateProvider<LightState> stateProvider,
   }) {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return LightControlDialog(
-          title: title,
-          subtitle: subtitle,
-          stateProvider: stateProvider,
-        );
-      },
+    return Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) {
+          return LightControlDialog(
+            title: title,
+            subtitle: subtitle,
+            stateProvider: stateProvider,
+          );
+        },
+      ),
     );
   }
 }
@@ -266,13 +265,13 @@ class _LightControlContentState extends State<LightControlContent> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
+    return Scaffold(
+      appBar: AppBar(title: _buildTitle()),
+      body: Padding(
         padding: EdgeInsets.all(cardPadding * 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildHeader(),
             // The controls stay a comfortable width even on a wide tablet.
             Expanded(
               child: Center(
@@ -297,7 +296,7 @@ class _LightControlContentState extends State<LightControlContent> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildTitle() {
     final theme = Theme.of(context);
     final brightness = _light?.brightness;
 
@@ -309,32 +308,16 @@ class _LightControlContentState extends State<LightControlContent> {
                 ? '${(_fraction(brightness) * 100).round()}%'
                 : 'On';
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: primaryTextSize, fontWeight: primartyTextWeight),
-              ),
-              Text(
-                widget.subtitle ?? status,
-                style: TextStyle(fontSize: secondaryTextSize, color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ],
-          ),
+    return Text.rich(
+      TextSpan(children: [
+        TextSpan(text: widget.title),
+        TextSpan(
+          text: ' · ${widget.subtitle ?? status}',
+          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
         ),
-        IconButton(
-          icon: const Icon(Icons.close),
-          iconSize: iconSize * 0.7,
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ],
+      ]),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
