@@ -86,12 +86,12 @@ class _MyAppState extends State<MyApp> {
         ],
       ),
       theme: ThemeData(
-        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
         cardTheme: CardThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
       ),
       darkTheme: ThemeData(
-        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
         useMaterial3: true,
         cardTheme: CardThemeData(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cardBorderRadius))),
       ),
