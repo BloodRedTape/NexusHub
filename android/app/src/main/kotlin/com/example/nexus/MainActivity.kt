@@ -5,10 +5,13 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.app.Activity
 import android.app.AlarmManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.AlarmClock
 import android.provider.AlarmClock.ACTION_SHOW_ALARMS
 import android.provider.AlarmClock.ACTION_SHOW_TIMERS
@@ -23,9 +26,30 @@ import io.flutter.plugin.common.MethodCall
 
 
 class MainActivity : FlutterActivity(){
+    private var channel: MethodChannel? = null
+
+    /// The screen going off is the user's "I'm done" signal - Dart decides what
+    /// it means. Only a receiver can see it; a window flag cannot.
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            channel?.invokeMethod("onScreenOff", null)
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
+    }
+
+    override fun onDestroy() {
+        try { unregisterReceiver(screenOffReceiver) } catch (_: Exception) {}
+        super.onDestroy()
+    }
+
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "alarm_manager_plugin").setMethodCallHandler {
+        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "alarm_manager_plugin")
+        channel!!.setMethodCallHandler {
             call, result ->
             when (call.method) {
                 "getNextAlarmClockTriggerTime" -> {
@@ -51,6 +75,9 @@ class MainActivity : FlutterActivity(){
                 "setKeepScreenOn" -> {
                     val on = call.argument<Boolean>("on") ?: false
                     result.success(setKeepScreenOn(on))
+                }
+                "wakeScreen" -> {
+                    result.success(wakeScreen())
                 }
                 else -> {
                     result.notImplemented()
@@ -147,6 +174,30 @@ class MainActivity : FlutterActivity(){
                     WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
                     WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
             runOnUiThread { if (on) window.addFlags(flags) else window.clearFlags(flags) }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /// FLAG_TURN_SCREEN_ON only fires as the activity resumes, so on an already
+    /// running window it does nothing. A momentary wakelock is what actually
+    /// lights a dark screen; FLAG_KEEP_SCREEN_ON then holds it.
+    private fun wakeScreen(): Boolean {
+        return try {
+            val power = getSystemService(Context.POWER_SERVICE) as PowerManager
+
+            if (power.isInteractive) return true
+
+            @Suppress("DEPRECATION")
+            val lock = power.newWakeLock(
+                PowerManager.FULL_WAKE_LOCK or
+                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                        PowerManager.ON_AFTER_RELEASE,
+                "nexus:wake"
+            )
+            lock.acquire(3000)
+            lock.release()
             true
         } catch (_: Exception) {
             false

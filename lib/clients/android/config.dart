@@ -1,3 +1,15 @@
+/// What should happen to the screen right now.
+enum ScreenOnDecision {
+  /// A blocking interval - never turn it on by ourselves.
+  blocked,
+
+  /// Hold it on, waking it if dark.
+  keepOn,
+
+  /// Nothing to say; let the system dim it on its own timeout.
+  idle,
+}
+
 class ScreenOnInterval {
   final int startMinutes; // minutes since midnight
   final int endMinutes;
@@ -16,6 +28,17 @@ class ScreenOnInterval {
 
     return minutes >= startMinutes && minutes < endMinutes;
   }
+
+  // Config reloads rebuild intervals, so a dismissed one must match by value.
+  @override
+  bool operator ==(Object other) =>
+      other is ScreenOnInterval &&
+      other.startMinutes == startMinutes &&
+      other.endMinutes == endMinutes &&
+      other.blocking == blocking;
+
+  @override
+  int get hashCode => Object.hash(startMinutes, endMinutes, blocking);
 
   static String format(int minutes) {
     final h = (minutes ~/ 60).toString().padLeft(2, '0');
@@ -56,14 +79,36 @@ class AndroidConfig {
   }
 
   /// Whether the screen should be held on at [time], given the sensor states
-  /// by entity id. A blocking interval always wins; the sensors gate the
-  /// enabling ones, any one of them being on is enough.
-  bool shouldKeepScreenOn(DateTime time, Map<String, bool?> sensorStates) {
+  /// by entity id.
+  ///
+  /// [dismissedInterval] is the keep-on interval the user already dismissed by
+  /// switching the screen off; it stays inert until it ends.
+  ScreenOnDecision screenOnDecision(
+    DateTime time,
+    Map<String, bool?> sensorStates, {
+    ScreenOnInterval? dismissedInterval,
+  }) {
     final matching = screenOnIntervals.where((interval) => interval.contains(time));
 
-    if (matching.isEmpty || matching.any((interval) => interval.blocking)) return false;
+    if (matching.any((interval) => interval.blocking)) return ScreenOnDecision.blocked;
 
-    return screenOnSensors.isEmpty || screenOnSensors.any((id) => sensorStates[id] == true);
+    if (screenOnSensors.any((id) => sensorStates[id] == true)) return ScreenOnDecision.keepOn;
+
+    final keepOn = matching.where((interval) => interval != dismissedInterval);
+
+    if (keepOn.isNotEmpty) return ScreenOnDecision.keepOn;
+
+    return ScreenOnDecision.idle;
+  }
+
+  /// The keep-on interval covering [time], if any. Identifies which interval a
+  /// user's screen-off dismisses.
+  ScreenOnInterval? activeKeepOnInterval(DateTime time) {
+    for (final interval in screenOnIntervals) {
+      if (!interval.blocking && interval.contains(time)) return interval;
+    }
+
+    return null;
   }
 
   static String serialize(AndroidConfig? config) {

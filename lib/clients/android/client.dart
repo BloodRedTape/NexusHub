@@ -22,7 +22,8 @@ class AndroidClient {
   AlarmStateProvider _alarmStateProvider = AlarmStateProvider();
   StateProvider<List<AppInfo>> _appsStateProvider = AppsStateProvider();
   Timer? _screenOnTimer;
-  bool? _screenOnState;
+  ScreenOnDecision? _screenOnState;
+  ScreenOnInterval? _dismissedInterval;
   final Map<String, StateProvider<bool>> _screenOnSensorProviders = {};
 
   StateProvider<List<AppInfo>> getAppsStateProvider() {
@@ -52,8 +53,16 @@ class AndroidClient {
       _applyScreenOnSchedule();
     });
     _screenOnTimer = Timer.periodic(Duration(minutes: 1), (_) => _applyScreenOnSchedule());
+    AndroidClientApi.onScreenOff(_onScreenOff);
     _bindScreenOnSensors(_configStateProvider.getValue()?.screenOnSensors ?? const []);
     _applyScreenOnSchedule();
+  }
+
+  /// The screen went dark. Inside a keep-on interval that means the user
+  /// dismissed it, so it stays inert until it ends.
+  void _onScreenOff() {
+    _screenOnState = null;
+    _dismissedInterval = _configStateProvider.getValue()?.activeKeepOnInterval(DateTime.now());
   }
 
   void _onScreenOnSensorChanged(bool? _) => _applyScreenOnSchedule();
@@ -78,15 +87,26 @@ class AndroidClient {
 
     if (config == null) return;
 
-    final shouldKeepOn = config.shouldKeepScreenOn(
-      DateTime.now(),
+    final now = DateTime.now();
+
+    // A dismissal only lasts as long as the interval it dismissed.
+    if (_dismissedInterval != null && !_dismissedInterval!.contains(now)) _dismissedInterval = null;
+
+    final decision = config.screenOnDecision(
+      now,
       _screenOnSensorProviders.map((id, provider) => MapEntry(id, provider.getValue())),
+      dismissedInterval: _dismissedInterval,
     );
 
-    if (shouldKeepOn == _screenOnState) return;
+    if (decision == _screenOnState) return;
 
-    _screenOnState = shouldKeepOn;
-    AndroidClientApi.setKeepScreenOn(shouldKeepOn);
+    _screenOnState = decision;
+
+    // Blocked and idle both mean "stop holding it"; only blocked also forbids
+    // waking, which we simply never do outside keepOn.
+    AndroidClientApi.setKeepScreenOn(decision == ScreenOnDecision.keepOn);
+
+    if (decision == ScreenOnDecision.keepOn) AndroidClientApi.wakeScreen();
   }
 
   void dispose() {

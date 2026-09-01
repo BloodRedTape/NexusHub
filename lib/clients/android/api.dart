@@ -73,6 +73,26 @@ class AndroidClientApi {
     }
   }
 
+  static Future<bool> wakeScreen() async {
+    try {
+      if (Platform.isAndroid) {
+        dynamic result = await _channel.invokeMethod<dynamic>('wakeScreen');
+        return result is bool ? result : false;
+      } else {
+        throw UnimplementedError();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Called by the native side when the screen goes off, however that happened.
+  static void onScreenOff(void Function() handler) {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'onScreenOff') handler();
+    });
+  }
+
   static Future<bool> setBrightness(double brightness) async {
     try {
       if (Platform.isAndroid) {
