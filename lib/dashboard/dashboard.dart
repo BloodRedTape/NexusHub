@@ -61,6 +61,46 @@ class _SubTabsState extends State<SubTabs> {
   }
 }
 
+/// Material icon for a Home Assistant `mdi:` name. Only the ones actually in
+/// use are here - anything else falls back to a generic room.
+const Map<String, IconData> _mdiIcons = {
+  'bathtub': Icons.bathtub,
+  'shower': Icons.shower,
+  'bed': Icons.bed,
+  'bed-king': Icons.bed,
+  'bed-queen': Icons.bed,
+  'sofa': Icons.weekend,
+  'fridge': Icons.kitchen,
+  'countertop': Icons.countertops,
+  'silverware-fork-knife': Icons.restaurant,
+  'toilet': Icons.wc,
+  'door': Icons.door_front_door,
+  'door-open': Icons.door_front_door,
+  'door-closed': Icons.door_front_door,
+  'space-invaders': Icons.videogame_asset,
+  'television': Icons.tv,
+  'television-classic': Icons.tv,
+  'desk': Icons.desktop_windows,
+  'desktop-tower-monitor': Icons.desktop_windows,
+  'garage': Icons.garage,
+  'tree': Icons.park,
+  'flower': Icons.local_florist,
+  'washing-machine': Icons.local_laundry_service,
+  'stairs': Icons.stairs,
+  'server': Icons.dns,
+  'home': Icons.home,
+};
+
+/// Area icons come from Home Assistant as `mdi:<name>`.
+IconData roomIcon(String? icon) {
+  if (icon == null) return Icons.meeting_room;
+
+  // mdi ships outline variants of most icons - they map to the same thing here
+  final name = icon.replaceFirst('mdi:', '').replaceFirst(RegExp(r'-outline$'), '');
+
+  return _mdiIcons[name] ?? Icons.meeting_room;
+}
+
 // One sub tab per Home Assistant area, rebuilt whenever the area list arrives.
 class AreaTabs extends StateCard<List<Area>> {
   final Widget Function(Area area) builder;
@@ -78,7 +118,7 @@ class AreaTabs extends StateCard<List<Area>> {
       key: ValueKey(areas.map((area) => area.areaId).join(',')),
       items: areas
           .map((area) => TabItem(
-                tab: Tab(text: area.name, icon: Icon(Icons.meeting_room)),
+                tab: Tab(text: area.name, icon: Icon(roomIcon(area.icon))),
                 child: PaddedTab(child: builder(area)),
               ))
           .toList(),
