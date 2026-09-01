@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/clients/android/client.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
+import 'package:nexus/config/config.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/dashboard/apps.dart';
 import 'package:nexus/dashboard/area.dart';
@@ -22,15 +23,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final OpenMeteoWeatherClient _weatherClient = OpenMeteoWeatherClient();
-  final HomeAssistantClient _homeAssistantClient = HomeAssistantClient();
+  final AppConfig _config = AppConfig();
+  late final OpenMeteoWeatherClient _weatherClient;
+  late final HomeAssistantClient _homeAssistantClient;
   late final AndroidClient _androidClient;
 
   @override
   void initState() {
     super.initState();
 
-    _androidClient = AndroidClient(homeAssistantClient: _homeAssistantClient);
+    _weatherClient = OpenMeteoWeatherClient(configCubit: _config.openMeteo);
+    _homeAssistantClient = HomeAssistantClient(configCubit: _config.homeAssistant);
+    _androidClient = AndroidClient(
+      homeAssistantClient: _homeAssistantClient,
+      configCubit: _config.android,
+    );
 
     // an area is only worth a tab if some device in it gets a card
     _homeAssistantClient.isDeviceShowable = (device) => matchCard(device) != null;

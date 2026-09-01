@@ -5,6 +5,7 @@ import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:intl/intl.dart';
 import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/ha/config.dart';
+import 'package:nexus/config/config.dart';
 import 'package:nexus/clients/ha/debug.dart';
 import 'package:nexus/clients/ha/settings.dart';
 import 'package:nexus/utils/settings_section.dart';
@@ -16,7 +17,6 @@ import 'package:nexus/clients/ha/states/vacuum.dart';
 import 'package:nexus/clients/ha/states/sensor.dart';
 import 'package:nexus/clients/ha/states/switch.dart';
 import 'package:nexus/dashboard/settings.dart';
-import 'package:nexus/providers/shared_preferences_state.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/calendar.dart';
 import 'package:nexus/states/light.dart';
@@ -103,7 +103,8 @@ class HomeAssistantClientState {
 }
 
 class HomeAssistantClient {
-  late StateProvider<HomeAssistantConfig> _configStateProvider;
+  final HomeAssistantConfigCubit _configCubit;
+  StreamSubscription<HomeAssistantConfig>? _configSubscription;
   HomeAssistantWs? _homeAssistantWs = null;
   Timer? _pingPongTimer;
 
@@ -268,16 +269,9 @@ class HomeAssistantClient {
   Future<void>? _restartFuture;
   HomeAssistantConfig? _pendingConfig;
 
-  HomeAssistantClient() {
-    _configStateProvider = SharedPreferencesStateProvider(
-      initialValue: HomeAssistantConfig(token: '', url: 'https://192.168.1.209:8443'),
-      preferencesKey: 'HOME_ASSISTANT_CONFIG',
-      serialize: HomeAssistantConfig.serialize,
-      deserialize: HomeAssistantConfig.deserialize,
-    );
-
-    _configStateProvider.init();
-    _configStateProvider.bindValueChanged(_reconnect);
+  HomeAssistantClient({required HomeAssistantConfigCubit configCubit}) : _configCubit = configCubit {
+    _reconnect(_configCubit.state);
+    _configSubscription = _configCubit.stream.listen(_reconnect);
 
     _setStatus('Initialized', detail: 'Client initialized');
   }
@@ -381,9 +375,15 @@ class HomeAssistantClient {
     });
   }
 
+  void dispose() {
+    _configSubscription?.cancel();
+    _pingPongTimer?.cancel();
+    _homeAssistantWs?.disconnect();
+  }
+
   void reconnect() {
     _setStatus('reconnecting...', detail: 'Manual reconnect requested');
-    _reconnect(_configStateProvider.getValue());
+    _reconnect(_configCubit.state);
   }
 
   void _onDone() {
@@ -609,7 +609,7 @@ class HomeAssistantClient {
         actions: [SettingsSaveButton(_settingsKey)],
         body: HomeAssistantConfigWidget(
           key: _settingsKey,
-          stateProvider: _configStateProvider,
+          configCubit: _configCubit,
           // Its own page: the log has a scroll of its own and does not belong
           // inside the settings list.
           openDiagnostics: (context) => DetailsPage(

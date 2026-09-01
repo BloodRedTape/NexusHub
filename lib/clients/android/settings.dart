@@ -1,10 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nexus/clients/android/config.dart';
+import 'package:nexus/config/config.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/utils/settings_section.dart';
 
 class AndroidConfigWidget extends StatefulWidget {
-  final StateProvider<AndroidConfig> stateProvider;
+  final AndroidConfigCubit configCubit;
 
   /// Selectable binary sensors, by entity id and name.
   final Map<String, String> Function() binarySensors;
@@ -14,7 +17,7 @@ class AndroidConfigWidget extends StatefulWidget {
 
   AndroidConfigWidget({
     Key? key,
-    required this.stateProvider,
+    required this.configCubit,
     required this.binarySensors,
     required this.entityState,
   }) : super(key: key);
@@ -28,6 +31,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
   double _brightnessThreshold = 70.0;
   List<ScreenOnInterval> _screenOnIntervals = const [];
   List<String> _screenOnSensors = const [];
+  StreamSubscription<AndroidConfig>? _configSubscription;
 
   @override
   final ValueNotifier<bool> dirty = ValueNotifier(false);
@@ -36,7 +40,8 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
   void initState() {
     super.initState();
 
-    widget.stateProvider.bindValueChanged(_onConfigChanged);
+    _onConfigChanged(widget.configCubit.state);
+    _configSubscription = widget.configCubit.stream.listen(_onConfigChanged);
   }
 
   AndroidConfig _edited() {
@@ -51,7 +56,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
   /// Compared through serialize - intervals carry no equality of their own.
   void _refreshDirty() {
     dirty.value =
-        AndroidConfig.serialize(_edited()) != AndroidConfig.serialize(widget.stateProvider.getValue());
+        AndroidConfig.serialize(_edited()) != AndroidConfig.serialize(widget.configCubit.state);
   }
 
   /// Sensor state providers we are subscribed to, by entity id.
@@ -81,9 +86,7 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
     }
   }
 
-  void _onConfigChanged(AndroidConfig? config) {
-    if (config == null) return;
-
+  void _onConfigChanged(AndroidConfig config) {
     _bindSensorStates(config.screenOnSensors);
 
     setState(() {
@@ -98,13 +101,13 @@ class _AndroidConfigWidgetState extends State<AndroidConfigWidget> implements Se
 
   @override
   void save() {
-    widget.stateProvider.setValue(_edited());
+    widget.configCubit.save(_edited());
     _refreshDirty();
   }
 
   @override
   void dispose() {
-    widget.stateProvider.unbind(_onConfigChanged);
+    _configSubscription?.cancel();
     dirty.dispose();
 
     for (final provider in _sensorStates.values) {

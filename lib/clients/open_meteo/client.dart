@@ -4,8 +4,7 @@ import 'package:nexus/clients/open_meteo/provider.dart';
 import 'package:nexus/clients/open_meteo/settings.dart';
 import 'package:nexus/utils/settings_section.dart';
 import 'package:nexus/dashboard/settings.dart';
-import 'package:nexus/providers/shared_preferences_state.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/config/config.dart';
 import 'package:nexus/states/weather.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
@@ -34,21 +33,11 @@ class OpenMeteoConfig {
 }
 
 class OpenMeteoWeatherClient {
-  late StateProvider<OpenMeteoConfig> _configStateProvider;
+  final OpenMeteoConfigCubit _configCubit;
   late WeatherStateProvider _weatherStateProvider;
 
-  OpenMeteoWeatherClient() {
-    _configStateProvider = SharedPreferencesStateProvider(
-      initialValue: OpenMeteoConfig(lat: 50.4375, long: 30.5),
-      preferencesKey: 'OPEN_METEO_CONFIG',
-      serialize: OpenMeteoConfig.serialize,
-      deserialize: OpenMeteoConfig.deserialize,
-    );
-
-    _configStateProvider.init();
-
-    _weatherStateProvider = OpenMeteoWeatherStateProvider(
-        configStateProvider: _configStateProvider);
+  OpenMeteoWeatherClient({required OpenMeteoConfigCubit configCubit}) : _configCubit = configCubit {
+    _weatherStateProvider = OpenMeteoWeatherStateProvider(configCubit: _configCubit);
 
     _weatherStateProvider.init();
   }
@@ -68,7 +57,7 @@ class OpenMeteoWeatherClient {
             actions: [SettingsSaveButton(_settingsKey)],
             body: OpenMeteoConfigWidget(
               key: _settingsKey,
-              stateProvider: _configStateProvider,
+              configCubit: _configCubit,
             )));
   }
 }

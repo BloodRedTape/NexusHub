@@ -10,15 +10,16 @@ import 'package:nexus/clients/android/providers/apps.dart';
 import 'package:nexus/clients/android/settings.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/dashboard/settings.dart';
-import 'package:nexus/providers/shared_preferences_state.dart';
 import 'package:nexus/providers/state.dart';
+import 'package:nexus/config/config.dart';
 import 'package:nexus/states/alarm.dart';
 import 'package:nexus/utils/generic_icon.dart';
 import 'package:nexus/utils/settings_section.dart';
 
 class AndroidClient {
   final HomeAssistantClient _homeAssistantClient;
-  late StateProvider<AndroidConfig> _configStateProvider;
+  final AndroidConfigCubit _configCubit;
+  final List<StreamSubscription<AndroidConfig>> _configSubscriptions = [];
   AlarmStateProvider _alarmStateProvider = AlarmStateProvider();
   StateProvider<List<AppInfo>> _appsStateProvider = AppsStateProvider();
   Timer? _screenOnTimer;
@@ -30,16 +31,9 @@ class AndroidClient {
     return _appsStateProvider;
   }
 
-  AndroidClient({required HomeAssistantClient homeAssistantClient})
-      : _homeAssistantClient = homeAssistantClient {
-    _configStateProvider = SharedPreferencesStateProvider(
-      initialValue: AndroidConfig(),
-      preferencesKey: 'ANDROID_CONFIG',
-      serialize: AndroidConfig.serialize,
-      deserialize: AndroidConfig.deserialize,
-    );
-
-    _configStateProvider.init();
+  AndroidClient({required HomeAssistantClient homeAssistantClient, required AndroidConfigCubit configCubit})
+      : _homeAssistantClient = homeAssistantClient,
+        _configCubit = configCubit {
     _alarmStateProvider.init();
     _appsStateProvider.init();
 
@@ -48,13 +42,13 @@ class AndroidClient {
   }
 
   void _initScreenOnSchedule() {
-    _configStateProvider.bindValueChanged((AndroidConfig? config) {
-      _bindScreenOnSensors(config?.screenOnSensors ?? const []);
+    _configSubscriptions.add(_configCubit.stream.listen((config) {
+      _bindScreenOnSensors(config.screenOnSensors);
       _applyScreenOnSchedule();
-    });
+    }));
     _screenOnTimer = Timer.periodic(Duration(minutes: 1), (_) => _applyScreenOnSchedule());
     AndroidClientApi.onScreenOff(_onScreenOff);
-    _bindScreenOnSensors(_configStateProvider.getValue()?.screenOnSensors ?? const []);
+    _bindScreenOnSensors(_configCubit.state.screenOnSensors);
     _applyScreenOnSchedule();
   }
 
@@ -62,7 +56,7 @@ class AndroidClient {
   /// dismissed it, so it stays inert until it ends.
   void _onScreenOff() {
     _screenOnState = null;
-    _dismissedInterval = _configStateProvider.getValue()?.activeKeepOnInterval(DateTime.now());
+    _dismissedInterval = _configCubit.state.activeKeepOnInterval(DateTime.now());
   }
 
   void _onScreenOnSensorChanged(bool? _) => _applyScreenOnSchedule();
@@ -83,10 +77,7 @@ class AndroidClient {
   }
 
   void _applyScreenOnSchedule() {
-    final config = _configStateProvider.getValue();
-
-    if (config == null) return;
-
+    final config = _configCubit.state;
     final now = DateTime.now();
 
     // A dismissal only lasts as long as the interval it dismissed.
@@ -111,6 +102,9 @@ class AndroidClient {
 
   void dispose() {
     _screenOnTimer?.cancel();
+    for (final subscription in _configSubscriptions) {
+      subscription.cancel();
+    }
     for (final provider in _screenOnSensorProviders.values) {
       provider.unbind(_onScreenOnSensorChanged);
     }
@@ -121,17 +115,17 @@ class AndroidClient {
     final illuminanceProvider = _homeAssistantClient.sensorStateProvider('sensor.illuminance_mi_bedroom');
 
     // Subscribe to config changes
-    _configStateProvider.bindValueChanged((AndroidConfig? config) {
-      if (config == null || !config.autoBrightnessEnabled) return;
+    _configSubscriptions.add(_configCubit.stream.listen((config) {
+      if (!config.autoBrightnessEnabled) return;
 
       // Re-subscribe to illuminance with new threshold
       _updateBrightness(illuminanceProvider.getValue(), config);
-    });
+    }));
 
     // Subscribe to illuminance changes
     illuminanceProvider.bindValueChanged((double? lux) {
-      final config = _configStateProvider.getValue();
-      if (config == null || !config.autoBrightnessEnabled) return;
+      final config = _configCubit.state;
+      if (!config.autoBrightnessEnabled) return;
 
       _updateBrightness(lux, config);
     });
@@ -168,7 +162,7 @@ class AndroidClient {
         actions: [SettingsSaveButton(_settingsKey)],
         body: AndroidConfigWidget(
           key: _settingsKey,
-          stateProvider: _configStateProvider,
+          configCubit: _configCubit,
           binarySensors: () => {
             for (final entry in _homeAssistantClient.binarySensors()) entry.entityId: entry.displayName,
           },

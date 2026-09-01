@@ -1,15 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nexus/clients/ha/config.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/config/config.dart';
 import 'package:nexus/utils/settings_section.dart';
 
 class HomeAssistantConfigWidget extends StatefulWidget {
-  final StateProvider<HomeAssistantConfig> stateProvider;
+  final HomeAssistantConfigCubit configCubit;
 
   /// Opens the connection diagnostics page.
   final void Function(BuildContext context) openDiagnostics;
 
-  HomeAssistantConfigWidget({Key? key, required this.stateProvider, required this.openDiagnostics})
+  HomeAssistantConfigWidget({Key? key, required this.configCubit, required this.openDiagnostics})
       : super(key: key);
 
   @override
@@ -18,6 +20,7 @@ class HomeAssistantConfigWidget extends StatefulWidget {
 }
 
 class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> implements SettingsSaver {
+  StreamSubscription<HomeAssistantConfig>? _configSubscription;
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _tokenController = TextEditingController();
 
@@ -28,16 +31,16 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> i
   void initState() {
     super.initState();
 
-    widget.stateProvider.bindValueChanged(_onConfigChanged);
+    _onConfigChanged(widget.configCubit.state);
+    _configSubscription = widget.configCubit.stream.listen(_onConfigChanged);
     _urlController.addListener(_refreshDirty);
     _tokenController.addListener(_refreshDirty);
   }
 
   void _refreshDirty() {
-    final current = widget.stateProvider.getValue();
+    final current = widget.configCubit.state;
 
-    dirty.value = current == null ||
-        current.url != _urlController.text ||
+    dirty.value = current.url != _urlController.text ||
         current.token != _tokenController.text ||
         current.hideUnavailable != _hideUnavailable ||
         current.hideEmptyAreas != _hideEmptyAreas;
@@ -46,9 +49,7 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> i
   bool _hideUnavailable = true;
   bool _hideEmptyAreas = true;
 
-  void _onConfigChanged(HomeAssistantConfig? config) {
-    if (config == null) return;
-
+  void _onConfigChanged(HomeAssistantConfig config) {
     _urlController.text = config.url.toString();
     _tokenController.text = config.token.toString();
     _hideUnavailable = config.hideUnavailable;
@@ -72,7 +73,7 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> i
 
   @override
   void save() {
-    widget.stateProvider.setValue(
+    widget.configCubit.save(
       HomeAssistantConfig(
         url: _urlController.text,
         token: _tokenController.text,
@@ -86,7 +87,7 @@ class _HomeAssistantConfigWidgetState extends State<HomeAssistantConfigWidget> i
 
   @override
   void dispose() {
-    widget.stateProvider.unbind(_onConfigChanged);
+    _configSubscription?.cancel();
     dirty.dispose();
     super.dispose();
   }
