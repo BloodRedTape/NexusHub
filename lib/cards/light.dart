@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:nexus/cards/plain.dart';
@@ -5,7 +7,6 @@ import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/light.dart';
-import 'package:nexus/utils/generic_icon.dart';
 import 'package:nexus/utils/safe_slider.dart';
 import 'package:nexus/utils/tint.dart';
 
@@ -24,10 +25,8 @@ class LightControlDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
-      ),
+    return Dialog.fullscreen(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: LightControlContent(
         title: title ?? 'Light',
         subtitle: subtitle,
@@ -73,16 +72,51 @@ class LightControlContent extends StatefulWidget {
 }
 
 class _LightControlContentState extends State<LightControlContent> {
-  LightState? _light;
+  // What Home Assistant last told us.
+  LightState? _confirmed;
+  // What the user asked for and HA has not echoed back yet. Null when in sync.
+  LightState? _pending;
+  // The state at the moment the command went out: anything HA repeats that still
+  // equals this is a stale echo, anything else is news and outranks _pending.
+  LightState? _pendingWasBefore;
+  Timer? _pendingTimeout;
   void Function(LightState?)? _valueChangedCallback;
   ControlMode _controlMode = ControlMode.brightness;
+
+  // A light reports no brightness while it is off, and none for the first frame
+  // or two after being switched on either. Stand a zero in whenever it is
+  // missing, so the slider never blinks out to the bare bulb mid-transition.
+  static LightState? _withZeroes(LightState? s) {
+    if (s == null || s.brightness != null) return s;
+
+    return LightState(
+      isOn: s.isOn,
+      brightness: LimitedValueState(value: 0, min: 0, max: 255),
+      temperature: s.temperature,
+      color: s.color,
+    );
+  }
+
+  // A light takes a moment to answer, and the answer often arrives with the old
+  // value first. Until then the user's choice wins - but not forever, or a
+  // command the light ignored would leave the dialog lying about its state.
+  static const _pendingLifetime = Duration(seconds: 4);
+
+  // What the UI draws: the user's intent while it is in flight, else the truth.
+  LightState? get _light => _pending ?? _confirmed;
 
   @override
   void initState() {
     super.initState();
     _valueChangedCallback = (value) {
       setState(() {
-        _light = value;
+        _confirmed = _withZeroes(value);
+        // Hold the user's choice only while HA is still repeating the old value.
+        if (_pending != null && !_matches(value, _pendingWasBefore)) _clearPending();
+        // First state in: land on a mode the light actually has.
+        if (!_supports(_controlMode)) {
+          _controlMode = ControlMode.values.firstWhere(_supports, orElse: () => ControlMode.brightness);
+        }
       });
     };
     widget.stateProvider.bindValueChanged(_valueChangedCallback!);
@@ -90,197 +124,457 @@ class _LightControlContentState extends State<LightControlContent> {
 
   @override
   void dispose() {
+    _pendingTimeout?.cancel();
     if (_valueChangedCallback != null) {
       widget.stateProvider.unbind(_valueChangedCallback!);
     }
     super.dispose();
   }
 
-  void _updateLightState() {
-    if (_light != null) {
-      widget.stateProvider.requestValue(_light!);
+  // HA rounds brightness on its way through, so compare with a little slack.
+  bool _matches(LightState? a, LightState? b) {
+    if (a == null || b == null) return false;
+
+    bool near(LimitedValueState? x, LimitedValueState? y) =>
+        x == null || y == null || (x.value - y.value).abs() <= (x.max - x.min) * 0.02;
+
+    return a.isOn == b.isOn &&
+        near(a.brightness, b.brightness) &&
+        near(a.temperature, b.temperature) &&
+        (a.color?.value.toARGB32() == b.color?.value.toARGB32());
+  }
+
+  void _clearPending() {
+    _pendingTimeout?.cancel();
+    _pendingTimeout = null;
+    _pending = null;
+    _pendingWasBefore = null;
+  }
+
+  // Edit the pending copy, never the object the provider handed us.
+  void _edit(void Function(LightState) change) {
+    final base = _light;
+    if (base == null) return;
+
+    setState(() {
+      _pending = _copy(base);
+      change(_pending!);
+    });
+  }
+
+  // Send what the user picked and hold it on screen until HA agrees.
+  void _commit({bool dropZeroBrightness = false}) {
+    if (_pending == null) return;
+
+    final request = _copy(_pending!);
+    if (dropZeroBrightness && request.brightness?.value == 0) request.brightness = null;
+
+    _pendingWasBefore ??= _confirmed == null ? null : _copy(_confirmed!);
+    widget.stateProvider.requestValue(request);
+    _pendingTimeout?.cancel();
+    _pendingTimeout = Timer(_pendingLifetime, () {
+      if (mounted) setState(_clearPending);
+    });
+  }
+
+  LightState _copy(LightState s) => LightState(
+        isOn: s.isOn,
+        brightness: _copyLimited(s.brightness),
+        temperature: _copyLimited(s.temperature),
+        color: s.color == null ? null : ColorState(value: s.color!.value),
+      );
+
+  LimitedValueState? _copyLimited(LimitedValueState? v) =>
+      v == null ? null : LimitedValueState(value: v.value, min: v.min, max: v.max);
+
+  double _fraction(LimitedValueState? v) {
+    if (v == null) return 0;
+
+    final range = v.max - v.min;
+    return range <= 0 ? 0 : ((v.value - v.min) / range).clamp(0.0, 1.0);
+  }
+
+  // Sliders are addressed by mode, because after _edit the object identity of
+  // the value the user is dragging changes with every copy.
+  void _setFraction(ControlMode mode, double position) {
+    _edit((light) {
+      final v = mode == ControlMode.temperature ? light.temperature : light.brightness;
+      if (v == null) return;
+
+      v.value = (v.min + (v.max - v.min) * position).clamp(v.min, v.max);
+      // Dragging brightness up is also a way to switch the light on.
+      if (mode == ControlMode.brightness) light.isOn = v.value > v.min;
+    });
+  }
+
+  bool _supports(ControlMode mode) {
+    switch (mode) {
+      case ControlMode.brightness:
+        return _light?.brightness != null;
+      case ControlMode.temperature:
+        return _light?.temperature != null;
+      case ControlMode.color:
+        return _light?.color != null;
     }
   }
 
-  double _calculateBrightnessPercentage() {
-    if (_light?.brightness == null) return 0;
+  // The light's own colour, or a warm default: what the cards paint icons with.
+  Color _accent() {
+    final base = _light?.color?.value ?? const Color(0xFFFFC46B);
+    if (_light?.isOn == true) return base;
 
-    final b = _light!.brightness!;
-    final range = b.max - b.min;
-    if (range <= 0) return 0;
-
-    return (b.value - b.min) / range;
+    return Color.lerp(base, Theme.of(context).colorScheme.surfaceContainerHighest, 0.75)!;
   }
 
-  void _onSliderChanged(double position) {
-    if (_light?.brightness != null) {
-      final b = _light!.brightness!;
-      final range = b.max - b.min;
-      final newValue = b.min + (range * position);
+  // The card treatment: the same colour dimmed down to sit behind content.
+  // Only the controls wear it - the dialog itself stays neutral.
+  Color _tint() => Tint.color(color: _accent(), fraction: 0.4)!;
 
-      setState(() {
-        b.value = newValue.clamp(b.min + 1, b.max);
-      });
-    }
+  void _togglePower() {
+    if (_light == null) return;
+
+    _edit((light) => light.isOn = !light.isOn);
+    // The zero standing in for a missing brightness is a display value, not a
+    // command: switching on at zero would turn the light straight back off. Drop
+    // it from the request only - _pending keeps it, so the slider stays put.
+    _commit(dropZeroBrightness: true);
   }
 
   @override
   Widget build(BuildContext context) {
-    final brightnessPercent = (_calculateBrightnessPercentage() * 100).round();
-
-    final isColorPicker = _controlMode == ControlMode.color && _light?.color != null;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header section
-          _buildHeader(),
-
-          if (!isColorPicker)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 0),
-              child: Column(
-                children: [
-                  Text(
-                    "$brightnessPercent%",
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                    ),
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.all(cardPadding * 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(),
+            // The controls stay a comfortable width even on a wide tablet.
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: cardPadding * 2),
+                    child: _buildBody(),
                   ),
-                  SizedBox(
-                    height: 300,
-                    child: _buildLightSlider(),
-                  ),
-                ],
+                ),
               ),
-            )
-          else
-            _buildColorPicker(),
-
-          // Control buttons
-          const SizedBox(height: 20),
-          _buildControlButtons(),
-
-          // Color picker
-        ],
+            ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: _buildControlButtons(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader() {
+    final theme = Theme.of(context);
+    final brightness = _light?.brightness;
+
+    final status = _light == null
+        ? 'Unavailable'
+        : !_light!.isOn
+            ? 'Off'
+            : brightness != null
+                ? '${(_fraction(brightness) * 100).round()}%'
+                : 'On';
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: primaryTextSize, fontWeight: primartyTextWeight),
+              ),
+              Text(
+                widget.subtitle ?? status,
+                style: TextStyle(fontSize: secondaryTextSize, color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
         ),
-        Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.of(context).pop(),
-              padding: EdgeInsets.zero,
-              constraints: BoxConstraints(), // Remove padding
-            ),
-          ],
+        IconButton(
+          icon: const Icon(Icons.close),
+          iconSize: iconSize * 0.7,
+          onPressed: () => Navigator.of(context).pop(),
         ),
       ],
     );
   }
 
-  Widget _buildLightSlider() {
+  Widget _buildBody() {
+    switch (_controlMode) {
+      case ControlMode.color:
+        // Colour and temperature say nothing about a light that is off: keep the
+        // layout, but show it as unavailable until there is light to tune.
+        return _disabledWhenOff(_supports(ControlMode.color) ? _buildColorPicker() : _buildBrightness());
+      case ControlMode.temperature:
+        return _disabledWhenOff(_supports(ControlMode.temperature) ? _buildTemperature() : _buildBrightness());
+      case ControlMode.brightness:
+        // Brightness stays live - dragging it up is how the light comes back on.
+        return _buildBrightness();
+    }
+  }
+
+  Widget _disabledWhenOff(Widget child) {
+    if (_light?.isOn != false) return child;
+
+    return IgnorePointer(child: Opacity(opacity: 0.4, child: child));
+  }
+
+  Widget _buildBrightness() {
+    // Truly no dimmer on this light: a big tappable bulb instead of a fake
+    // slider. An off dimmable light reports no brightness either, but _supports
+    // remembers it, so it keeps the slider - reading zero.
+    if (!_supports(ControlMode.brightness)) {
+      return Center(
+        child: GestureDetector(
+          onTap: _togglePower,
+          child: Icon(Icons.lightbulb, size: iconSize * 3, color: _accent()),
+        ),
+      );
+    }
+
+    final on = _light?.isOn == true;
+    final fraction = _fraction(_light?.brightness);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(child: _stepButton(Icons.remove, on && fraction > 0 ? () => _step(-0.1) : null)),
+        _VerticalSlider(
+          value: fraction,
+          fill: _accent(),
+          trough: _tint(),
+          // With the light off there is no brightness to drag: the slider shows
+          // the state but the power button is what brings it back.
+          onChanged: on ? (v) => _setFraction(ControlMode.brightness, v) : null,
+          onChangeEnd: _commit,
+          icon: on ? Icons.light_mode : Icons.light_mode_outlined,
+        ),
+        Expanded(child: _stepButton(Icons.add, on && fraction < 1 ? () => _step(0.1) : null)),
+      ],
+    );
+  }
+
+  // Nudge brightness by a tenth - easier than aiming on a tablet.
+  void _step(double delta) {
+    _setFraction(ControlMode.brightness, (_fraction(_light?.brightness) + delta).clamp(0.0, 1.0));
+    _commit();
+  }
+
+  Widget _stepButton(IconData icon, VoidCallback? onTap) {
+    final theme = Theme.of(context);
+    final radius = BorderRadius.circular(cardBorderRadius);
+
+    return Center(
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: onTap == null ? 0.4 : 1),
+        borderRadius: radius,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: SizedBox(
+            width: 56,
+            height: 56,
+            child: Icon(
+              icon,
+              size: iconSize * 0.8,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: onTap == null ? 0.4 : 1),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTemperature() {
+    final temperature = _light!.temperature!;
+
+    return Column(
+      children: [
+        Expanded(
+          child: _VerticalSlider(
+            value: _fraction(temperature),
+            // Mireds: low is cold light, high is warm - so the bar warms upwards.
+            gradient: const LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [Color(0xFFCFE6FF), Color(0xFFFFF1DC), Color(0xFFFFB65C)],
+            ),
+            onChanged: (v) => _setFraction(ControlMode.temperature, v),
+            onChangeEnd: _commit,
+            icon: Icons.thermostat,
+            iconColor: Colors.black54,
+          ),
+        ),
+        SizedBox(height: cardPadding / 2),
+        Text('${temperature.value.round()} mired', style: TextStyle(fontSize: secondaryTextSize)),
+      ],
+    );
+  }
+
+  Widget _buildColorPicker() {
+    void onColorChanged(Color color) {
+      _edit((light) {
+        light.color!.value = color;
+        light.isOn = true; // Turn on when color is changed
+      });
+      _commit();
+    }
+
+    // The picker sizes its wheel from colorPickerWidth and stacks its own slider
+    // row (a 50px indicator in 5/5 padding, plus the row's own slack) under it,
+    // so the wheel has to give that row up out of the height available. It needs
+    // a bounded width of its own - the row inside uses Expanded.
+    return LayoutBuilder(builder: (context, constraints) {
+      const sliderRow = 80.0;
+      final width = (constraints.maxHeight - sliderRow).clamp(0.0, constraints.maxWidth).floorToDouble();
+
+      return SizedBox(
+        width: width,
+        child: ColorPicker(
+          pickerColor: _light!.color!.value,
+          onColorChanged: onColorChanged,
+          labelTypes: const [],
+          paletteType: PaletteType.hueWheel,
+          displayThumbColor: true,
+          enableAlpha: false,
+          portraitOnly: true,
+          colorPickerWidth: width,
+          pickerAreaHeightPercent: 1,
+        ),
+      );
+    });
+  }
+
+  Widget _buildControlButtons() {
+    final theme = Theme.of(context);
+    final on = _light?.isOn == true;
+    // Only offer a mode switch when there is more than one mode to switch to.
+    final modes = ControlMode.values.where(_supports).toList();
+
+    return Row(
+      children: [
+        // The power button wears the card treatment: tinted ground, lit content.
+        Expanded(
+          child: _ModeButton(
+            icon: Icons.power_settings_new,
+            label: on ? 'On' : 'Off',
+            selected: on,
+            background: on ? _tint() : null,
+            foreground: on ? _accent() : null,
+            onTap: _togglePower,
+          ),
+        ),
+        if (modes.length > 1)
+          for (final mode in modes) ...[
+            SizedBox(width: cardPadding / 2),
+            _ModeButton(
+              icon: _modeIcon(mode),
+              selected: _controlMode == mode,
+              background: _controlMode == mode ? theme.colorScheme.primary : null,
+              swatch: mode == ControlMode.color ? _light?.color?.value : null,
+              // Nothing to tune on a light that is off - except its brightness.
+              enabled: on || mode == ControlMode.brightness,
+              onTap: () => setState(() => _controlMode = mode),
+            ),
+          ],
+      ],
+    );
+  }
+
+  IconData _modeIcon(ControlMode mode) {
+    switch (mode) {
+      case ControlMode.brightness:
+        return Icons.brightness_6;
+      case ControlMode.temperature:
+        return Icons.thermostat;
+      case ControlMode.color:
+        return Icons.palette;
+    }
+  }
+}
+
+// A fat vertical bar filled from the bottom: drag anywhere on it, or tap a spot.
+class _VerticalSlider extends StatelessWidget {
+  final double value;
+  final Color? fill;
+  final Color? trough;
+  final Gradient? gradient;
+  // Null leaves the bar readable but inert.
+  final ValueChanged<double>? onChanged;
+  final VoidCallback onChangeEnd;
+  final IconData? icon;
+  final Color? iconColor;
+
+  const _VerticalSlider({
+    required this.value,
+    required this.onChanged,
+    required this.onChangeEnd,
+    this.fill,
+    this.trough,
+    this.gradient,
+    this.icon,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return LayoutBuilder(builder: (context, constraints) {
       final height = constraints.maxHeight;
-      final brightnessPercent = _calculateBrightnessPercentage();
-      final sliderHeight = height * 0.8;
-      final sliderWidth = sliderHeight * 0.5;
-      final zeroOffset = sliderHeight * 0.1;
-      final lineHeight = sliderHeight * 0.02;
+      // Wide enough to hit comfortably, but it must not grow into a slab on a
+      // tall fullscreen dialog.
+      final width = (height * 0.42).clamp(0.0, constraints.maxWidth.clamp(0.0, 140.0));
+      final radius = cardBorderRadius;
 
-      final percentPerPixel = 1.0 / sliderHeight;
-      final cornerRadius = sliderWidth / 8;
+      final enabled = onChanged != null;
 
-      return GestureDetector(
-        onVerticalDragUpdate: (details) {
-          if (_controlMode == ControlMode.brightness && _light?.brightness != null) {
-            final delta = -details.delta.dy * percentPerPixel;
-            _onSliderChanged((brightnessPercent + delta).clamp(0.0, 1.0));
-          }
-        },
-        onVerticalDragEnd: (_) {
-          _updateLightState();
-        },
-        onTapUp: (details) {
-          if (_controlMode == ControlMode.brightness && _light?.brightness != null) {
-            final RenderBox box = context.findRenderObject() as RenderBox;
-            final Offset localPosition = box.globalToLocal(details.globalPosition);
-            final double dy = localPosition.dy;
+      void fromLocal(Offset local) => onChanged!((1 - local.dy / height).clamp(0.0, 1.0));
 
-            // Calculate relative position from bottom
-            final sliderStart = (height - sliderHeight - zeroOffset) / 2;
-            final sliderEnd = sliderStart + sliderHeight + zeroOffset;
-
-            if (dy >= sliderStart && dy <= sliderEnd) {
-              final position = 1.0 - ((dy - sliderStart - zeroOffset / 2) / sliderHeight);
-              _onSliderChanged(position.clamp(0.0, 1.0));
-            }
-
-            _updateLightState();
-          }
-        },
-        child: Center(
+      return Center(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: enabled ? (d) => fromLocal(d.localPosition) : null,
+          onTapUp: enabled ? (_) => onChangeEnd() : null,
+          onVerticalDragUpdate: enabled ? (d) => fromLocal(d.localPosition) : null,
+          onVerticalDragEnd: enabled ? (_) => onChangeEnd() : null,
           child: Container(
-            width: sliderWidth,
-            height: zeroOffset + sliderHeight,
+            width: width,
+            height: height,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(cornerRadius), // Less rounded corners
+              color: trough ?? theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(radius),
             ),
-            clipBehavior: Clip.antiAlias, // Fix for the broken corners
+            clipBehavior: Clip.antiAlias,
             child: Stack(
+              alignment: Alignment.bottomCenter,
               children: [
-                // Empty part
-                Container(
-                  color: Colors.grey[200],
+                // Keep a stub of fill at zero so the bar stays readable.
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  height: (height * value).clamp(width * 0.55, height),
+                  decoration: BoxDecoration(color: gradient == null ? fill : null, gradient: gradient),
                 ),
-                // Filled part - position from bottom
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    width: double.infinity,
-                    height: zeroOffset + sliderHeight * brightnessPercent,
-                    decoration: BoxDecoration(
-                      color: _light?.isOn == true ? (_light?.color?.value ?? Colors.red) : Colors.grey,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(cornerRadius),
-                        topRight: Radius.circular(cornerRadius),
-                      ),
-                    ),
+                if (icon != null)
+                  Positioned(
+                    bottom: width * 0.25,
+                    child: Icon(icon, size: iconSize, color: iconColor ?? Colors.white70),
                   ),
-                ),
-                // Indicator line
-                Positioned(
-                  bottom: (zeroOffset + sliderHeight * brightnessPercent) - zeroOffset / 2 - lineHeight / 2,
-                  left: sliderWidth * 0.1,
-                  child: Container(
-                    width: sliderWidth * 0.8,
-                    height: lineHeight,
-                    color: Colors.white,
-                  ),
-                ),
               ],
             ),
           ),
@@ -288,171 +582,91 @@ class _LightControlContentState extends State<LightControlContent> {
       );
     });
   }
+}
 
-  Widget _buildControlButtons() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Power button
-          _buildRoundButton(
-            icon: Icons.power_settings_new,
-            selected: false,
-            onTap: () {
-              if (_light != null) {
-                setState(() {
-                  _light!.isOn = !_light!.isOn;
-                });
-                _updateLightState();
-              }
-            },
-            backgroundColor: Colors.white,
-            iconColor: Colors.black54,
-          ),
+class _ModeButton extends StatelessWidget {
+  final IconData icon;
+  final String? label;
+  final bool selected;
+  final bool enabled;
+  // Both default to the neutral surface treatment when not given.
+  final Color? background;
+  final Color? foreground;
+  final Color? swatch;
+  final VoidCallback onTap;
 
-          // Settings button
-          _buildRoundButton(
-            icon: Icons.wb_sunny_outlined,
-            selected: _controlMode == ControlMode.brightness,
-            onTap: () {
-              setState(() {
-                _controlMode = ControlMode.brightness;
-              });
-            },
-          ),
+  const _ModeButton({
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    this.enabled = true,
+    this.background,
+    this.foreground,
+    this.label,
+    this.swatch,
+  });
 
-          // Color picker button
-          _buildRoundButton(
-            icon: Icons.color_lens,
-            selected: _controlMode == ControlMode.color,
-            onTap: () {
-              setState(() {
-                _controlMode = ControlMode.color;
-              });
-            },
-            isColorButton: true,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoundButton({
-    required IconData icon,
-    required bool selected,
-    required VoidCallback onTap,
-    Color? backgroundColor,
-    Color? iconColor,
-    bool isColorButton = false,
-    bool isTemperatureButton = false,
-  }) {
-    final bgColor = selected ? Colors.black : (backgroundColor ?? Colors.transparent);
-
-    final fgColor = selected ? Colors.white : (iconColor ?? Colors.black);
-
-    Widget iconWidget = Icon(icon, color: fgColor, size: 20);
-
-    if (isColorButton) {
-      iconWidget = Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(icon, color: fgColor, size: 20),
-          if (!selected)
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _light?.color?.value ?? Colors.red,
-                  border: Border.all(color: Colors.white, width: 1),
-                ),
-              ),
-            ),
-        ],
-      );
-    }
-
-    if (isTemperatureButton) {
-      iconWidget = Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(icon, color: fgColor, size: 20),
-          if (!selected)
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Colors.orange, Colors.white],
-                    begin: Alignment.bottomLeft,
-                    end: Alignment.topRight,
-                  ),
-                  border: Border.all(color: Colors.white, width: 1),
-                ),
-              ),
-            ),
-        ],
-      );
-    }
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final radius = BorderRadius.circular(cardBorderRadius);
+    final ground = background ?? theme.colorScheme.surfaceContainerHighest;
+    final content = foreground ??
+        (selected
+            ? (ThemeData.estimateBrightnessForColor(ground) == Brightness.dark ? Colors.white : Colors.black87)
+            : theme.colorScheme.onSurfaceVariant);
+    final size = 56.0;
+    // Same dimming as the step buttons, so "unavailable" reads the same
+    // everywhere in the dialog.
+    final fade = enabled ? 1.0 : 0.4;
 
     return Material(
-      color: Colors.transparent,
+      color: ground.withValues(alpha: fade),
+      borderRadius: radius,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        onTap: enabled ? onTap : null,
+        borderRadius: radius,
         child: Container(
-          width: 36,
-          height: 36,
-          margin: EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            color: bgColor,
-            shape: BoxShape.circle,
+          height: size,
+          constraints: BoxConstraints(minWidth: size),
+          padding: EdgeInsets.symmetric(horizontal: label == null ? 0 : cardPadding),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, size: iconSize * 0.7, color: content.withValues(alpha: fade)),
+                  if (swatch != null && !selected)
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: swatch,
+                          border: Border.all(color: theme.colorScheme.surfaceContainerHighest, width: 1),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (label != null) ...[
+                const SizedBox(width: 8),
+                Text(label!, style: TextStyle(fontSize: secondaryTextSize, color: content.withValues(alpha: fade))),
+              ],
+            ],
           ),
-          child: Center(child: iconWidget),
         ),
       ),
     );
   }
-
-  Widget _buildColorPicker() {
-    void onColorChanged(Color color) {
-      setState(() {
-        _light!.color!.value = color;
-        _light!.isOn = true; // Turn on when color is changed
-      });
-      _updateLightState();
-    }
-
-    final color = _light!.color!.value;
-    return SizedBox(
-        width: 300,
-        child: ColorPicker(
-          pickerColor: color,
-          onColorChanged: onColorChanged,
-          labelTypes: [],
-          paletteType: PaletteType.hueWheel,
-          displayThumbColor: true,
-          enableAlpha: false,
-          portraitOnly: true,
-          pickerAreaHeightPercent: 1,
-        ));
-  }
 }
 
 // Enum for control modes
-enum ControlMode { brightness, color }
+enum ControlMode { brightness, temperature, color }
 
 // Extension method to easily show the dialog
 extension LightControlExtension on BuildContext {
@@ -531,21 +745,23 @@ class LightCard extends StateCard<LightState> {
 
   @override
   Widget build(BuildContext context, LightState? state) {
-    return GestureDetector(
-      onLongPress: () {
-        if (state != null) _buildControlDialog(context);
+    return PlainCard(
+      color: _color(state),
+      icon: _icon(state),
+      iconColor: _iconColor(state),
+      text: _stateToText(state),
+      subText: name,
+      action: () {
+        if (state != null) switchState(state);
       },
-      child: PlainCard(
-        color: _color(state),
-        icon: _icon(state),
-        iconColor: _iconColor(state),
-        text: _stateToText(state),
-        subText: name,
-        action: () {
-          if (state != null) switchState(state);
-        },
-        compact: compact,
-      ),
+      // The compact card has no room for it and PlainCard drops it there anyway.
+      subAction: state == null || compact
+          ? null
+          : PlainAction(
+              icon: Icons.chevron_right,
+              onTap: () => _buildControlDialog(context),
+            ),
+      compact: compact,
     );
   }
 
@@ -555,24 +771,6 @@ class LightCard extends StateCard<LightState> {
 
   Future<void> _buildControlDialog(BuildContext context) {
     return context.showLightControl(stateProvider: stateProvider, title: name);
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(name ?? 'Light'),
-          //content: SingleChildScrollView(child: LightCardSettings(stateProvider: stateProvider, )),
-          actions: <Widget>[
-            TextButton(
-              style: TextButton.styleFrom(textStyle: Theme.of(context).textTheme.labelLarge),
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void switchState(LightState state) {
