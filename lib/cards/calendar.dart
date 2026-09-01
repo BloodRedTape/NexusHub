@@ -11,47 +11,62 @@ class CalendarDayWidget extends StatelessWidget {
 
   const CalendarDayWidget({required this.day});
 
+  static String _time(TimeOfDay time) => '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+
   @override
   Widget build(BuildContext context) {
     if (day.events.isEmpty) return SizedBox();
 
-    double fontSize = 24;
+    double fontSize = 20;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(children: [
-          Icon(Icons.calendar_month, size: 35),
+          Icon(Icons.calendar_month, size: 28),
           const SizedBox(width: 8),
           Text(
             DateFormat('d MMMM').format(day.date),
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
           ),
         ]),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Table(
           columnWidths: {
             0: IntrinsicColumnWidth(),
-            1: FixedColumnWidth(40.0),
+            1: FixedColumnWidth(20.0),
             2: FlexColumnWidth(),
           },
           children: day.events.map((event) {
-            final timeRangeText =
-                '${event.start.hour}:${event.start.minute.toString().padLeft(2, '0')} - ${event.end.hour}:${event.end.minute.toString().padLeft(2, '0')}';
-
             return TableRow(
               children: [
                 TableCell(
                     child: Align(
                   alignment: AlignmentDirectional.center,
-                  child: Text(timeRangeText, style: TextStyle(fontSize: fontSize)),
+                  child: Text.rich(
+                    TextSpan(
+                      text: '${_time(event.start)} - ${_time(event.end)}',
+                      children: [
+                        if (event.isMultiDay)
+                          // day offset rides above the end time, out of the way
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.top,
+                            child: Text(
+                              '+${event.days - 1}',
+                              style: TextStyle(fontSize: fontSize * 0.6, color: Colors.grey),
+                            ),
+                          ),
+                      ],
+                    ),
+                    style: TextStyle(fontSize: fontSize),
+                  ),
                 )),
                 const TableCell(
                   verticalAlignment: TableCellVerticalAlignment.middle,
                   child: Icon(
                     Icons.circle,
                     color: Colors.blue,
-                    size: 16,
+                    size: 8,
                   ),
                 ),
                 TableCell(
@@ -83,7 +98,7 @@ class CalendarCard extends StateCard<CalendarState> {
         child: ListView.builder(
           itemCount: state.days.length,
           itemBuilder: (context, index) => Padding(
-            padding: EdgeInsets.only(bottom: cardPadding),
+            padding: EdgeInsets.only(bottom: cardPadding * 0.5),
             child: CalendarDayWidget(day: state.days[index]),
           ),
         ),

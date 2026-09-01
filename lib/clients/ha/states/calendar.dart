@@ -71,22 +71,16 @@ class CalendarStateProvider extends StateProvider<CalendarState> {
 
       String description = event['summary'];
 
-      List<CalendarEventState> events = _sliceEvent(startDateTime, endDateTime, description);
-
-      DateTime insertDate = _withoutTime(startDateTime);
-      for (int i = 0; i < events.length; i++) {
-        var event = events[i];
-
-        if (events.length > 1) {
-          event = CalendarEventState(
-            start: event.start,
-            end: event.end,
-            description: event.description + ' (Day ${i + 1}/${events.length})',
+      // an event is listed once, on the day it starts - repeating it for every
+      // day it covers buried the rest of the schedule
+      result.putIfAbsent(_withoutTime(startDateTime), () => []).add(
+            CalendarEventState(
+              start: _withoutDate(startDateTime),
+              end: _withoutDate(endDateTime),
+              description: description,
+              days: _spannedDays(startDateTime, endDateTime),
+            ),
           );
-        }
-        result.putIfAbsent(insertDate, () => []).add(event);
-        insertDate = insertDate.add(Duration(days: 1));
-      }
     }
 
     return result;
@@ -100,35 +94,14 @@ class CalendarStateProvider extends StateProvider<CalendarState> {
     return TimeOfDay(hour: date.hour, minute: date.minute);
   }
 
-  List<CalendarEventState> _sliceEvent(DateTime start, DateTime end, String description) {
-    final difference = _withoutTime(end).difference(_withoutTime(start)).inDays;
+  /// How many calendar days an event covers, counted from midnight to midnight.
+  /// An event that ends exactly at midnight belongs to the day it started on.
+  int _spannedDays(DateTime start, DateTime end) {
+    final days = _withoutTime(end).difference(_withoutTime(start)).inDays;
 
-    List<CalendarEventState> result = [];
+    final endsAtMidnight = end.hour == 0 && end.minute == 0;
 
-    var startNoDate = _withoutDate(start);
-    final endNoDate = _withoutDate(end);
-
-    for (int i = 0; i < difference; i++) {
-      result.add(
-        CalendarEventState(
-          start: startNoDate,
-          end: TimeOfDay(hour: 24, minute: 0),
-          description: description,
-        ),
-      );
-
-      startNoDate = TimeOfDay(hour: 0, minute: 0);
-    }
-
-    result.add(
-      CalendarEventState(
-        start: startNoDate,
-        end: endNoDate,
-        description: description,
-      ),
-    );
-
-    return result;
+    return (endsAtMidnight ? days : days + 1).clamp(1, 999);
   }
 
   List<CalendarDayState> createCalendarDayStates(Map<DateTime, List<CalendarEventState>> groupedEvents, DateTime endDate) {

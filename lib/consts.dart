@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-final scale = 0.75;
+final scale = 0.65;
 final double cardPadding = 24.0 * scale;
 final double cardBorderRadius = 16.0 * scale;
 final double iconSize = 48 * scale;
