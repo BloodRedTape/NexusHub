@@ -7,3 +7,4 @@ final double iconSize = 48 * scale;
 final double primaryTextSize = 34 * scale;
 final FontWeight primartyTextWeight = FontWeight.bold;
 final double secondaryTextSize = 28 * scale;
+final double percentBarHeight = 6 * scale;

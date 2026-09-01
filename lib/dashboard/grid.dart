@@ -8,7 +8,7 @@ class Tile {
   const Tile(this.child);
 }
 
-/// A cell split into two stacked halves - the compact card pairs.
+/// A cell split into two stacked halves, for pairs of small cards.
 class SplitTile extends StatelessWidget {
   final Widget top;
   final Widget bottom;

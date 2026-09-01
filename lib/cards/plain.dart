@@ -156,12 +156,22 @@ class PlainCardBase extends StatelessWidget {
 
   final Color? color;
 
+  /// 0..1, drawn as a bar across the bottom edge. Null hides it.
+  final double? percent;
+
+  /// Filled and unfilled parts of the [percent] bar. Default to the theme.
+  final Color? percentColor;
+  final Color? percentBackgroundColor;
+
   PlainCardBase({
     required this.icon,
     this.action,
     this.subAction,
     required this.children,
     this.color,
+    this.percent,
+    this.percentColor,
+    this.percentBackgroundColor,
   });
 
   @override
@@ -172,7 +182,32 @@ class PlainCardBase extends StatelessWidget {
       children: children,
     );
 
-    return BaseCard(child: content, action: action, color: color);
+    // The bar sits outside the layout's padding so it reaches both edges. The
+    // whole stack is clipped, not just the bar: a few pixels tall, the bar has
+    // no room for the card radius on its own and would square off the corners.
+    final child = percent == null
+        ? content
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(cardBorderRadius),
+            child: Stack(
+              children: [
+                content,
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: LinearProgressIndicator(
+                    value: percent!.clamp(0.0, 1.0),
+                    minHeight: percentBarHeight,
+                    color: percentColor,
+                    backgroundColor: percentBackgroundColor ?? Theme.of(context).cardColor,
+                  ),
+                ),
+              ],
+            ),
+          );
+
+    return BaseCard(child: child, action: action, color: color);
   }
 }
 
@@ -190,7 +225,12 @@ class PlainCard extends StatelessWidget {
 
   final Color? color;
 
-  final bool compact;
+  /// 0..1, drawn as a bar across the bottom edge. Null hides it.
+  final double? percent;
+
+  /// Filled and unfilled parts of the [percent] bar. Default to the theme.
+  final Color? percentColor;
+  final Color? percentBackgroundColor;
 
   PlainCard({
     required IconData icon,
@@ -202,7 +242,9 @@ class PlainCard extends StatelessWidget {
     this.subText,
     this.subTextColor,
     this.color,
-    this.compact = false,
+    this.percent,
+    this.percentColor,
+    this.percentBackgroundColor,
   }) : iconWidget = Icon(icon, color: iconColor, size: iconSize);
 
   PlainCard.fromIconWidget({
@@ -214,32 +256,13 @@ class PlainCard extends StatelessWidget {
     this.subText,
     this.subTextColor,
     this.color,
-    this.compact = false,
+    this.percent,
+    this.percentColor,
+    this.percentBackgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (compact) {
-      return BaseCard(
-        action: action,
-        color: color,
-        child: Padding(
-          padding: EdgeInsets.all(cardPadding),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              iconWidget,
-              SizedBox(width: cardPadding * 0.25),
-              Expanded(
-                child: Text(text, style: TextStyle(fontSize: primaryTextSize, fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis)),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     final textWidget = FittedBox(
       alignment: Alignment.bottomLeft,
       fit: BoxFit.scaleDown,
@@ -258,6 +281,9 @@ class PlainCard extends StatelessWidget {
       subAction: subAction,
       action: action,
       color: color,
+      percent: percent,
+      percentColor: percentColor,
+      percentBackgroundColor: percentBackgroundColor,
       children: [
         textWidget,
         subTextWidget,

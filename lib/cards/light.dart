@@ -187,12 +187,7 @@ class _LightControlContentState extends State<LightControlContent> {
   LimitedValueState? _copyLimited(LimitedValueState? v) =>
       v == null ? null : LimitedValueState(value: v.value, min: v.min, max: v.max);
 
-  double _fraction(LimitedValueState? v) {
-    if (v == null) return 0;
-
-    final range = v.max - v.min;
-    return range <= 0 ? 0 : ((v.value - v.min) / range).clamp(0.0, 1.0);
-  }
+  double _fraction(LimitedValueState? v) => v?.fraction ?? 0;
 
   // Sliders are addressed by mode, because after _edit the object identity of
   // the value the user is dragging changes with every copy.
@@ -733,14 +728,12 @@ class LightCard extends StateCard<LightState> {
   final IconData onIcon;
   final IconData offIcon;
   final String? name;
-  final bool compact;
 
   LightCard({
     required super.stateProvider,
     required this.onIcon,
     required this.offIcon,
     this.name,
-    this.compact = false,
   });
 
   @override
@@ -754,14 +747,18 @@ class LightCard extends StateCard<LightState> {
       action: () {
         if (state != null) switchState(state);
       },
-      // The compact card has no room for it and PlainCard drops it there anyway.
-      subAction: state == null || compact
+      subAction: state == null
           ? null
           : PlainAction(
               icon: Icons.chevron_right,
               onTap: () => _buildControlDialog(context),
             ),
-      compact: compact,
+      // An off light reports no brightness - nothing to show a level for.
+      percent: state != null && state.isOn ? state.brightness?.fraction : null,
+      // Filled in the light's own colour, the rest the same colour tinted
+      // further down than the card behind it (which sits at 0.4).
+      percentColor: _iconColor(state),
+      percentBackgroundColor: Tint.color(color: state?.color?.value, fraction: 0.3),
     );
   }
 

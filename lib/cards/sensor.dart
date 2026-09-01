@@ -80,9 +80,8 @@ class SensorCard extends StateCard<double> {
   final String Function(double) formatter;
   final Color? Function(double)? iconPainter;
   final String? room;
-  final bool compact;
 
-  const SensorCard({required super.stateProvider, required this.icon, required this.formatter, this.iconPainter, this.room, this.compact = false});
+  const SensorCard({required super.stateProvider, required this.icon, required this.formatter, this.iconPainter, this.room});
 
   @override
   Widget build(BuildContext context, double? state) {
@@ -93,7 +92,6 @@ class SensorCard extends StateCard<double> {
       iconColor: iconPainter?.call(state),
       text: formatter(state),
       subText: room,
-      compact: compact,
     );
   }
 }
