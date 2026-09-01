@@ -7,6 +7,7 @@ import 'package:nexus/cards/motion.dart';
 import 'package:nexus/cards/outlet.dart';
 import 'package:nexus/cards/sensor.dart';
 import 'package:nexus/cards/system.dart';
+import 'package:nexus/cards/vacuum.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/dashboard/grid.dart';
@@ -45,11 +46,19 @@ const List<CardMatcher> cardMatchers = [
   CardMatcher(requires: {'sensor.carbon_dioxide', 'sensor.pm25', 'sensor.pm10'}, build: _buildAirQuality),
   CardMatcher(requires: {'sensor.illuminance'}, build: _buildIlluminance),
   CardMatcher(requires: {'binary_sensor.occupancy', 'sensor.illuminance'}, build: _buildMotion),
+  CardMatcher(requires: {'vacuum'}, build: _buildVacuum),
   CardMatcher(requires: {}, accepts: _isMachine, weight: 4, build: _buildSystem),
 ];
 
 /// System Monitor leaves the device class empty, so go by the entity names.
 bool _isMachine(DeviceEntities device) => device.entityEndingWith('processor_use') != null;
+
+Widget _buildVacuum(HomeAssistantClient client, DeviceEntities device) {
+  return VacuumCard(
+    stateProvider: client.vacuumStateProvider(device.entityOf('vacuum')!.entityId),
+    name: device.name,
+  );
+}
 
 Widget _buildSystem(HomeAssistantClient client, DeviceEntities device) {
   StateProvider<double>? sensor(String suffix) {

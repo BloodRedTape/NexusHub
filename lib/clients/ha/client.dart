@@ -13,6 +13,7 @@ import 'package:nexus/clients/ha/states/calendar.dart';
 import 'package:nexus/clients/ha/states/curtain.dart';
 import 'package:nexus/clients/ha/states/entity.dart';
 import 'package:nexus/clients/ha/states/light.dart';
+import 'package:nexus/clients/ha/states/vacuum.dart';
 import 'package:nexus/clients/ha/states/sensor.dart';
 import 'package:nexus/clients/ha/states/switch.dart';
 import 'package:nexus/dashboard/settings.dart';
@@ -20,6 +21,7 @@ import 'package:nexus/providers/shared_preferences_state.dart';
 import 'package:nexus/providers/state.dart';
 import 'package:nexus/states/calendar.dart';
 import 'package:nexus/states/light.dart';
+import 'package:nexus/states/vacuum.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
 EntityAttributes applyAttributes(EntityAttributes target, EntityAttributes source) {
@@ -262,6 +264,7 @@ class HomeAssistantClient {
   Map<String, CurtainStateProvider> _curtainStateProviders = {};
   Map<String, CalendarStateProvider> _calendarStateProviders = {};
   Map<String, LightStateProvider> _lightStateProviders = {};
+  Map<String, VacuumStateProvider> _vacuumStateProviders = {};
 
   Future<void>? _restartFuture;
   HomeAssistantConfig? _pendingConfig;
@@ -561,6 +564,37 @@ class HomeAssistantClient {
       serviceData: data,
       returnResponse: false,
     );
+  }
+
+  StateProvider<VacuumState> vacuumStateProvider(String entityId) {
+    return _vacuumStateProviders.putIfAbsent(entityId, () => _buildVacuumStateProvider(entityId));
+  }
+
+  VacuumStateProvider _buildVacuumStateProvider(String entityId) {
+    final provider = VacuumStateProvider(entityProvider: findOrCreate(entityId), requestState: (state) => _requestVacuumState(entityId, state));
+
+    provider.init();
+
+    return provider;
+  }
+
+  void _requestVacuumState(String entityId, VacuumState state) {
+    if (state.requestedFanSpeed != null) {
+      _homeAssistantWs?.executeServiceForEntity(entityId, 'set_fan_speed', additionalData: {'fan_speed': state.requestedFanSpeed!});
+      return;
+    }
+
+    const services = {
+      VacuumCommand.start: 'start',
+      VacuumCommand.pause: 'pause',
+      VacuumCommand.stop: 'stop',
+      VacuumCommand.returnToBase: 'return_to_base',
+      VacuumCommand.locate: 'locate',
+    };
+
+    final service = services[state.command];
+
+    if (service != null) _homeAssistantWs?.executeServiceForEntity(entityId, service);
   }
 
   final GlobalKey<State> _settingsKey = GlobalKey<State>();
