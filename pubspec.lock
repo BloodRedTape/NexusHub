@@ -139,11 +139,9 @@ packages:
   home_assistant_ws:
     dependency: "direct main"
     description:
-      path: "."
-      ref: f50650edab72a720367d103fde55ab4f42db7ea0
-      resolved-ref: f50650edab72a720367d103fde55ab4f42db7ea0
-      url: "https://github.com/BloodRedTape/home_assistant_ws"
-    source: git
+      path: "../FlutterHomeAssistantSdk/home_assistant_ws"
+      relative: true
+    source: path
     version: "1.0.0"
   http:
     dependency: "direct main"

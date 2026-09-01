@@ -57,8 +57,12 @@ EntityAttributes applyAttributes(EntityAttributes target, EntityAttributes sourc
 
 class HomeAssistantClientState {
   String status;
+  String? url;
+  bool hasToken;
+  DateTime? lastConnected;
+  final List<String> log;
 
-  HomeAssistantClientState({required this.status});
+  HomeAssistantClientState({required this.status, this.url, this.hasToken = false, this.lastConnected, List<String>? log}) : log = log ?? [];
 }
 
 class HomeAssistantClient {
@@ -67,6 +71,27 @@ class HomeAssistantClient {
   Timer? _pingPongTimer;
 
   final _clientState = StateProvider<HomeAssistantClientState>();
+  final List<String> _log = [];
+  String? _wsUrl;
+  bool _hasToken = false;
+  DateTime? _lastConnected;
+
+  void _setStatus(String status, {String? detail}) {
+    if (detail != null) {
+      _log.add('${DateFormat('HH:mm:ss').format(DateTime.now())}  $detail');
+      if (_log.length > 50) _log.removeRange(0, _log.length - 50);
+    }
+
+    _clientState.setValue(
+      HomeAssistantClientState(
+        status: status,
+        url: _wsUrl,
+        hasToken: _hasToken,
+        lastConnected: _lastConnected,
+        log: List.from(_log.reversed),
+      ),
+    );
+  }
 
   Map<String, StateProvider<Entity>> _entityProviders = {};
 
@@ -91,30 +116,53 @@ class HomeAssistantClient {
     _configStateProvider.init();
     _configStateProvider.bindValueChanged(_reconnect);
 
-    _clientState.setValue(HomeAssistantClientState(status: 'Initialized'));
+    _setStatus('Initialized', detail: 'Client initialized');
   }
 
   Future<void> _restartConnection(HomeAssistantConfig? config) async {
-    _clientState.setValue(HomeAssistantClientState(status: 'disconnecting...'));
+    _setStatus('disconnecting...');
 
     _pingPongTimer?.cancel();
     await _homeAssistantWs?.disconnect();
 
-    if (config == null) return;
+    if (config == null) {
+      _setStatus('No config', detail: 'No config: url/token are empty or malformed');
+      return;
+    }
 
-    _clientState.setValue(HomeAssistantClientState(status: 'connecting...'));
+    _hasToken = config.token.isNotEmpty;
 
-    final uri = Uri.parse(config.url);
+    final uri = Uri.tryParse(config.url);
+    if (uri == null || uri.host.isEmpty) {
+      _wsUrl = null;
+      _setStatus('Bad url', detail: 'Cannot parse url "${config.url}" - expected something like https://host:8123');
+      return;
+    }
+
+    _wsUrl = 'wss://${uri.host}${uri.hasPort ? ':' + uri.port.toString() : ''}/api/websocket';
+
+    if (!_hasToken) {
+      _setStatus('No token', detail: 'Bearer token is empty - create a long-lived token in HA profile');
+      return;
+    }
+
+    _setStatus('connecting...', detail: 'Connecting to $_wsUrl');
+
     _homeAssistantWs = HomeAssistantWs(
       token: config.token,
-      baseUrl: 'wss://${uri.host}${uri.hasPort ? ':' + uri.port.toString() : ''}/api/websocket',
+      baseUrl: _wsUrl!,
       onDone: _onDone,
       onError: _onError,
     );
     final ha = _homeAssistantWs!;
 
-    if (!await ha.connect()) {
-      _clientState.setValue(HomeAssistantClientState(status: 'Connect failed'));
+    try {
+      await ha.connectOrThrow(unsafe: true);
+    } on ConnectionError catch (e) {
+      _setStatus(e.kind.name, detail: e.description);
+      return;
+    } catch (e) {
+      _setStatus('Connect failed', detail: 'connect() threw: ${_describe(e)}');
       return;
     }
 
@@ -123,11 +171,16 @@ class HomeAssistantClient {
     _pingPongTimer = Timer.periodic(Duration(seconds: 30), (_) async {
       try {
         await ha.ping();
-      } catch (e) {}
+      } catch (e) {
+        _setStatus('ping failed', detail: 'Ping failed: ${_describe(e)}');
+      }
     });
 
-    _clientState.setValue(HomeAssistantClientState(status: 'connected'));
+    _lastConnected = DateTime.now();
+    _setStatus('connected', detail: 'Connected to $_wsUrl');
   }
+
+  String _describe(dynamic e) => '${e.runtimeType}: $e';
 
   void _reconnect(HomeAssistantConfig? config) {
     _pendingConfig = config;
@@ -143,12 +196,17 @@ class HomeAssistantClient {
     });
   }
 
+  void reconnect() {
+    _setStatus('reconnecting...', detail: 'Manual reconnect requested');
+    _reconnect(_configStateProvider.getValue());
+  }
+
   void _onDone() {
-    //_clientState.setValue(HomeAssistantClientState(status: 'done'));
+    _setStatus('disconnected', detail: 'Socket closed by the other side');
   }
 
   void _onError(dynamic error) {
-    _clientState.setValue(HomeAssistantClientState(status: error.toString()));
+    _setStatus('Error', detail: 'Socket error: ${_describe(error)}');
   }
 
   void _onEvent(EventMessage event) {
@@ -333,7 +391,7 @@ class HomeAssistantClient {
               stateProvider: _configStateProvider,
             ),
             Flexible(
-              child: HomeAssistantDebugWidget(stateProvider: _clientState),
+              child: HomeAssistantDebugWidget(stateProvider: _clientState, onReconnect: reconnect),
             ),
           ],
         ),

@@ -46,14 +46,39 @@ class _HomeAssistantEntityDebugWidgetState extends State<HomeAssistantEntityDebu
 }
 
 class HomeAssistantDebugWidget extends StateCard<HomeAssistantClientState> {
-  HomeAssistantDebugWidget({required super.stateProvider});
+  final VoidCallback onReconnect;
+
+  HomeAssistantDebugWidget({required super.stateProvider, required this.onReconnect});
 
   @override
   Widget build(BuildContext context, HomeAssistantClientState? state) {
     if (state == null) return Center(child: Text('Null state'));
 
     return Column(
-      children: [Text('Status ${state.status}')],
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Status: ${state.status}'),
+        Text('Socket: ${state.url ?? '-'}'),
+        Text('Token: ${state.hasToken ? 'set' : 'missing'}'),
+        Text('Last connected: ${state.lastConnected?.toString() ?? 'never'}'),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: onReconnect,
+            icon: Icon(Icons.refresh),
+            label: Text('Reconnect'),
+          ),
+        ),
+        Flexible(
+          child: ListView.builder(
+            itemCount: state.log.length,
+            itemBuilder: (context, index) => Text(
+              state.log[index],
+              style: TextStyle(fontFamily: 'monospace', fontSize: 11),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
