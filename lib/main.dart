@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nexus/clients/android/client.dart';
+import 'package:nexus/clients/core/client.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +24,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  late final CoreClient _coreClient;
   late final OpenMeteoWeatherClient _weatherClient;
   late final HomeAssistantClient _homeAssistantClient;
   late final AndroidClient _androidClient;
@@ -31,6 +33,8 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
+    // First: it catches whatever the other clients log on their way up.
+    _coreClient = CoreClient();
     _weatherClient = OpenMeteoWeatherClient();
     _homeAssistantClient = HomeAssistantClient();
     _androidClient = AndroidClient(homeAssistantClient: _homeAssistantClient);
@@ -50,6 +54,7 @@ class _MyAppState extends State<MyApp> {
     _androidClient.dispose();
     _homeAssistantClient.dispose();
     _weatherClient.dispose();
+    _coreClient.dispose();
     super.dispose();
   }
 
@@ -59,6 +64,7 @@ class _MyAppState extends State<MyApp> {
     // itself rather than handed down through each tab.
     return MultiProvider(
       providers: [
+        Provider<CoreClient>.value(value: _coreClient),
         Provider<OpenMeteoWeatherClient>.value(value: _weatherClient),
         Provider<HomeAssistantClient>.value(value: _homeAssistantClient),
         Provider<AndroidClient>.value(value: _androidClient),
@@ -91,6 +97,7 @@ class _MyAppState extends State<MyApp> {
                   _androidClient.makeSettings(),
                   _weatherClient.makeSettings(),
                   _homeAssistantClient.makeSettings(),
+                  _coreClient.makeSettings(),
                 ]),
               ),
             ),

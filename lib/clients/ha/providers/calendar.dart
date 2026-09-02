@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:home_assistant_ws/home_assistant_ws.dart';
+import 'package:nexus/clients/core/log.dart';
 import 'package:nexus/clients/state.dart';
 import 'package:nexus/clients/ha/models/calendar.dart';
 
@@ -39,7 +40,7 @@ class CalendarStateProvider extends StateProvider<Calendar> {
       ServiceResponse? response = await getCalendarEvents(entityId, now, endDate);
 
       if (response == null) {
-        print('CalendarStateProvider: Null Reseponse');
+        logCalendar.warning('Null response for $entityId');
 
         return;
       }
@@ -48,7 +49,7 @@ class CalendarStateProvider extends StateProvider<Calendar> {
 
       setValue(parseStateFromJson(responseForEntity, endDate));
     } catch (e) {
-      print('CalendarStateProvider: $e');
+      logCalendar.severe('Failed to load $entityId', e);
       return;
     }
   }

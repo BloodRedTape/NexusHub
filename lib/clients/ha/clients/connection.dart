@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:home_assistant_ws/home_assistant_ws.dart';
-import 'package:intl/intl.dart';
+import 'package:logging/logging.dart';
 import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/config_storage.dart';
+import 'package:nexus/clients/core/log.dart';
 import 'package:nexus/clients/ha/config.dart';
 import 'package:nexus/clients/ha/debug.dart';
 import 'package:nexus/clients/state.dart';
@@ -14,9 +15,8 @@ class HomeAssistantClientState {
   String? url;
   bool hasToken;
   DateTime? lastConnected;
-  final List<String> log;
 
-  HomeAssistantClientState({required this.status, this.url, this.hasToken = false, this.lastConnected, List<String>? log}) : log = log ?? [];
+  HomeAssistantClientState({required this.status, this.url, this.hasToken = false, this.lastConnected});
 }
 
 /// The socket and the config behind it: connecting, reconnecting, keeping the
@@ -24,13 +24,11 @@ class HomeAssistantClientState {
 /// entities or areas - whoever needs those hangs off [onConnected].
 class HomeAssistantConnection {
   static const _pingInterval = Duration(seconds: 30);
-  static const _logLimit = 500;
 
   static final _fallback = HomeAssistantConfig(token: '', url: 'https://ha.raspberry.lan');
 
   final _storage = const ConfigStorage('HOME_ASSISTANT_CONFIG');
   final _state = StateProvider<HomeAssistantClientState>();
-  final List<String> _log = [];
 
   HomeAssistantConfig _config = _fallback;
   HomeAssistantWs? _ws;
@@ -88,11 +86,8 @@ class HomeAssistantConnection {
     _reconnect(_config);
   }
 
-  void _setStatus(String status, {String? detail}) {
-    if (detail != null) {
-      _log.add('${DateFormat('HH:mm:ss').format(DateTime.now())}  $detail');
-      if (_log.length > _logLimit) _log.removeRange(0, _log.length - _logLimit);
-    }
+  void _setStatus(String status, {String? detail, Level level = Level.INFO, Object? error}) {
+    if (detail != null) logHa.log(level, detail, error);
 
     _state.setValue(
       HomeAssistantClientState(
@@ -100,7 +95,6 @@ class HomeAssistantConnection {
         url: _wsUrl,
         hasToken: _hasToken,
         lastConnected: _lastConnected,
-        log: List.from(_log.reversed),
       ),
     );
   }
@@ -128,7 +122,7 @@ class HomeAssistantConnection {
     await _ws?.disconnect();
 
     if (config == null) {
-      _setStatus('No config', detail: 'No config: url/token are empty or malformed');
+      _setStatus('No config', detail: 'No config: url/token are empty or malformed', level: Level.WARNING);
       return;
     }
 
@@ -137,14 +131,16 @@ class HomeAssistantConnection {
     final uri = Uri.tryParse(config.url);
     if (uri == null || uri.host.isEmpty) {
       _wsUrl = null;
-      _setStatus('Bad url', detail: 'Cannot parse url "${config.url}" - expected something like https://host:8123');
+      _setStatus('Bad url',
+          detail: 'Cannot parse url "${config.url}" - expected something like https://host:8123', level: Level.WARNING);
       return;
     }
 
     _wsUrl = 'wss://${uri.host}${uri.hasPort ? ':' + uri.port.toString() : ''}/api/websocket';
 
     if (!_hasToken) {
-      _setStatus('No token', detail: 'Bearer token is empty - create a long-lived token in HA profile');
+      _setStatus('No token',
+          detail: 'Bearer token is empty - create a long-lived token in HA profile', level: Level.WARNING);
       return;
     }
 
@@ -161,10 +157,10 @@ class HomeAssistantConnection {
     try {
       await ha.connectOrThrow(unsafe: true);
     } on ConnectionError catch (e) {
-      _setStatus(e.kind.name, detail: e.description);
+      _setStatus(e.kind.name, detail: e.description, level: Level.SEVERE, error: e);
       return;
     } catch (e) {
-      _setStatus('Connect failed', detail: 'connect() threw: ${describe(e)}');
+      _setStatus('Connect failed', detail: 'connect() threw: ${describe(e)}', level: Level.SEVERE, error: e);
       return;
     }
 
@@ -173,14 +169,14 @@ class HomeAssistantConnection {
     try {
       _setStatus('connected', detail: await onConnected?.call(ha));
     } catch (e) {
-      _setStatus('connected', detail: 'Failed to load registries: ${describe(e)}');
+      _setStatus('connected', detail: 'Failed to load registries', level: Level.SEVERE, error: e);
     }
 
     _pingPongTimer = Timer.periodic(_pingInterval, (_) async {
       try {
         await ha.ping();
       } catch (e) {
-        _setStatus('ping failed', detail: 'Ping failed: ${describe(e)}');
+        _setStatus('ping failed', detail: 'Ping failed', level: Level.WARNING, error: e);
       }
     });
 
@@ -189,11 +185,11 @@ class HomeAssistantConnection {
   }
 
   void _onDone() {
-    _setStatus('disconnected', detail: 'Socket closed by the other side');
+    _setStatus('disconnected', detail: 'Socket closed by the other side', level: Level.WARNING);
   }
 
   void _onError(dynamic error) {
-    _setStatus('Error', detail: 'Socket error: ${describe(error)}');
+    _setStatus('Error', detail: 'Socket error', level: Level.SEVERE, error: error);
   }
 
   /// The connection log. Its own page: it has a scroll of its own and does not

@@ -69,15 +69,7 @@ class HomeAssistantDebugWidget extends StateCard<HomeAssistantClientState> {
             label: Text('Reconnect'),
           ),
         ),
-        Flexible(
-          child: ListView.builder(
-            itemCount: state.log.length,
-            itemBuilder: (context, index) => Text(
-              state.log[index],
-              style: TextStyle(fontFamily: 'monospace', fontSize: 11),
-            ),
-          ),
-        ),
+        // What happened is in the HA log category, on the Nexus settings page.
       ],
     );
   }
