@@ -11,6 +11,7 @@ import 'package:nexus/clients/ha/models/vacuum.dart';
 import 'package:nexus/clients/ha/providers/calendar.dart';
 import 'package:nexus/clients/ha/providers/curtain.dart';
 import 'package:nexus/clients/ha/providers/entity.dart';
+import 'package:nexus/clients/ha/providers/image.dart';
 import 'package:nexus/clients/ha/providers/light.dart';
 import 'package:nexus/clients/ha/providers/sensor.dart';
 import 'package:nexus/clients/ha/providers/switch.dart';
@@ -73,6 +74,7 @@ class HomeAssistantClient {
   final Map<String, SwitchStateProvider> _switchStateProviders = {};
   final Map<String, CurtainStateProvider> _curtainStateProviders = {};
   final Map<String, CalendarStateProvider> _calendarStateProviders = {};
+  final Map<String, ImageStateProvider> _imageStateProviders = {};
   final Map<String, LightStateProvider> _lightStateProviders = {};
   final Map<String, VacuumStateProvider> _vacuumStateProviders = {};
 
@@ -102,6 +104,13 @@ class HomeAssistantClient {
             entityProvider: entities.findOrCreate(entityId),
             getCalendarEvents: _getCalendarEvents,
             rangeFromNow: _calendarRange,
+          )..init());
+
+  StateProvider<HaImage> imageStateProvider(String entityId) => _imageStateProviders.putIfAbsent(
+      entityId,
+      () => ImageStateProvider(
+            entityProvider: entities.findOrCreate(entityId),
+            baseUrl: () => connection.config.url,
           )..init());
 
   StateProvider<Light> lightStateProvider(String entityId) => _lightStateProviders.putIfAbsent(

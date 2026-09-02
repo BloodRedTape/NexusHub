@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/cards/ha/air_quality.dart';
 import 'package:nexus/cards/ha/climate.dart';
+import 'package:nexus/cards/ha/image.dart';
 import 'package:nexus/cards/ha/light.dart';
 import 'package:nexus/cards/ha/motion.dart';
 import 'package:nexus/cards/ha/outlet.dart';
@@ -48,6 +49,7 @@ const List<CardMatcher> cardMatchers = [
   CardMatcher(requires: {'sensor.illuminance'}, build: _buildIlluminance),
   CardMatcher(requires: {'binary_sensor.occupancy', 'sensor.illuminance'}, build: _buildMotion),
   CardMatcher(requires: {'vacuum'}, build: _buildVacuum),
+  CardMatcher(requires: {'image'}, build: _buildImage),
   CardMatcher(requires: {}, accepts: _isMachine, weight: 4, build: _buildSystem),
 ];
 
@@ -57,6 +59,13 @@ bool _isMachine(DeviceEntities device) => device.entityEndingWith('processor_use
 Widget _buildVacuum(HomeAssistantClient client, DeviceEntities device) {
   return VacuumCard(
     stateProvider: client.vacuumStateProvider(device.entityOf('vacuum')!.entityId),
+    name: device.name,
+  );
+}
+
+Widget _buildImage(HomeAssistantClient client, DeviceEntities device) {
+  return ImageCard(
+    stateProvider: client.imageStateProvider(device.entityOf('image')!.entityId),
     name: device.name,
   );
 }

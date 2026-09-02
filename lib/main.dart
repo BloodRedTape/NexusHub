@@ -93,11 +93,11 @@ class _MyAppState extends State<MyApp> {
               tab: const Tab(text: 'Settings'),
               child: PaddedTab(
                 child: SettingsTab(items: [
+                  _coreClient.makeSettings(),
                   _androidClient.makeSystemSettings(),
                   _androidClient.makeSettings(),
                   _weatherClient.makeSettings(),
                   _homeAssistantClient.makeSettings(),
-                  _coreClient.makeSettings(),
                 ]),
               ),
             ),

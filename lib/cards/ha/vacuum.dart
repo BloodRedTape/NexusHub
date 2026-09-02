@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nexus/cards/control_button.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
@@ -138,7 +139,7 @@ class VacuumControlContent extends StateCard<Vacuum> {
       children: [
         // Start doubles as resume, so a vacuum already out gets a pause instead.
         Expanded(
-          child: _VacuumButton(
+          child: ControlButton(
             icon: running ? Icons.pause : Icons.play_arrow,
             label: running ? 'Pause' : 'Start',
             background: running ? Tint.color(color: _accent, fraction: 0.4) : null,
@@ -147,11 +148,11 @@ class VacuumControlContent extends StateCard<Vacuum> {
           ),
         ),
         SizedBox(width: cardPadding / 2),
-        _VacuumButton(icon: Icons.stop, onTap: () => send(VacuumCommand.stop)),
+        ControlButton(icon: Icons.stop, onTap: () => send(VacuumCommand.stop)),
         SizedBox(width: cardPadding / 2),
-        _VacuumButton(icon: Icons.home, onTap: () => send(VacuumCommand.returnToBase)),
+        ControlButton(icon: Icons.home, onTap: () => send(VacuumCommand.returnToBase)),
         SizedBox(width: cardPadding / 2),
-        _VacuumButton(icon: Icons.place, onTap: () => send(VacuumCommand.locate)),
+        ControlButton(icon: Icons.place, onTap: () => send(VacuumCommand.locate)),
         if (state.fanSpeeds.isNotEmpty) ...[
           SizedBox(width: cardPadding / 2),
           _FanSpeedButton(
@@ -160,50 +161,6 @@ class VacuumControlContent extends StateCard<Vacuum> {
           ),
         ],
       ],
-    );
-  }
-}
-
-/// The light dialog's button treatment: neutral ground, tinted when it is the
-/// thing currently happening.
-class _VacuumButton extends StatelessWidget {
-  final IconData icon;
-  final String? label;
-  final Color? background;
-  final Color? foreground;
-  final VoidCallback onTap;
-
-  const _VacuumButton({required this.icon, required this.onTap, this.label, this.background, this.foreground});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final radius = BorderRadius.circular(cardBorderRadius);
-    final content = foreground ?? theme.colorScheme.onSurfaceVariant;
-    final size = 56.0;
-
-    return Material(
-      color: background ?? theme.colorScheme.surfaceContainerHighest,
-      borderRadius: radius,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: radius,
-        child: Container(
-          height: size,
-          constraints: BoxConstraints(minWidth: size),
-          padding: EdgeInsets.symmetric(horizontal: label == null ? 0 : cardPadding),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: iconSize * 0.7, color: content),
-              if (label != null) ...[
-                const SizedBox(width: 8),
-                Text(label!, style: TextStyle(fontSize: secondaryTextSize, color: content)),
-              ],
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
