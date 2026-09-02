@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/cards/ha/air_quality.dart';
+import 'package:nexus/cards/ha/automations.dart';
 import 'package:nexus/cards/ha/climate.dart';
 import 'package:nexus/cards/ha/image.dart';
 import 'package:nexus/cards/ha/light.dart';
@@ -177,6 +178,22 @@ class AreaTab extends StatelessWidget {
       if (matcher == null) continue;
 
       tiles.add(Tile(matcher.build(homeAssistantClient, device)));
+    }
+
+    final automations = homeAssistantClient.automationsOfArea(area.areaId);
+
+    if (automations.isNotEmpty) {
+      tiles.add(Tile(AutomationsCard(
+        automations: [
+          for (final entry in automations)
+            (
+              name: entry.displayName,
+              category: homeAssistantClient.categoryOf(entry),
+              state: homeAssistantClient.switchStateProvider(entry.entityId),
+            )
+        ],
+        room: area.name,
+      )));
     }
 
     if (tiles.isEmpty) return Center(child: Text('Nothing to show in ${area.name}'));

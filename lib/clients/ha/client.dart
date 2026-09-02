@@ -65,6 +65,8 @@ class HomeAssistantClient {
   String kindOf(RegistryEntry entry) => registry.kindOf(entry);
   List<DeviceEntities> devicesOfArea(String areaId) => registry.devicesOfArea(areaId);
   List<RegistryEntry> entitiesOfArea(String areaId) => registry.entitiesOfArea(areaId);
+  List<RegistryEntry> automationsOfArea(String areaId) => registry.automationsOfArea(areaId);
+  String? categoryOf(RegistryEntry entry) => registry.categoryOf(entry);
   List<RegistryEntry> binarySensors() => registry.binarySensors();
 
   void dispose() => connection.dispose();

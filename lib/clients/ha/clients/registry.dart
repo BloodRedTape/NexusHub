@@ -62,6 +62,10 @@ class HomeAssistantRegistry {
 
   bool _hideUnavailable = true;
   bool _hideEmptyAreas = true;
+  bool _showAutomations = false;
+
+  /// Automation categories as configured in Home Assistant, by category id.
+  Map<String, String> _automationCategories = {};
 
   /// A new connection is starting: nothing loaded yet, and the filters come
   /// from the config that connection is about to use.
@@ -71,6 +75,7 @@ class HomeAssistantRegistry {
 
     _hideUnavailable = config?.hideUnavailable ?? true;
     _hideEmptyAreas = config?.hideEmptyAreas ?? true;
+    _showAutomations = config?.showAutomations ?? false;
   }
 
   Future<String> load(HomeAssistantWs ha) async {
@@ -79,6 +84,12 @@ class HomeAssistantRegistry {
     _devices = devices;
     _deviceAreas = {for (final device in devices) device.deviceId: device.areaId};
     _registry = await ha.getEntityRegistry();
+    // categories are newer than the rest of the registry - an older HA just has none
+    try {
+      _automationCategories = await ha.getCategories('automation');
+    } catch (_) {
+      _automationCategories = {};
+    }
 
     // entity states carry the device class the registry usually omits, so
     // hold the areas back until the first batch of states has arrived
@@ -121,9 +132,11 @@ class HomeAssistantRegistry {
     final showable = isDeviceShowable;
     final devices = devicesOfArea(areaId);
 
-    if (showable == null) return devices.length;
+    final automations = automationsOfArea(areaId).isEmpty ? 0 : 1;
 
-    return devices.where(showable).length;
+    if (showable == null) return devices.length + automations;
+
+    return devices.where(showable).length + automations;
   }
 
   /// What a card is matched against: the entity domain, and for sensors the
@@ -182,6 +195,14 @@ class HomeAssistantRegistry {
 
     return result;
   }
+
+  /// Automations assigned to [areaId], sorted by name. Empty while the
+  /// dashboard is configured to leave automations alone.
+  List<RegistryEntry> automationsOfArea(String areaId) =>
+      !_showAutomations ? const [] : entitiesOfArea(areaId).where((entry) => entry.domain == 'automation').toList();
+
+  /// Name of the category an automation is filed under, null when it has none.
+  String? categoryOf(RegistryEntry entry) => _automationCategories[entry.categories['automation']];
 
   /// Every binary sensor in the registry, sorted by name.
   List<RegistryEntry> binarySensors() {

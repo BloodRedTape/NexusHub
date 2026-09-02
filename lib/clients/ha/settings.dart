@@ -11,12 +11,14 @@ class HomeAssistantFormState {
   final String token;
   final bool hideUnavailable;
   final bool hideEmptyAreas;
+  final bool showAutomations;
 
   const HomeAssistantFormState({
     required this.url,
     required this.token,
     required this.hideUnavailable,
     required this.hideEmptyAreas,
+    required this.showAutomations,
   });
 
   HomeAssistantFormState copyWith({
@@ -24,12 +26,14 @@ class HomeAssistantFormState {
     String? token,
     bool? hideUnavailable,
     bool? hideEmptyAreas,
+    bool? showAutomations,
   }) {
     return HomeAssistantFormState(
       url: url ?? this.url,
       token: token ?? this.token,
       hideUnavailable: hideUnavailable ?? this.hideUnavailable,
       hideEmptyAreas: hideEmptyAreas ?? this.hideEmptyAreas,
+      showAutomations: showAutomations ?? this.showAutomations,
     );
   }
 }
@@ -43,6 +47,7 @@ class HomeAssistantFormCubit extends SettingsFormCubit<HomeAssistantFormState> {
           token: client.config.token,
           hideUnavailable: client.config.hideUnavailable,
           hideEmptyAreas: client.config.hideEmptyAreas,
+          showAutomations: client.config.showAutomations,
         ));
 
   void setUrl(String url) => emit(state.copyWith(url: url));
@@ -53,11 +58,14 @@ class HomeAssistantFormCubit extends SettingsFormCubit<HomeAssistantFormState> {
 
   void setHideEmptyAreas(bool value) => emit(state.copyWith(hideEmptyAreas: value));
 
+  void setShowAutomations(bool value) => emit(state.copyWith(showAutomations: value));
+
   HomeAssistantConfig get _edited => HomeAssistantConfig(
         url: state.url,
         token: state.token,
         hideUnavailable: state.hideUnavailable,
         hideEmptyAreas: state.hideEmptyAreas,
+        showAutomations: state.showAutomations,
       );
 
   @override
@@ -67,7 +75,8 @@ class HomeAssistantFormCubit extends SettingsFormCubit<HomeAssistantFormState> {
     return current.url != state.url ||
         current.token != state.token ||
         current.hideUnavailable != state.hideUnavailable ||
-        current.hideEmptyAreas != state.hideEmptyAreas;
+        current.hideEmptyAreas != state.hideEmptyAreas ||
+        current.showAutomations != state.showAutomations;
   }
 
   @override
@@ -165,11 +174,18 @@ class _HomeAssistantFormState extends State<_HomeAssistantForm> {
           _form.setHideUnavailable,
         ),
         _flag(
-          'Hide rooms without devices',
+          'Hide rooms without cards',
           'Areas with nothing to show are skipped',
           Icons.meeting_room_outlined,
           state.hideEmptyAreas,
           _form.setHideEmptyAreas,
+        ),
+        _flag(
+          'Show automations',
+          'Rooms with automations get a card for switching them on and off',
+          Icons.auto_awesome_outlined,
+          state.showAutomations,
+          _form.setShowAutomations,
         ),
         SettingsSectionHeader('Diagnostics'),
         ListTile(

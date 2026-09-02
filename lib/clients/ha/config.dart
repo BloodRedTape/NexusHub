@@ -8,13 +8,24 @@ class HomeAssistantConfig {
   /// Skip areas that ended up with nothing to show.
   final bool hideEmptyAreas;
 
-  HomeAssistantConfig({required this.url, required this.token, this.hideUnavailable = true, this.hideEmptyAreas = true});
+  /// Give every room with automations a card for them. Off by default - most
+  /// rooms have more automations than anyone wants on a wall panel.
+  final bool showAutomations;
+
+  HomeAssistantConfig({
+    required this.url,
+    required this.token,
+    this.hideUnavailable = true,
+    this.hideEmptyAreas = true,
+    this.showAutomations = false,
+  });
 
   Map<String, dynamic> toJson() => {
         'url': url,
         'token': token,
         'hideUnavailable': hideUnavailable,
         'hideEmptyAreas': hideEmptyAreas,
+        'showAutomations': showAutomations,
       };
 
   static HomeAssistantConfig? fromJson(Map<String, dynamic> json) {
@@ -28,6 +39,7 @@ class HomeAssistantConfig {
       token: token,
       hideUnavailable: json['hideUnavailable'] as bool? ?? true,
       hideEmptyAreas: json['hideEmptyAreas'] as bool? ?? true,
+      showAutomations: json['showAutomations'] as bool? ?? false,
     );
   }
 }
