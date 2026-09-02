@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Where one kind of settings is kept. Each cubit holds its own, bound to the
@@ -7,14 +9,23 @@ class ConfigStorage {
 
   const ConfigStorage(this.key);
 
-  Future<String?> read() async {
+  Future<Map<String, dynamic>?> read() async {
     final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(key);
 
-    return prefs.getString(key);
+    if (stored == null || stored.isEmpty) return null;
+
+    try {
+      final decoded = jsonDecode(stored);
+
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } on FormatException {
+      return null;
+    }
   }
 
-  Future<void> write(String value) async {
+  Future<void> write(Map<String, dynamic> value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, value);
+    await prefs.setString(key, jsonEncode(value));
   }
 }

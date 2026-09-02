@@ -15,20 +15,15 @@ class OpenMeteoConfig {
 
   OpenMeteoConfig({required this.lat, required this.long});
 
-  static String serialize(OpenMeteoConfig? config) {
-    if (config == null) return '';
+  Map<String, dynamic> toJson() => {'lat': lat, 'long': long};
 
-    return '${config.lat}:${config.long}';
-  }
+  static OpenMeteoConfig? fromJson(Map<String, dynamic> json) {
+    final lat = json['lat'];
+    final long = json['long'];
 
-  static OpenMeteoConfig? deserialize(String string) {
-    final parts = string.split(':');
+    if (lat is! num || long is! num) return null;
 
-    if (parts.length != 2) return null;
-
-    if (parts[0].isEmpty || parts[1].isEmpty) return null;
-
-    return OpenMeteoConfig(lat: double.parse(parts[0]), long: double.parse(parts[1]));
+    return OpenMeteoConfig(lat: lat.toDouble(), long: long.toDouble());
   }
 }
 
@@ -52,7 +47,7 @@ class OpenMeteoWeatherClient {
     final stored = await _storage.read();
 
     // Settings written by an older build can stop parsing; the default stands.
-    final loaded = stored == null ? null : OpenMeteoConfig.deserialize(stored);
+    final loaded = stored == null ? null : OpenMeteoConfig.fromJson(stored);
 
     if (loaded != null) _config = loaded;
 
@@ -62,7 +57,7 @@ class OpenMeteoWeatherClient {
   void saveConfig(OpenMeteoConfig config) {
     _config = config;
 
-    _storage.write(OpenMeteoConfig.serialize(config));
+    _storage.write(config.toJson());
     _restartPolling();
   }
 
@@ -77,12 +72,18 @@ class OpenMeteoWeatherClient {
 
   Future<void> _fetch() async {
     try {
-      final response = await WeatherApi().request(
-          latitude: _config.lat,
-          longitude: _config.long,
-          current: {WeatherCurrent.weather_code, WeatherCurrent.temperature_2m},
-          hourly: {WeatherHourly.temperature_2m, WeatherHourly.weather_code},
-          daily: {WeatherDaily.temperature_2m_min, WeatherDaily.temperature_2m_max, WeatherDaily.weather_code, WeatherDaily.precipitation_probability_max});
+      final response = await WeatherApi().request(latitude: _config.lat, longitude: _config.long, current: {
+        WeatherCurrent.weather_code,
+        WeatherCurrent.temperature_2m
+      }, hourly: {
+        WeatherHourly.temperature_2m,
+        WeatherHourly.weather_code
+      }, daily: {
+        WeatherDaily.temperature_2m_min,
+        WeatherDaily.temperature_2m_max,
+        WeatherDaily.weather_code,
+        WeatherDaily.precipitation_probability_max
+      });
 
       final forecast = _buildForecast(response);
 

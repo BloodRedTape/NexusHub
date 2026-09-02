@@ -198,14 +198,14 @@ class AndroidClient {
     final stored = await _storage.read();
 
     // Settings written by an older build can stop parsing; the default stands.
-    final loaded = stored == null ? null : AndroidConfig.deserialize(stored);
+    final loaded = stored == null ? null : AndroidConfig.fromJson(stored);
 
     if (loaded != null) _applyConfig(loaded);
   }
 
   void saveConfig(AndroidConfig config) {
     _applyConfig(config);
-    _storage.write(AndroidConfig.serialize(config));
+    _storage.write(config.toJson());
   }
 
   void _applyConfig(AndroidConfig config) {

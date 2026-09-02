@@ -10,27 +10,24 @@ class HomeAssistantConfig {
 
   HomeAssistantConfig({required this.url, required this.token, this.hideUnavailable = true, this.hideEmptyAreas = true});
 
-  static String serialize(HomeAssistantConfig? config) {
-    if (config == null) return '';
+  Map<String, dynamic> toJson() => {
+        'url': url,
+        'token': token,
+        'hideUnavailable': hideUnavailable,
+        'hideEmptyAreas': hideEmptyAreas,
+      };
 
-    return '${config.url}~${config.token}~${config.hideUnavailable}~${config.hideEmptyAreas}';
-  }
+  static HomeAssistantConfig? fromJson(Map<String, dynamic> json) {
+    final url = json['url'];
+    final token = json['token'];
 
-  static HomeAssistantConfig? deserialize(String string) {
-    final parts = string.split('~');
-
-    // older formats carried fewer fields - the flags then keep their defaults
-    if (parts.length < 2 || parts.length > 4) return null;
-
-    if (parts[0].isEmpty || parts[1].isEmpty) return null;
-
-    bool flag(int index) => parts.length <= index || parts[index] != 'false';
+    if (url is! String || token is! String || url.isEmpty || token.isEmpty) return null;
 
     return HomeAssistantConfig(
-      url: parts[0],
-      token: parts[1],
-      hideUnavailable: flag(2),
-      hideEmptyAreas: flag(3),
+      url: url,
+      token: token,
+      hideUnavailable: json['hideUnavailable'] as bool? ?? true,
+      hideEmptyAreas: json['hideEmptyAreas'] as bool? ?? true,
     );
   }
 }

@@ -69,7 +69,7 @@ class HomeAssistantConnection {
     final stored = await _storage.read();
 
     // Settings written by an older build can stop parsing; the default stands.
-    final loaded = stored == null ? null : HomeAssistantConfig.deserialize(stored);
+    final loaded = stored == null ? null : HomeAssistantConfig.fromJson(stored);
 
     if (loaded != null) _config = loaded;
 
@@ -79,7 +79,7 @@ class HomeAssistantConnection {
   void saveConfig(HomeAssistantConfig config) {
     _config = config;
 
-    _storage.write(HomeAssistantConfig.serialize(config));
+    _storage.write(config.toJson());
     _reconnect(config);
   }
 

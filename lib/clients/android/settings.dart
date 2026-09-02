@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nexus/clients/android/client.dart';
@@ -20,9 +22,9 @@ class AndroidFormCubit extends SettingsFormCubit<AndroidConfig> {
 
   void setSensors(List<String> sensors) => emit(state.copyWith(screenOnSensors: sensors));
 
-  /// Compared through serialize - intervals carry no equality of their own.
+  /// Compared through JSON - the config carries no equality of its own.
   @override
-  bool get dirty => AndroidConfig.serialize(state) != AndroidConfig.serialize(client.config);
+  bool get dirty => jsonEncode(state.toJson()) != jsonEncode(client.config.toJson());
 
   @override
   void save() {

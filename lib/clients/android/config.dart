@@ -20,6 +20,17 @@ class ScreenOnInterval {
 
   ScreenOnInterval({required this.startMinutes, required this.endMinutes, this.blocking = false});
 
+  Map<String, dynamic> toJson() => {'start': startMinutes, 'end': endMinutes, 'blocking': blocking};
+
+  static ScreenOnInterval? fromJson(Map<String, dynamic> json) {
+    final start = json['start'];
+    final end = json['end'];
+
+    if (start is! int || end is! int) return null;
+
+    return ScreenOnInterval(startMinutes: start, endMinutes: end, blocking: json['blocking'] as bool? ?? false);
+  }
+
   bool contains(DateTime time) {
     final minutes = time.hour * 60 + time.minute;
 
@@ -111,54 +122,23 @@ class AndroidConfig {
     return null;
   }
 
-  static String serialize(AndroidConfig? config) {
-    if (config == null) return '';
+  Map<String, dynamic> toJson() => {
+        'autoBrightnessEnabled': autoBrightnessEnabled,
+        'brightnessThreshold': brightnessThreshold,
+        'screenOnIntervals': screenOnIntervals.map((i) => i.toJson()).toList(),
+        'screenOnSensors': screenOnSensors,
+      };
 
-    final intervals =
-        config.screenOnIntervals.map((i) => '${i.startMinutes}:${i.endMinutes}:${i.blocking ? '1' : '0'}').join(',');
-
-    return '${config.autoBrightnessEnabled ? '1' : '0'}~${config.brightnessThreshold}~$intervals~${config.screenOnSensors.join(',')}';
-  }
-
-  static AndroidConfig? deserialize(String string) {
-    if (string.isEmpty) return AndroidConfig();
-
-    final parts = string.split('~');
-
-    if (parts.length < 2) return AndroidConfig();
-
+  static AndroidConfig fromJson(Map<String, dynamic> json) {
     return AndroidConfig(
-      autoBrightnessEnabled: parts[0] == '1',
-      brightnessThreshold: double.tryParse(parts[1]) ?? 70.0,
-      screenOnIntervals: parts.length < 3 ? const [] : _deserializeIntervals(parts[2]),
-      screenOnSensors: parts.length < 4 ? const [] : _deserializeSensors(parts[3]),
+      autoBrightnessEnabled: json['autoBrightnessEnabled'] as bool? ?? false,
+      brightnessThreshold: (json['brightnessThreshold'] as num?)?.toDouble() ?? 70.0,
+      screenOnIntervals: (json['screenOnIntervals'] as List? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(ScreenOnInterval.fromJson)
+          .whereType<ScreenOnInterval>()
+          .toList(),
+      screenOnSensors: (json['screenOnSensors'] as List? ?? const []).whereType<String>().toList(),
     );
-  }
-
-  static List<String> _deserializeSensors(String string) {
-    if (string.isEmpty) return const [];
-
-    return string.split(',').where((id) => id.isNotEmpty).toList();
-  }
-
-  static List<ScreenOnInterval> _deserializeIntervals(String string) {
-    if (string.isEmpty) return const [];
-
-    return string.split(',').map((part) {
-      final bounds = part.split(':');
-
-      if (bounds.length < 2) return null;
-
-      final start = int.tryParse(bounds[0]);
-      final end = int.tryParse(bounds[1]);
-
-      if (start == null || end == null) return null;
-
-      return ScreenOnInterval(
-        startMinutes: start,
-        endMinutes: end,
-        blocking: bounds.length > 2 && bounds[2] == '1',
-      );
-    }).whereType<ScreenOnInterval>().toList();
   }
 }
