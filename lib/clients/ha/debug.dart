@@ -5,7 +5,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/state.dart';
-import 'package:nexus/clients/ha/client.dart';
+import 'package:nexus/clients/ha/clients/connection.dart';
 
 class HomeAssistantEntityDebugWidget extends StatefulWidget {
   final Entity entity;

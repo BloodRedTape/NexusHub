@@ -3,7 +3,7 @@ import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/providers/state.dart';
-import 'package:nexus/states/vacuum.dart';
+import 'package:nexus/clients/ha/models/vacuum.dart';
 import 'package:nexus/utils/material_design_icons.dart';
 import 'package:nexus/utils/tint.dart';
 
@@ -27,13 +27,13 @@ Color? _statusColor(String status) {
   return status == 'docked' ? null : _accent;
 }
 
-class VacuumCard extends StateCard<VacuumState> {
+class VacuumCard extends StateCard<Vacuum> {
   final String? name;
 
   const VacuumCard({required super.stateProvider, this.name});
 
   @override
-  Widget build(BuildContext context, VacuumState? state) {
+  Widget build(BuildContext context, Vacuum? state) {
     if (state == null) return PlainCard(icon: Icons.error, text: 'Unavailable', subText: name);
 
     final color = _statusColor(state.status);
@@ -56,7 +56,7 @@ class VacuumCard extends StateCard<VacuumState> {
 /// vacuum itself in the middle, its commands along the bottom.
 class VacuumControlDialog extends StatelessWidget {
   final String? title;
-  final StateProvider<VacuumState> stateProvider;
+  final StateProvider<Vacuum> stateProvider;
 
   const VacuumControlDialog({super.key, this.title, required this.stateProvider});
 
@@ -66,7 +66,7 @@ class VacuumControlDialog extends StatelessWidget {
   }
 
   /// A page rather than a dialog: the app bar's back button is the way out.
-  static Future<void> show(BuildContext context, {String? title, required StateProvider<VacuumState> stateProvider}) {
+  static Future<void> show(BuildContext context, {String? title, required StateProvider<Vacuum> stateProvider}) {
     return Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => VacuumControlDialog(title: title, stateProvider: stateProvider)),
@@ -74,13 +74,13 @@ class VacuumControlDialog extends StatelessWidget {
   }
 }
 
-class VacuumControlContent extends StateCard<VacuumState> {
+class VacuumControlContent extends StateCard<Vacuum> {
   final String title;
 
   const VacuumControlContent({required this.title, required super.stateProvider});
 
   @override
-  Widget build(BuildContext context, VacuumState? state) {
+  Widget build(BuildContext context, Vacuum? state) {
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -111,7 +111,7 @@ class VacuumControlContent extends StateCard<VacuumState> {
     );
   }
 
-  Widget _buildTitle(BuildContext context, VacuumState? state) {
+  Widget _buildTitle(BuildContext context, Vacuum? state) {
     final theme = Theme.of(context);
 
     return Text.rich(
@@ -127,10 +127,10 @@ class VacuumControlContent extends StateCard<VacuumState> {
     );
   }
 
-  Widget _buildControlButtons(BuildContext context, VacuumState? state) {
+  Widget _buildControlButtons(BuildContext context, Vacuum? state) {
     if (state == null) return const SizedBox();
 
-    void send(VacuumCommand command) => stateProvider.requestValue(VacuumState(status: state.status, command: command));
+    void send(VacuumCommand command) => stateProvider.requestValue(Vacuum(status: state.status, command: command));
 
     final running = state.isRunning;
 
@@ -156,7 +156,7 @@ class VacuumControlContent extends StateCard<VacuumState> {
           SizedBox(width: cardPadding / 2),
           _FanSpeedButton(
             state: state,
-            onPicked: (speed) => stateProvider.requestValue(VacuumState(status: state.status, requestedFanSpeed: speed)),
+            onPicked: (speed) => stateProvider.requestValue(Vacuum(status: state.status, requestedFanSpeed: speed)),
           ),
         ],
       ],
@@ -209,7 +209,7 @@ class _VacuumButton extends StatelessWidget {
 }
 
 class _FanSpeedButton extends StatelessWidget {
-  final VacuumState state;
+  final Vacuum state;
   final void Function(String) onPicked;
 
   const _FanSpeedButton({required this.state, required this.onPicked});

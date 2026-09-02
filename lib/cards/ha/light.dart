@@ -6,14 +6,14 @@ import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
 import 'package:nexus/providers/state.dart';
-import 'package:nexus/states/light.dart';
+import 'package:nexus/clients/ha/models/light.dart';
 import 'package:nexus/utils/tint.dart';
 
 // The main light control dialog
 class LightControlDialog extends StatelessWidget {
   final String? title;
   final String? subtitle;
-  final StateProvider<LightState> stateProvider;
+  final StateProvider<Light> stateProvider;
 
   const LightControlDialog({
     super.key,
@@ -36,7 +36,7 @@ class LightControlDialog extends StatelessWidget {
     BuildContext context, {
     String? title,
     String? subtitle,
-    required StateProvider<LightState> stateProvider,
+    required StateProvider<Light> stateProvider,
   }) {
     return Navigator.push(
       context,
@@ -56,7 +56,7 @@ class LightControlDialog extends StatelessWidget {
 class LightControlContent extends StatefulWidget {
   final String title;
   final String? subtitle;
-  final StateProvider<LightState> stateProvider;
+  final StateProvider<Light> stateProvider;
 
   const LightControlContent({
     super.key,
@@ -71,29 +71,29 @@ class LightControlContent extends StatefulWidget {
 
 class _LightControlContentState extends State<LightControlContent> {
   // What Home Assistant last told us.
-  LightState? _confirmed;
+  Light? _confirmed;
   // What the user asked for and HA has not echoed back yet. Null when in sync.
-  LightState? _pending;
+  Light? _pending;
   // The state at the moment the command went out: anything HA repeats that still
   // equals this is a stale echo, anything else is news and outranks _pending.
-  LightState? _pendingWasBefore;
+  Light? _pendingWasBefore;
   Timer? _pendingTimeout;
   // Open while a throttled commit is cooling down; holds the drag's last frame
   // so the final colour still goes out after the user lets go.
   Timer? _throttleCooldown;
   bool _throttleMissed = false;
-  void Function(LightState?)? _valueChangedCallback;
+  void Function(Light?)? _valueChangedCallback;
   ControlMode _controlMode = ControlMode.brightness;
 
   // A light reports no brightness while it is off, and none for the first frame
   // or two after being switched on either. Stand a zero in whenever it is
   // missing, so the slider never blinks out to the bare bulb mid-transition.
-  static LightState? _withZeroes(LightState? s) {
+  static Light? _withZeroes(Light? s) {
     if (s == null || s.brightness != null) return s;
 
-    return LightState(
+    return Light(
       isOn: s.isOn,
-      brightness: LimitedValueState(value: 0, min: 0, max: 255),
+      brightness: LimitedValue(value: 0, min: 0, max: 255),
       temperature: s.temperature,
       color: s.color,
     );
@@ -110,7 +110,7 @@ class _LightControlContentState extends State<LightControlContent> {
   static const _throttleInterval = Duration(milliseconds: 200);
 
   // What the UI draws: the user's intent while it is in flight, else the truth.
-  LightState? get _light => _pending ?? _confirmed;
+  Light? get _light => _pending ?? _confirmed;
 
   @override
   void initState() {
@@ -140,10 +140,10 @@ class _LightControlContentState extends State<LightControlContent> {
   }
 
   // HA rounds brightness on its way through, so compare with a little slack.
-  bool _matches(LightState? a, LightState? b) {
+  bool _matches(Light? a, Light? b) {
     if (a == null || b == null) return false;
 
-    bool near(LimitedValueState? x, LimitedValueState? y) =>
+    bool near(LimitedValue? x, LimitedValue? y) =>
         x == null || y == null || (x.value - y.value).abs() <= (x.max - x.min) * 0.02;
 
     return a.isOn == b.isOn &&
@@ -160,7 +160,7 @@ class _LightControlContentState extends State<LightControlContent> {
   }
 
   // Edit the pending copy, never the object the provider handed us.
-  void _edit(void Function(LightState) change) {
+  void _edit(void Function(Light) change) {
     final base = _light;
     if (base == null) return;
 
@@ -204,17 +204,17 @@ class _LightControlContentState extends State<LightControlContent> {
     });
   }
 
-  LightState _copy(LightState s) => LightState(
+  Light _copy(Light s) => Light(
         isOn: s.isOn,
         brightness: _copyLimited(s.brightness),
         temperature: _copyLimited(s.temperature),
-        color: s.color == null ? null : ColorState(value: s.color!.value),
+        color: s.color == null ? null : LightColor(value: s.color!.value),
       );
 
-  LimitedValueState? _copyLimited(LimitedValueState? v) =>
-      v == null ? null : LimitedValueState(value: v.value, min: v.min, max: v.max);
+  LimitedValue? _copyLimited(LimitedValue? v) =>
+      v == null ? null : LimitedValue(value: v.value, min: v.min, max: v.max);
 
-  double _fraction(LimitedValueState? v) => v?.fraction ?? 0;
+  double _fraction(LimitedValue? v) => v?.fraction ?? 0;
 
   // Sliders are addressed by mode, because after _edit the object identity of
   // the value the user is dragging changes with every copy.
@@ -679,7 +679,7 @@ extension LightControlExtension on BuildContext {
   Future<void> showLightControl({
     String? title,
     String? subtitle,
-    required StateProvider<LightState> stateProvider,
+    required StateProvider<Light> stateProvider,
   }) {
     return LightControlDialog.show(
       this,
@@ -690,7 +690,7 @@ extension LightControlExtension on BuildContext {
   }
 }
 
-class LightCard extends StateCard<LightState> {
+class LightCard extends StateCard<Light> {
   final IconData onIcon;
   final IconData offIcon;
   final String? name;
@@ -703,7 +703,7 @@ class LightCard extends StateCard<LightState> {
   });
 
   @override
-  Widget build(BuildContext context, LightState? state) {
+  Widget build(BuildContext context, Light? state) {
     return PlainCard(
       color: _color(state),
       icon: _icon(state),
@@ -728,7 +728,7 @@ class LightCard extends StateCard<LightState> {
     );
   }
 
-  Color? _color(LightState? state) {
+  Color? _color(Light? state) {
     return state != null ? Tint.color(color: state.color?.value, fraction: 0.4) : null;
   }
 
@@ -736,9 +736,9 @@ class LightCard extends StateCard<LightState> {
     return context.showLightControl(stateProvider: stateProvider, title: name);
   }
 
-  void switchState(LightState state) {
+  void switchState(Light state) {
     stateProvider.requestValue(
-      LightState(
+      Light(
         isOn: !state.isOn,
         brightness: state.brightness,
         color: state.color,
@@ -747,13 +747,13 @@ class LightCard extends StateCard<LightState> {
     );
   }
 
-  String _stateToText(LightState? state) {
+  String _stateToText(Light? state) {
     if (state == null) return 'Unavailable';
 
     return state.isOn ? 'On' : 'Off';
   }
 
-  IconData _icon(LightState? state) {
+  IconData _icon(Light? state) {
     if (state == null) {
       return Icons.error;
     }
@@ -761,7 +761,7 @@ class LightCard extends StateCard<LightState> {
     return state.isOn ? onIcon : offIcon;
   }
 
-  Color _iconColor(LightState? state) {
+  Color _iconColor(Light? state) {
     return state?.color?.value ?? Colors.white;
   }
 }

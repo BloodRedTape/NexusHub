@@ -1,10 +1,10 @@
 import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/providers/state.dart';
-import 'package:nexus/states/vacuum.dart';
+import 'package:nexus/clients/ha/models/vacuum.dart';
 
-class VacuumStateProvider extends StateProvider<VacuumState> {
+class VacuumStateProvider extends StateProvider<Vacuum> {
   final StateProvider<Entity> entityProvider;
-  final void Function(VacuumState) requestState;
+  final void Function(Vacuum) requestState;
 
   VacuumStateProvider({required this.entityProvider, required this.requestState});
 
@@ -21,7 +21,7 @@ class VacuumStateProvider extends StateProvider<VacuumState> {
   }
 
   @override
-  void requestValue(VacuumState value) {
+  void requestValue(Vacuum value) {
     requestState(value);
   }
 
@@ -31,7 +31,7 @@ class VacuumStateProvider extends StateProvider<VacuumState> {
       return;
     }
 
-    setValue(VacuumState(
+    setValue(Vacuum(
       status: entity.state!,
       fanSpeed: entity.attributes?.fanSpeed,
       fanSpeeds: entity.attributes?.fanSpeedList ?? const [],

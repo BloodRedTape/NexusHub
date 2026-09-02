@@ -4,10 +4,10 @@ import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
-import 'package:nexus/states/calendar.dart';
+import 'package:nexus/clients/ha/models/calendar.dart';
 
 class CalendarDayWidget extends StatelessWidget {
-  final CalendarDayState day;
+  final CalendarDay day;
 
   const CalendarDayWidget({required this.day});
 
@@ -84,11 +84,11 @@ class CalendarDayWidget extends StatelessWidget {
   }
 }
 
-class CalendarCard extends StateCard<CalendarState> {
+class CalendarCard extends StateCard<Calendar> {
   const CalendarCard({required super.stateProvider});
 
   @override
-  Widget build(BuildContext context, CalendarState? state) {
+  Widget build(BuildContext context, Calendar? state) {
     if (state == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
 
     return BaseCard(

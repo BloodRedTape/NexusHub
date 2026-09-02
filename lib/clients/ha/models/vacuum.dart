@@ -1,7 +1,7 @@
 /// What a vacuum can be asked to do. `start` doubles as resume from a pause.
 enum VacuumCommand { start, pause, stop, returnToBase, locate }
 
-class VacuumState {
+class Vacuum {
   /// Raw state from the `vacuum` domain: cleaning, docked, returning, paused,
   /// idle, error.
   final String status;
@@ -14,7 +14,7 @@ class VacuumState {
   final String? requestedFanSpeed;
   final VacuumCommand? command;
 
-  const VacuumState({
+  const Vacuum({
     required this.status,
     this.fanSpeed,
     this.fanSpeeds = const [],
