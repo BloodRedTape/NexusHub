@@ -12,12 +12,16 @@ class HomeAssistantConfig {
   /// rooms have more automations than anyone wants on a wall panel.
   final bool showAutomations;
 
+  /// Entity the Glance calendar card reads, empty when none is picked.
+  final String calendarEntity;
+
   HomeAssistantConfig({
     required this.url,
     required this.token,
     this.hideUnavailable = true,
     this.hideEmptyAreas = true,
     this.showAutomations = false,
+    this.calendarEntity = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -26,6 +30,7 @@ class HomeAssistantConfig {
         'hideUnavailable': hideUnavailable,
         'hideEmptyAreas': hideEmptyAreas,
         'showAutomations': showAutomations,
+        'calendarEntity': calendarEntity,
       };
 
   static HomeAssistantConfig? fromJson(Map<String, dynamic> json) {
@@ -40,6 +45,7 @@ class HomeAssistantConfig {
       hideUnavailable: json['hideUnavailable'] as bool? ?? true,
       hideEmptyAreas: json['hideEmptyAreas'] as bool? ?? true,
       showAutomations: json['showAutomations'] as bool? ?? false,
+      calendarEntity: json['calendarEntity'] as String? ?? '',
     );
   }
 }

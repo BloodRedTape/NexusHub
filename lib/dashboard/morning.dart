@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/os/alarm.dart';
 import 'package:nexus/cards/os/clock.dart';
 import 'package:nexus/cards/os/calendar.dart';
+import 'package:nexus/cards/plain.dart';
+import 'package:nexus/cards/state.dart';
+import 'package:nexus/clients/ha/config.dart';
 import 'package:nexus/clients/android/client.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/clients/open_meteo/client.dart';
@@ -27,9 +30,33 @@ class MorningTab extends StatelessWidget {
           ExpandedRow(children: [WeatherCard(stateProvider: weatherClient.getStateProvider()), AlarmCard(stateProvider: androidClient.alarms.getStateProvider())])
         ]),
         ExpandedColumn(children: [
-          CalendarCard(stateProvider: homeAssistantClient.calendarStateProvider('calendar.primary')),
+          _CalendarSlot(homeAssistantClient),
         ])
       ],
     );
+  }
+}
+
+/// Which calendar to show is a setting, so the card follows the config as it
+/// changes instead of being wired once at startup.
+class _CalendarSlot extends StateCard<HomeAssistantConfig> {
+  final HomeAssistantClient client;
+
+  _CalendarSlot(this.client) : super(stateProvider: client.configState);
+
+  @override
+  Widget build(BuildContext context, HomeAssistantConfig? config) {
+    final entityId = (config ?? client.config).calendarEntity;
+
+    if (entityId.isEmpty) {
+      return PlainCard(
+        icon: Icons.event_busy,
+        text: 'No calendar',
+        subText: 'Pick one in Home Assistant settings',
+      );
+    }
+
+    // a new entity means a new provider - rebind by rebuilding the card
+    return CalendarCard(key: ValueKey(entityId), stateProvider: client.calendarStateProvider(entityId));
   }
 }

@@ -12,6 +12,7 @@ class HomeAssistantFormState {
   final bool hideUnavailable;
   final bool hideEmptyAreas;
   final bool showAutomations;
+  final String calendarEntity;
 
   const HomeAssistantFormState({
     required this.url,
@@ -19,6 +20,7 @@ class HomeAssistantFormState {
     required this.hideUnavailable,
     required this.hideEmptyAreas,
     required this.showAutomations,
+    required this.calendarEntity,
   });
 
   HomeAssistantFormState copyWith({
@@ -27,6 +29,7 @@ class HomeAssistantFormState {
     bool? hideUnavailable,
     bool? hideEmptyAreas,
     bool? showAutomations,
+    String? calendarEntity,
   }) {
     return HomeAssistantFormState(
       url: url ?? this.url,
@@ -34,6 +37,7 @@ class HomeAssistantFormState {
       hideUnavailable: hideUnavailable ?? this.hideUnavailable,
       hideEmptyAreas: hideEmptyAreas ?? this.hideEmptyAreas,
       showAutomations: showAutomations ?? this.showAutomations,
+      calendarEntity: calendarEntity ?? this.calendarEntity,
     );
   }
 }
@@ -48,6 +52,7 @@ class HomeAssistantFormCubit extends SettingsFormCubit<HomeAssistantFormState> {
           hideUnavailable: client.config.hideUnavailable,
           hideEmptyAreas: client.config.hideEmptyAreas,
           showAutomations: client.config.showAutomations,
+          calendarEntity: client.config.calendarEntity,
         ));
 
   void setUrl(String url) => emit(state.copyWith(url: url));
@@ -60,12 +65,15 @@ class HomeAssistantFormCubit extends SettingsFormCubit<HomeAssistantFormState> {
 
   void setShowAutomations(bool value) => emit(state.copyWith(showAutomations: value));
 
+  void setCalendarEntity(String value) => emit(state.copyWith(calendarEntity: value));
+
   HomeAssistantConfig get _edited => HomeAssistantConfig(
         url: state.url,
         token: state.token,
         hideUnavailable: state.hideUnavailable,
         hideEmptyAreas: state.hideEmptyAreas,
         showAutomations: state.showAutomations,
+        calendarEntity: state.calendarEntity,
       );
 
   @override
@@ -76,7 +84,8 @@ class HomeAssistantFormCubit extends SettingsFormCubit<HomeAssistantFormState> {
         current.token != state.token ||
         current.hideUnavailable != state.hideUnavailable ||
         current.hideEmptyAreas != state.hideEmptyAreas ||
-        current.showAutomations != state.showAutomations;
+        current.showAutomations != state.showAutomations ||
+        current.calendarEntity != state.calendarEntity;
   }
 
   @override
@@ -135,6 +144,43 @@ class _HomeAssistantFormState extends State<_HomeAssistantForm> {
     super.dispose();
   }
 
+  /// Calendars, as the registry knows them, with an entry for picking none.
+  Future<void> _pickCalendar(String selected) async {
+    final calendars = _form.client.entitiesOfDomain('calendar');
+
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('Glance calendar'),
+        children: calendars.isEmpty
+            ? [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text('Home Assistant reports no calendar entities'),
+                )
+              ]
+            : [
+                ListTile(
+                  leading: Icon(Icons.block),
+                  title: Text('None'),
+                  selected: selected.isEmpty,
+                  onTap: () => Navigator.pop(context, ''),
+                ),
+                for (final calendar in calendars)
+                  ListTile(
+                    leading: Icon(Icons.event),
+                    title: Text(calendar.displayName, overflow: TextOverflow.ellipsis),
+                    subtitle: Text(calendar.entityId, overflow: TextOverflow.ellipsis),
+                    selected: calendar.entityId == selected,
+                    onTap: () => Navigator.pop(context, calendar.entityId),
+                  ),
+              ],
+      ),
+    );
+
+    if (picked != null) _form.setCalendarEntity(picked);
+  }
+
   Widget _flag(String title, String subtitle, IconData icon, bool value, void Function(bool) apply) {
     return SwitchListTile(
       secondary: Icon(icon),
@@ -186,6 +232,13 @@ class _HomeAssistantFormState extends State<_HomeAssistantForm> {
           Icons.auto_awesome_outlined,
           state.showAutomations,
           _form.setShowAutomations,
+        ),
+        ListTile(
+          leading: Icon(Icons.event_outlined),
+          title: Text('Glance calendar'),
+          subtitle: Text(state.calendarEntity.isEmpty ? 'Not selected' : state.calendarEntity),
+          trailing: Icon(Icons.chevron_right),
+          onTap: () => _pickCalendar(state.calendarEntity),
         ),
         SettingsSectionHeader('Diagnostics'),
         ListTile(

@@ -30,6 +30,9 @@ class HomeAssistantConnection {
   final _storage = const ConfigStorage('HOME_ASSISTANT_CONFIG');
   final _state = StateProvider<HomeAssistantClientState>();
 
+  /// The config as it currently stands - cards built out of a setting follow it.
+  final configState = StateProvider<HomeAssistantConfig>();
+
   HomeAssistantConfig _config = _fallback;
   HomeAssistantWs? _ws;
   Timer? _pingPongTimer;
@@ -71,12 +74,14 @@ class HomeAssistantConnection {
 
     if (loaded != null) _config = loaded;
 
+    configState.setValue(_config);
     _reconnect(_config);
   }
 
   void saveConfig(HomeAssistantConfig config) {
     _config = config;
 
+    configState.setValue(config);
     _storage.write(config.toJson());
     _reconnect(config);
   }

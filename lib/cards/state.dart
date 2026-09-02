@@ -5,6 +5,7 @@ abstract class StateCard<T> extends StatefulWidget {
   final StateProvider<T> stateProvider;
 
   const StateCard({
+    super.key,
     required this.stateProvider,
   });
 

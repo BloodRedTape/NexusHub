@@ -85,7 +85,7 @@ class CalendarDayWidget extends StatelessWidget {
 }
 
 class CalendarCard extends StateCard<Calendar> {
-  const CalendarCard({required super.stateProvider});
+  const CalendarCard({super.key, required super.stateProvider});
 
   @override
   Widget build(BuildContext context, Calendar? state) {

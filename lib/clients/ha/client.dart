@@ -54,6 +54,7 @@ class HomeAssistantClient {
 
   // The dashboard and the settings pages talk to the client, not to its parts.
   HomeAssistantConfig get config => connection.config;
+  StateProvider<HomeAssistantConfig> get configState => connection.configState;
   StateProvider<List<Area>> get areas => registry.areas;
 
   set isDeviceShowable(bool Function(DeviceEntities device)? showable) => registry.isDeviceShowable = showable;
@@ -68,6 +69,7 @@ class HomeAssistantClient {
   List<RegistryEntry> automationsOfArea(String areaId) => registry.automationsOfArea(areaId);
   String? categoryOf(RegistryEntry entry) => registry.categoryOf(entry);
   List<RegistryEntry> binarySensors() => registry.binarySensors();
+  List<RegistryEntry> entitiesOfDomain(String domain) => registry.entitiesOfDomain(domain);
 
   void dispose() => connection.dispose();
 

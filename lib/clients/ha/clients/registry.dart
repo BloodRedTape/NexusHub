@@ -204,14 +204,16 @@ class HomeAssistantRegistry {
   /// Name of the category an automation is filed under, null when it has none.
   String? categoryOf(RegistryEntry entry) => _automationCategories[entry.categories['automation']];
 
-  /// Every binary sensor in the registry, sorted by name.
-  List<RegistryEntry> binarySensors() {
-    final result = _registry.where((entry) => entry.domain == 'binary_sensor' && !entry.disabled && !entry.hidden).toList();
+  /// Every entity of a domain in the registry, sorted by name.
+  List<RegistryEntry> entitiesOfDomain(String domain) {
+    final result = _registry.where((entry) => entry.domain == domain && !entry.disabled && !entry.hidden).toList();
 
     result.sort((a, b) => a.displayName.compareTo(b.displayName));
 
     return result;
   }
+
+  List<RegistryEntry> binarySensors() => entitiesOfDomain('binary_sensor');
 
   /// True unless Home Assistant says the entity has no usable state.
   bool _isAvailable(String entityId) {
