@@ -9,7 +9,7 @@ import 'package:nexus/cards/ha/sensor.dart';
 import 'package:nexus/cards/ha/system.dart';
 import 'package:nexus/cards/ha/vacuum.dart';
 import 'package:nexus/clients/ha/client.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 import 'package:nexus/dashboard/grid.dart';
 import 'package:provider/provider.dart';
 

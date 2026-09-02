@@ -1,5 +1,5 @@
 import 'package:home_assistant_ws/home_assistant_ws.dart';
-import 'package:nexus/providers/state.dart' show StateProvider;
+import 'package:nexus/clients/state.dart' show StateProvider;
 
 class SwitchStateProvider extends StateProvider<bool> {
   final StateProvider<Entity> entityProvider;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/ha/sensor.dart';
 import 'package:nexus/consts.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 
 /// A machine's vitals: load on top, memory and disk under it.
 class SystemCard extends StatelessWidget {

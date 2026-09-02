@@ -3,7 +3,7 @@ import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/ha/sensor.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 
 /// A motion sensor: whether the room is busy, and how bright it is.
 class MotionCard extends StateCard<bool> {

@@ -1,6 +1,6 @@
 import 'package:home_assistant_ws/home_assistant_ws.dart';
 import 'package:nexus/clients/ha/config.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 
 /// A device of an area together with the entities it exposes.
 class DeviceEntities {

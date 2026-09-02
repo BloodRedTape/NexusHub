@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/ha/sensor.dart';
 import 'package:nexus/consts.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 
 /// Carbon dioxide with the particulate readings under it.
 class AirQualityCard extends StatelessWidget {

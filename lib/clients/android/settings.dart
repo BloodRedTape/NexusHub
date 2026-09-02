@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nexus/clients/android/client.dart';
 import 'package:nexus/clients/android/config.dart';
 import 'package:nexus/clients/ha/client.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 import 'package:nexus/utils/settings_section.dart';
 
 /// The form edits a whole [AndroidConfig], so the config itself is the state.
@@ -107,8 +107,7 @@ class _AndroidFormState extends State<_AndroidForm> {
     for (final entityId in entityIds) {
       if (_sensorStates.containsKey(entityId)) continue;
 
-      _sensorStates[entityId] = _homeAssistant.entityStateProvider(entityId)
-        ..bindValueChanged(_onSensorStateChanged);
+      _sensorStates[entityId] = _homeAssistant.entityStateProvider(entityId)..bindValueChanged(_onSensorStateChanged);
     }
   }
 
@@ -311,9 +310,7 @@ class _AndroidFormState extends State<_AndroidForm> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(
-            config.screenOnSensors.isEmpty
-                ? 'Schedule alone decides when the screen turns on'
-                : 'Any one of them being on lets the screen turn on',
+            config.screenOnSensors.isEmpty ? 'Schedule alone decides when the screen turns on' : 'Any one of them being on lets the screen turn on',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),

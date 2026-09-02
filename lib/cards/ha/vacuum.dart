@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 import 'package:nexus/clients/ha/models/vacuum.dart';
 import 'package:nexus/utils/material_design_icons.dart';
 import 'package:nexus/utils/tint.dart';

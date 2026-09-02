@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 
 abstract class StateCard<T> extends StatefulWidget {
   final StateProvider<T> stateProvider;

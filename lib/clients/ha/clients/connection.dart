@@ -7,7 +7,7 @@ import 'package:nexus/cards/details.dart';
 import 'package:nexus/clients/config_storage.dart';
 import 'package:nexus/clients/ha/config.dart';
 import 'package:nexus/clients/ha/debug.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 
 class HomeAssistantClientState {
   String status;

@@ -5,7 +5,7 @@ import 'package:nexus/clients/open_meteo/settings.dart';
 import 'package:nexus/dashboard/settings.dart';
 import 'package:nexus/clients/config_storage.dart';
 import 'package:nexus/clients/open_meteo/models.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 import 'package:nexus/utils/generic_icon.dart';
 import 'package:open_meteo/open_meteo.dart';
 
@@ -80,20 +80,9 @@ class OpenMeteoWeatherClient {
       final response = await WeatherApi().request(
           latitude: _config.lat,
           longitude: _config.long,
-          current: {
-            WeatherCurrent.weather_code,
-            WeatherCurrent.temperature_2m
-          },
-          hourly: {
-            WeatherHourly.temperature_2m,
-            WeatherHourly.weather_code
-          },
-          daily: {
-            WeatherDaily.temperature_2m_min,
-            WeatherDaily.temperature_2m_max,
-            WeatherDaily.weather_code,
-            WeatherDaily.precipitation_probability_max
-          });
+          current: {WeatherCurrent.weather_code, WeatherCurrent.temperature_2m},
+          hourly: {WeatherHourly.temperature_2m, WeatherHourly.weather_code},
+          daily: {WeatherDaily.temperature_2m_min, WeatherDaily.temperature_2m_max, WeatherDaily.weather_code, WeatherDaily.precipitation_probability_max});
 
       final forecast = _buildForecast(response);
 

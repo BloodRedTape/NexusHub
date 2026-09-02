@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:home_assistant_ws/home_assistant_ws.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 import 'package:nexus/clients/ha/models/light.dart';
 
 class LightStateProvider extends StateProvider<Light> {

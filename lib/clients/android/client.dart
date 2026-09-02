@@ -10,7 +10,7 @@ import 'package:nexus/clients/android/models.dart';
 import 'package:nexus/clients/android/settings.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/dashboard/settings.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 import 'package:nexus/clients/config_storage.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
@@ -190,8 +190,7 @@ class AndroidClient {
 
   AndroidConfig get config => _config;
 
-  AndroidClient({required HomeAssistantClient homeAssistantClient})
-      : screen = AndroidScreenClient(homeAssistantClient: homeAssistantClient) {
+  AndroidClient({required HomeAssistantClient homeAssistantClient}) : screen = AndroidScreenClient(homeAssistantClient: homeAssistantClient) {
     _loadConfig();
   }
 

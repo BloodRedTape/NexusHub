@@ -5,7 +5,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 import 'package:nexus/clients/ha/models/light.dart';
 import 'package:nexus/utils/tint.dart';
 
@@ -143,8 +143,7 @@ class _LightControlContentState extends State<LightControlContent> {
   bool _matches(Light? a, Light? b) {
     if (a == null || b == null) return false;
 
-    bool near(LimitedValue? x, LimitedValue? y) =>
-        x == null || y == null || (x.value - y.value).abs() <= (x.max - x.min) * 0.02;
+    bool near(LimitedValue? x, LimitedValue? y) => x == null || y == null || (x.value - y.value).abs() <= (x.max - x.min) * 0.02;
 
     return a.isOn == b.isOn &&
         near(a.brightness, b.brightness) &&
@@ -211,8 +210,7 @@ class _LightControlContentState extends State<LightControlContent> {
         color: s.color == null ? null : LightColor(value: s.color!.value),
       );
 
-  LimitedValue? _copyLimited(LimitedValue? v) =>
-      v == null ? null : LimitedValue(value: v.value, min: v.min, max: v.max);
+  LimitedValue? _copyLimited(LimitedValue? v) => v == null ? null : LimitedValue(value: v.value, min: v.min, max: v.max);
 
   double _fraction(LimitedValue? v) => v?.fraction ?? 0;
 
@@ -618,9 +616,7 @@ class _ModeButton extends StatelessWidget {
     final radius = BorderRadius.circular(cardBorderRadius);
     final ground = background ?? theme.colorScheme.surfaceContainerHighest;
     final content = foreground ??
-        (selected
-            ? (ThemeData.estimateBrightnessForColor(ground) == Brightness.dark ? Colors.white : Colors.black87)
-            : theme.colorScheme.onSurfaceVariant);
+        (selected ? (ThemeData.estimateBrightnessForColor(ground) == Brightness.dark ? Colors.white : Colors.black87) : theme.colorScheme.onSurfaceVariant);
     final size = 56.0;
     // Same dimming as the step buttons, so "unavailable" reads the same
     // everywhere in the dialog.

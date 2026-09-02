@@ -17,7 +17,7 @@ import 'package:nexus/clients/ha/providers/switch.dart';
 import 'package:nexus/clients/ha/providers/vacuum.dart';
 import 'package:nexus/clients/ha/settings.dart';
 import 'package:nexus/dashboard/settings.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
 export 'package:nexus/clients/ha/clients/registry.dart' show DeviceEntities;
@@ -76,11 +76,11 @@ class HomeAssistantClient {
   final Map<String, LightStateProvider> _lightStateProviders = {};
   final Map<String, VacuumStateProvider> _vacuumStateProviders = {};
 
-  StateProvider<String> entityStateProvider(String entityId) => _entityStateProviders.putIfAbsent(
-      entityId, () => EntityStateProvider(entityProvider: entities.findOrCreate(entityId))..init());
+  StateProvider<String> entityStateProvider(String entityId) =>
+      _entityStateProviders.putIfAbsent(entityId, () => EntityStateProvider(entityProvider: entities.findOrCreate(entityId))..init());
 
-  StateProvider<double> sensorStateProvider(String entityId) => _sensorStateProviders.putIfAbsent(
-      entityId, () => SensorStateProvider(entityProvider: entities.findOrCreate(entityId))..init());
+  StateProvider<double> sensorStateProvider(String entityId) =>
+      _sensorStateProviders.putIfAbsent(entityId, () => SensorStateProvider(entityProvider: entities.findOrCreate(entityId))..init());
 
   StateProvider<bool> switchStateProvider(String entityId) => _switchStateProviders.putIfAbsent(
       entityId,
@@ -93,8 +93,7 @@ class HomeAssistantClient {
       entityId,
       () => CurtainStateProvider(
             entityProvider: entities.findOrCreate(entityId),
-            requestState: (state) =>
-                connection.ws?.executeServiceForEntity(entityId, 'set_cover_position', additionalData: {'position': state.toInt()}),
+            requestState: (state) => connection.ws?.executeServiceForEntity(entityId, 'set_cover_position', additionalData: {'position': state.toInt()}),
           )..init());
 
   StateProvider<Calendar> calendarStateProvider(String entityId) => _calendarStateProviders.putIfAbsent(

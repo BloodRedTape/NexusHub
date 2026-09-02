@@ -1,5 +1,5 @@
 import 'package:home_assistant_ws/home_assistant_ws.dart';
-import 'package:nexus/providers/state.dart';
+import 'package:nexus/clients/state.dart';
 
 /// The live state of every entity the socket has mentioned, one provider each.
 /// Providers are handed out before their entity is ever heard of, so a card
