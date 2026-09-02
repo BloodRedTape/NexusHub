@@ -24,7 +24,7 @@ class MorningTab extends StatelessWidget {
       children: [
         ExpandedColumn(children: [
           ClockCard(),
-          ExpandedRow(children: [WeatherCard(stateProvider: weatherClient.getStateProvider()), AlarmCard(stateProvider: androidClient.getAlarmProvider())])
+          ExpandedRow(children: [WeatherCard(stateProvider: weatherClient.getStateProvider()), AlarmCard(stateProvider: androidClient.alarms.getStateProvider())])
         ]),
         ExpandedColumn(children: [
           CalendarCard(stateProvider: homeAssistantClient.calendarStateProvider('calendar.primary')),

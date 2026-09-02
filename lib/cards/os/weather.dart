@@ -4,7 +4,7 @@ import 'package:nexus/cards/details.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/consts.dart';
-import 'package:nexus/states/weather.dart';
+import 'package:nexus/clients/open_meteo/models.dart';
 
 /// Chance of rain is only worth a line once it is worth planning around.
 const _rainThreshold = 10.0;
@@ -289,7 +289,7 @@ class _WeatherHourColumn extends StatelessWidget {
 /// What the sky is doing right now: the reading the rest of the page is
 /// context for.
 class _CurrentConditions extends StatelessWidget {
-  final WeatherState state;
+  final Weather state;
 
   const _CurrentConditions({required this.state});
 
@@ -338,7 +338,7 @@ class WeatherForecast extends StatelessWidget {
   /// better than another twenty columns of hours would.
   static const hoursShown = 16;
 
-  final WeatherState state;
+  final Weather state;
 
   const WeatherForecast({super.key, required this.state});
 
@@ -415,12 +415,12 @@ class WeatherForecast extends StatelessWidget {
   }
 }
 
-class WeatherCard extends StateCard<WeatherState> {
+class WeatherCard extends StateCard<Weather> {
   final DetailsPage? details;
   WeatherCard({required super.stateProvider, this.details});
 
   @override
-  Widget build(BuildContext context, WeatherState? state) {
+  Widget build(BuildContext context, Weather? state) {
     if (state == null)
       return PlainCard(
         icon: Icons.error,
@@ -451,7 +451,7 @@ class WeatherCard extends StateCard<WeatherState> {
                 child: buildCardContent(context, state))));
   }
 
-  Widget buildGradient(WeatherState state, Widget child) {
+  Widget buildGradient(Weather state, Widget child) {
     return Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16.0),
@@ -464,7 +464,7 @@ class WeatherCard extends StateCard<WeatherState> {
         child: child);
   }
 
-  Widget buildCardContent(BuildContext context, WeatherState state) {
+  Widget buildCardContent(BuildContext context, Weather state) {
     final fixed = 0;
     return Column(
       mainAxisSize: MainAxisSize.max,

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/cards/plain.dart';
 import 'package:nexus/cards/state.dart';
-import 'package:nexus/states/alarm.dart';
+import 'package:nexus/clients/android/models.dart';
 
-class AlarmCard extends StateCard<AlarmState> {
+class AlarmCard extends StateCard<Alarm> {
   const AlarmCard({required super.stateProvider});
 
   @override
-  Widget build(BuildContext context, AlarmState? state) {
+  Widget build(BuildContext context, Alarm? state) {
     if (state == null) return PlainCard(icon: Icons.error, text: 'Unavailable');
 
     final icon = Icons.alarm;

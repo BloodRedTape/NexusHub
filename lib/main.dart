@@ -81,7 +81,7 @@ class _MyAppState extends State<MyApp> {
             ),
             TabItem(
               tab: Tab(text: 'Apps'),
-              child: PaddedTab(child: AppsTab(stateProvider: _androidClient.getAppsStateProvider())),
+              child: PaddedTab(child: AppsTab(stateProvider: _androidClient.apps.getStateProvider())),
             ),
             TabItem(
               tab: const Tab(text: 'Settings'),
