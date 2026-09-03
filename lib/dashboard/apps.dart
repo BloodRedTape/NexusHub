@@ -3,6 +3,7 @@ import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/state.dart';
 import 'package:nexus/clients/android/models.dart';
 import 'package:nexus/consts.dart';
+import 'package:nexus/dashboard/dashboard.dart';
 import 'package:nexus/utils/generic_icon.dart';
 
 class AppsTab extends StateCard<List<LauncherApp>> {
@@ -17,9 +18,10 @@ class AppsTab extends StateCard<List<LauncherApp>> {
 
   Widget _buildGridView(List<LauncherApp> apps) {
     return GridView.builder(
+      padding: tabPadding,
       itemCount: apps.length,
       itemBuilder: (context, index) => _buildGridItem(context, apps[index]),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
         childAspectRatio: 1,
       ),
