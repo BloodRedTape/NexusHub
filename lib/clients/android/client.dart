@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/clients/android/api.dart';
@@ -19,12 +21,52 @@ import 'package:nexus/utils/generic_icon.dart';
 class AndroidAppsClient {
   final _apps = StateProvider<List<AppInfo>>();
 
+  static const _debugIconUrl = 'https://developer.android.com/static/develop/ui/compose/images/adaptive-icon-mask-applied.png';
+
   AndroidAppsClient() {
-    if (Platform.isAndroid) {
-      InstalledApps.getInstalledApps(false, true, true).then(_apps.setValue);
-    } else {
-      _apps.setValue([]);
+    _load();
+  }
+
+  Future<void> _load() async {
+    final apps = Platform.isAndroid ? await InstalledApps.getInstalledApps(false, true, true) : <AppInfo>[];
+
+    _apps.setValue(apps.isEmpty ? await _debugApps() : apps);
+  }
+
+  /// Debugging on the desktop there is no launcher to read, and the empty grid
+  /// says nothing about whether the tab works. Release keeps the honest empty,
+  /// and so does a debug run with no network to fetch the stand-in icon from.
+  static Future<List<AppInfo>> _debugApps() async {
+    if (kReleaseMode) return [];
+
+    final Uint8List icon;
+
+    try {
+      final response = await http.get(Uri.parse(_debugIconUrl));
+
+      if (response.statusCode != 200) return [];
+
+      icon = response.bodyBytes;
+    } catch (_) {
+      return [];
     }
+
+    return [
+      'Calculator', 'Calendar', 'Camera', 'Chrome', 'Clock', //
+      'Contacts', 'Files', 'Gallery', 'Gmail', 'Home Assistant',
+      'Maps', 'Messages', 'Music', 'Netflix', 'Phone',
+      'Photos', 'Settings', 'Spotify', 'Telegram', 'YouTube',
+    ]
+        .map((name) => AppInfo(
+              name: name,
+              icon: icon,
+              packageName: 'debug.${name.toLowerCase().replaceAll(' ', '_')}',
+              versionName: '1.0.0',
+              versionCode: 1,
+              builtWith: BuiltWith.native_or_others,
+              installedTimestamp: 0,
+            ))
+        .toList();
   }
 
   StateProvider<List<AppInfo>> getStateProvider() {
