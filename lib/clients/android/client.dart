@@ -3,13 +3,13 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:installed_apps/app_info.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/clients/android/api.dart';
 import 'package:nexus/clients/android/config.dart';
 import 'package:nexus/clients/android/models.dart';
 import 'package:nexus/clients/android/settings.dart';
+import 'package:nexus/clients/core/log.dart';
 import 'package:nexus/clients/ha/client.dart';
 import 'package:nexus/dashboard/settings.dart';
 import 'package:nexus/clients/state.dart';
@@ -19,8 +19,9 @@ import 'package:nexus/utils/generic_icon.dart';
 /// The launcher list. The installed apps only change when the user installs
 /// something, which this launcher is not around to see - one read at startup.
 class AndroidAppsClient {
-  final _apps = StateProvider<List<AppInfo>>();
+  final _apps = StateProvider<List<LauncherApp>>();
 
+  static const _systemSettingsPackage = 'com.android.settings';
   static const _debugIconUrl = 'https://developer.android.com/static/develop/ui/compose/images/adaptive-icon-mask-applied.png';
 
   AndroidAppsClient() {
@@ -28,28 +29,60 @@ class AndroidAppsClient {
   }
 
   Future<void> _load() async {
-    final apps = Platform.isAndroid ? await InstalledApps.getInstalledApps(false, true, true) : <AppInfo>[];
+    final installed = Platform.isAndroid ? await InstalledApps.getInstalledApps(false, true, true) : <AppInfo>[];
 
-    _apps.setValue(apps.isEmpty ? await _debugApps() : apps);
+    final apps = installed.where((info) => info.icon != null).map(_installedApp).toList();
+
+    _apps.setValue(apps.isEmpty ? _debugApps() : apps);
   }
 
-  /// Debugging on the desktop there is no launcher to read, and the empty grid
-  /// says nothing about whether the tab works. Release keeps the honest empty,
-  /// and so does a debug run with no network to fetch the stand-in icon from.
-  static Future<List<AppInfo>> _debugApps() async {
-    if (kReleaseMode) return [];
+  static LauncherApp _installedApp(AppInfo info) {
+    return LauncherApp(
+      name: info.name,
+      icon: Future.value(MemoryImage(info.icon!)),
+      launch: (context) => _launch(context, info.name, info.packageName),
+    );
+  }
 
-    final Uint8List icon;
+  LauncherApp findSystemSettings() {
+    if (!Platform.isAndroid && !kReleaseMode) return _debugApp('System Settings');
+
+    return LauncherApp(
+      name: 'System Settings',
+      icon: _packageIcon(_systemSettingsPackage),
+      launch: (context) => _launch(context, 'System Settings', _systemSettingsPackage),
+    );
+  }
+
+  static Future<ImageProvider> _packageIcon(String package) async {
+    final info = await InstalledApps.getAppInfo(package, null);
+    final bytes = info?.icon;
+
+    if (bytes == null) throw StateError('no icon for $package');
+
+    return MemoryImage(bytes);
+  }
+
+  static Future<void> _launch(BuildContext context, String name, String package) async {
+    String reason;
 
     try {
-      final response = await http.get(Uri.parse(_debugIconUrl));
+      if (await InstalledApps.startApp(package) == true) return;
 
-      if (response.statusCode != 200) return [];
-
-      icon = response.bodyBytes;
-    } catch (_) {
-      return [];
+      reason = 'refused by $package';
+    } catch (error) {
+      reason = '$error';
     }
+
+    logAndroid.warning('could not start $package: $reason');
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not start $name: $reason')));
+  }
+
+  static List<LauncherApp> _debugApps() {
+    if (kReleaseMode) return [];
 
     return [
       'Calculator', 'Calendar', 'Camera', 'Chrome', 'Clock', //
@@ -57,19 +90,19 @@ class AndroidAppsClient {
       'Maps', 'Messages', 'Music', 'Netflix', 'Phone',
       'Photos', 'Settings', 'Spotify', 'Telegram', 'YouTube',
     ]
-        .map((name) => AppInfo(
-              name: name,
-              icon: icon,
-              packageName: 'debug.${name.toLowerCase().replaceAll(' ', '_')}',
-              versionName: '1.0.0',
-              versionCode: 1,
-              builtWith: BuiltWith.native_or_others,
-              installedTimestamp: 0,
-            ))
+        .map(_debugApp)
         .toList();
   }
 
-  StateProvider<List<AppInfo>> getStateProvider() {
+  static LauncherApp _debugApp(String name) {
+    return LauncherApp(
+      name: name,
+      icon: Future.value(NetworkImage(_debugIconUrl)),
+      launch: (context) => _launch(context, name, 'debug.${name.toLowerCase().replaceAll(' ', '_')}'),
+    );
+  }
+
+  StateProvider<List<LauncherApp>> getStateProvider() {
     return _apps;
   }
 }
@@ -262,7 +295,7 @@ class AndroidClient {
   }
 
   SettingsItem makeSystemSettings() {
-    return SettingsItem.fromPackage(name: 'System Settings', package: 'com.android.settings');
+    return SettingsItem.fromLauncherApp(apps.findSystemSettings());
   }
 
   SettingsItem makeSettings() {

@@ -6,3 +6,5 @@
 
 ## Coding rules
 - prefer write/read tools for code edits
+
+- Write as small amount of comments as possible

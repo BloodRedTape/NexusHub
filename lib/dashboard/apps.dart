@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:installed_apps/app_info.dart';
-import 'package:installed_apps/installed_apps.dart';
 import 'package:nexus/cards/base.dart';
 import 'package:nexus/cards/state.dart';
+import 'package:nexus/clients/android/models.dart';
 import 'package:nexus/consts.dart';
+import 'package:nexus/utils/generic_icon.dart';
 
-class AppsTab extends StateCard<List<AppInfo>> {
+class AppsTab extends StateCard<List<LauncherApp>> {
   AppsTab({required super.stateProvider});
 
   @override
-  Widget build(BuildContext context, List<AppInfo>? state) {
+  Widget build(BuildContext context, List<LauncherApp>? state) {
     if (state == null) return _buildProgressIndicator();
 
     return _buildGridView(state);
   }
 
-  Widget _buildGridView(List<AppInfo> apps) {
+  Widget _buildGridView(List<LauncherApp> apps) {
     return GridView.builder(
       itemCount: apps.length,
       itemBuilder: (context, index) => _buildGridItem(context, apps[index]),
@@ -26,19 +26,15 @@ class AppsTab extends StateCard<List<AppInfo>> {
     );
   }
 
-  /// The dashboard cards put their icon and label in opposite corners; a
-  /// launcher tile reads better stacked and centred, like every other launcher.
-  Widget _buildGridItem(BuildContext context, AppInfo app) {
+  Widget _buildGridItem(BuildContext context, LauncherApp app) {
     return BaseCard(
-      action: () => InstalledApps.startApp(app.packageName),
+      action: () => app.launch(context),
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Whatever the tile leaves over after the label, the icon takes -
-            // a fixed size overflows as soon as the grid gets a little narrower.
-            Flexible(child: Image.memory(app.icon!, fit: BoxFit.contain)),
+            Flexible(child: GenericIcon.fromFuture(image: app.icon.then((image) => Image(image: image, fit: BoxFit.contain)))),
             SizedBox(height: cardPadding / 2),
             Text(
               app.name,
