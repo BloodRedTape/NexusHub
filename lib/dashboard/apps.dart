@@ -20,34 +20,36 @@ class AppsTab extends StateCard<List<AppInfo>> {
       itemCount: apps.length,
       itemBuilder: (context, index) => _buildGridItem(context, apps[index]),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisExtent: cardPadding + iconSize * 2 + cardPadding,
+        crossAxisCount: 4,
+        childAspectRatio: 1,
       ),
     );
   }
 
+  /// The dashboard cards put their icon and label in opposite corners; a
+  /// launcher tile reads better stacked and centred, like every other launcher.
   Widget _buildGridItem(BuildContext context, AppInfo app) {
     return BaseCard(
+      action: () => InstalledApps.startApp(app.packageName),
       child: Padding(
         padding: EdgeInsets.all(cardPadding),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(width: 80, height: 80, child: Image.memory(app.icon!)),
-            SizedBox(width: 10),
-            Flexible(
-              child: Text(
-                app.name,
-                style: TextStyle(fontSize: secondaryTextSize),
-                textAlign: TextAlign.left,
-                overflow: TextOverflow.ellipsis,
-              ),
-            )
+            // Whatever the tile leaves over after the label, the icon takes -
+            // a fixed size overflows as soon as the grid gets a little narrower.
+            Flexible(child: Image.memory(app.icon!, fit: BoxFit.contain)),
+            SizedBox(height: cardPadding / 2),
+            Text(
+              app.name,
+              style: TextStyle(fontSize: secondaryTextSize),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
-      action: () => InstalledApps.startApp(app.packageName),
     );
   }
 
